@@ -363,94 +363,22 @@
       width: 42%;
       flex-shrink: 0;
       height: 100%;
-      overflow-y: auto;
+      overflow: hidden;
       background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
     }
 
     #article-reader {
-      padding: 28px 26px 48px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
-    /* Reader internals (built by JS) */
-    .reader-cat {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
-    }
-    .reader-title {
-      font-family: var(--font-display);
-      font-size: 26px; font-weight: 700;
-      color: var(--text-primary); line-height: 1.25;
-      margin-bottom: 12px;
-    }
-    .reader-byline {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 18px; padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .reader-byline-left { display: flex; align-items: center; gap: 12px; }
-    .reader-date-time { font-size: 12px; color: var(--text-muted); }
-    .reader-actions { display: flex; align-items: center; gap: 8px; }
-    .reader-action-btn {
-      width: 30px; height: 30px; border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      border: 1px solid var(--border); color: var(--text-muted);
-      cursor: pointer; transition: all 0.15s;
-    }
-    .reader-action-btn:hover { border-color: var(--gold-border); color: var(--gold); background: var(--gold-dim); }
-
-    .reader-hero {
-      width: 100%; height: 200px;
-      border-radius: 6px; margin-bottom: 20px;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-    }
-
-    .reader-takeaways {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border); border-radius: 8px;
-      padding: 16px 18px; margin-bottom: 22px;
-    }
-    .reader-takeaways-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--gold); margin-bottom: 12px;
-    }
-    .reader-takeaways ul {
-      list-style: none; display: flex; flex-direction: column; gap: 8px;
-    }
-    .reader-takeaways li {
-      display: flex; gap: 10px; align-items: flex-start;
-      font-size: 13px; color: var(--text-secondary); line-height: 1.5;
-    }
-    .reader-takeaways li::before {
-      content: '';
-      display: block; width: 6px; height: 6px;
-      border-radius: 50%; background: var(--gold);
-      flex-shrink: 0; margin-top: 5px;
-    }
-
-    .reader-body p {
-      font-size: 14px; color: var(--text-secondary); line-height: 1.75;
-      margin-bottom: 16px;
-    }
-    .reader-body p:last-child { margin-bottom: 0; }
-
-    .reader-chart {
-      margin: 22px 0;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid var(--border);
-      border-radius: 8px; padding: 16px;
-    }
-    .reader-chart-label {
-      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-    .reader-chart svg { display: block; }
-
-    .reader-disclaimer {
-      margin-top: 32px; padding-top: 16px;
-      border-top: 1px solid var(--border);
-      font-size: 11px; color: var(--text-muted); font-style: italic; line-height: 1.6;
+    .reader-pdf-frame {
+      width: 100%; height: 100%;
+      border: none; display: block;
     }
 
     /* Empty / loading states */
@@ -460,7 +388,7 @@
       color: var(--text-muted); gap: 12px;
     }
     .reader-empty-icon { opacity: 0.3; }
-    .reader-empty-text { font-size: 14px; }
+    .reader-empty-text { font-size: 14px; text-align: center; line-height: 1.6; }
 
     /* No results */
     .no-results {
@@ -798,125 +726,29 @@
 
     // ── Render Article Reader ──────────────────────────────────
     function renderReader(article) {
-      // Build sparkline SVG if chartLabel present
-      let chartHtml = '';
-      if (article.chartLabel) {
-        // Generate a plausible sparkline path
-        const w = 320, h = 90;
-        const points = generateSparkline(w, h);
-        chartHtml = `
-          <div class="reader-chart">
-            <div class="reader-chart-label">${article.chartLabel}</div>
-            <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.25"/>
-                  <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <!-- grid lines -->
-              <line x1="0" y1="${h*0.25}" x2="${w}" y2="${h*0.25}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-              <line x1="0" y1="${h*0.5}"  x2="${w}" y2="${h*0.5}"  stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-              <line x1="0" y1="${h*0.75}" x2="${w}" y2="${h*0.75}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-              <!-- area fill -->
-              <path d="${points.area}" fill="url(#sparkGrad)"/>
-              <!-- line -->
-              <path d="${points.line}" fill="none" stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <!-- endpoint dot -->
-              <circle cx="${points.lastX}" cy="${points.lastY}" r="3" fill="#C9A84C"/>
-            </svg>
-          </div>`;
-      }
-
-      const bodyHtml = article.body.map(p => `<p>${p}</p>`).join('');
-      const takeawaysHtml = article.keyTakeaways.map(k => `<li>${k}</li>`).join('');
-
-      articleReaderEl.innerHTML = `
-        <div class="reader-cat">${article.category}</div>
-        <div class="reader-title">${article.title}</div>
-        <div class="reader-byline">
-          <div class="reader-byline-left">
-            <span class="reader-date-time">${article.date}</span>
-            <span class="reader-date-time">·</span>
-            <span class="reader-date-time">${article.readTime}</span>
-          </div>
-          <div class="reader-actions">
-            <button class="reader-action-btn" title="Bookmark">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      if (article.pdf) {
+        articleReaderEl.innerHTML = `
+          <iframe
+            class="reader-pdf-frame"
+            src="articles/${article.pdf}"
+            title="${article.title}"
+          ></iframe>
+        `;
+      } else {
+        articleReaderEl.innerHTML = `
+          <div class="reader-empty">
+            <div class="reader-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
-            </button>
-            <button class="reader-action-btn" title="Share">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-              </svg>
-            </button>
+            </div>
+            <div class="reader-empty-text">PDF coming soon.<br><span style="font-size:12px;color:var(--text-muted);">${article.title}</span></div>
           </div>
-        </div>
-        <div class="reader-hero" style="background:${article.thumbnail};">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
-        </div>
-        <div class="reader-takeaways">
-          <div class="reader-takeaways-label">Key Takeaways</div>
-          <ul>${takeawaysHtml}</ul>
-        </div>
-        <div class="reader-body">
-          ${bodyHtml}
-        </div>
-        ${chartHtml}
-        <div class="reader-disclaimer">
-          This research is for informational purposes only and does not constitute investment advice. Past performance is not indicative of future results.
-        </div>
-      `;
-
-      // Scroll reader to top
-      document.querySelector('.article-reader-panel').scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // ── Sparkline generator ────────────────────────────────────
-    function generateSparkline(w, h) {
-      // Deterministic pseudo-random sequence for reproducibility per page load
-      const seed = Date.now() % 997;
-      function rand(i) {
-        const x = Math.sin(seed + i * 127.1) * 43758.5453;
-        return x - Math.floor(x);
+        `;
       }
-
-      const n = 28;
-      const padding = 6;
-      const rawY = [];
-      let val = 0.45;
-      for (let i = 0; i < n; i++) {
-        val += (rand(i) - 0.48) * 0.12;
-        val = Math.max(0.05, Math.min(0.95, val));
-        rawY.push(val);
-      }
-
-      const pts = rawY.map((y, i) => ({
-        x: padding + (i / (n - 1)) * (w - padding * 2),
-        y: padding + y * (h - padding * 2)
-      }));
-
-      // Smooth line using cubic bezier approximation
-      let line = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
-      for (let i = 1; i < pts.length; i++) {
-        const prev = pts[i - 1];
-        const curr = pts[i];
-        const cx = (prev.x + curr.x) / 2;
-        line += ` C ${cx.toFixed(1)},${prev.y.toFixed(1)} ${cx.toFixed(1)},${curr.y.toFixed(1)} ${curr.x.toFixed(1)},${curr.y.toFixed(1)}`;
-      }
-
-      const last = pts[pts.length - 1];
-      const area = line + ` L ${last.x.toFixed(1)},${h} L ${pts[0].x.toFixed(1)},${h} Z`;
-
-      return { line, area, lastX: last.x.toFixed(1), lastY: last.y.toFixed(1) };
     }
 
     // ── Load Articles ──────────────────────────────────────────
