@@ -1,0 +1,167 @@
+[
+  {
+    "id": "global-liquidity-rebounds",
+    "category": "MACRO LIQUIDITY",
+    "title": "Global Liquidity Rebounds: What Comes Next?",
+    "date": "May 24, 2024",
+    "readTime": "12 min read",
+    "excerpt": "After months of contraction, global liquidity conditions are showing convincing signs of recovery — driven by coordinated central bank balance sheet expansion and easing credit conditions in key markets. The question is no longer whether the tide has turned, but how far and how fast it will rise.",
+    "thumbnail": "#1a2a1a",
+    "keyTakeaways": [
+      "Global M2 (USD-adjusted) rose 3.2% in April on a 3-month rolling basis, the strongest print since Q3 2022.",
+      "PBOC and Bank of Japan balance sheet expansion are the primary engines, together adding ~$480B in net new liquidity since January.",
+      "The Fed's ongoing QT (-$95B/mo) remains a meaningful headwind, but net global flows are firmly positive.",
+      "Historically, sustained global liquidity rebounds have preceded 12-month equity returns of +18% on average — with risk assets outside the US outperforming."
+    ],
+    "body": [
+      "Global liquidity — broadly defined as the aggregate of major central bank balance sheets plus cross-border credit flows, expressed in USD — reached an inflection point in Q1 2024 that is now becoming difficult to dismiss. After 18 months of net contraction driven by synchronized central bank tightening, the composite is rising again. April's 3-month change reading came in at +3.2%, a level that has historically served as a reliable signal that the next leg of the risk cycle is underway.",
+      "The composition of this recovery matters enormously. The People's Bank of China has been the most aggressive actor, injecting roughly $280B in net new reserves since January through a combination of RRR cuts, MLF rollovers, and targeted lending facilities. Chinese credit impulse — a leading indicator of domestic and global demand — turned positive in March for the first time since mid-2022. This matters globally because China's credit cycle has historically led developed market growth indicators by 6–9 months.",
+      "Japan is the second major engine of reflation. The Bank of Japan's yield curve control policy has effectively capped domestic borrowing costs while global rates remain elevated, incentivizing a relentless carry trade that funnels yen-denominated capital into higher-yielding global assets. While the BOJ has made hawkish noises, the structural constraints on normalization remain formidable — Japanese government debt at 260% of GDP means even modest rate increases carry severe fiscal consequences.",
+      "The Federal Reserve remains the key wildcard. The FOMC is still running quantitative tightening at roughly $95B per month, draining reserves from the US banking system. However, recent softening in core PCE data and a notable slowdown in non-farm payrolls suggest the Fed may be approaching the end of its tightening cycle. Futures markets are pricing 2.3 cuts in 2024, and if the pivot arrives before year-end, net global liquidity conditions could accelerate sharply.",
+      "From a historical perspective, the setup is constructive. Analysis of the six prior global liquidity rebound cycles since 1995 shows that sustained recoveries — defined as three consecutive months of positive 3M change — have been followed by 12-month equity returns averaging +18.4%. Emerging market equities, commodities, and Bitcoin have historically outperformed in the early stages, while developed market bonds tend to lag until the Fed officially pivots. The current configuration argues for tactical overweights in EM and real assets, with a patient approach to long duration.",
+      "Risks to the thesis are non-trivial. A reacceleration of US inflation — particularly shelter and services — could force the Fed to maintain QT longer than expected, capping the net global liquidity improvement. Geopolitical fragmentation and the continued weaponization of the USD financial system are also structurally reducing the marginal multiplier effect of new liquidity injections. Still, the weight of evidence suggests the cycle has turned, and investors who wait for certainty will likely miss the best entry points."
+    ],
+    "chartLabel": "GLOBAL LIQUIDITY COMPOSITE (3M CHANGE, USD-ADJUSTED)"
+  },
+  {
+    "id": "bitcoin-liquidity-dynamics",
+    "category": "CRYPTO",
+    "title": "Bitcoin Liquidity Dynamics: A New Regime?",
+    "date": "May 22, 2024",
+    "readTime": "10 min read",
+    "excerpt": "The approval of spot Bitcoin ETFs in the US has permanently altered the market structure of BTC liquidity — institutionalizing flows that were once episodic and retail-driven. We examine what this regime shift means for price discovery, volatility, and Bitcoin's evolving role as a macro asset.",
+    "thumbnail": "#1a1a2a",
+    "keyTakeaways": [
+      "Spot Bitcoin ETFs have absorbed over $12B in net inflows since January launch, dwarfing the daily mined supply by a factor of roughly 10x.",
+      "Bitcoin's correlation to global M2 (lagged 3 months) has risen to 0.82, the highest on record — reinforcing its role as a pure liquidity barometer.",
+      "On-chain exchange reserves have fallen to multi-year lows, suggesting a structural supply squeeze as long-term holders refuse to sell.",
+      "The post-halving supply shock, combined with ETF demand, creates an asymmetric setup — but leverage ratios in perpetual futures warn of short-term volatility risk."
+    ],
+    "body": [
+      "The launch of spot Bitcoin ETFs in the United States in January 2024 represents the most significant structural change to Bitcoin market dynamics since the CME futures launch in 2017. For the first time, institutional capital can access BTC through familiar, regulated wrappers — eliminating the custody, counterparty, and operational barriers that had previously kept the largest pools of capital on the sidelines. The consequences for market structure, price discovery, and volatility are only beginning to become apparent.",
+      "The headline numbers are staggering. In the first four months of trading, US spot Bitcoin ETFs attracted over $12B in net inflows. To contextualize this: at current prices and a post-halving issuance rate of roughly 450 BTC per day, daily mined supply is worth approximately $28M. ETF demand has been running at roughly 10x daily supply — a demand shock without meaningful historical precedent. Unlike prior demand cycles driven by retail speculation, ETF flows exhibit smoother, more persistent accumulation patterns that are less prone to sudden reversals.",
+      "From a macro perspective, Bitcoin's statistical relationship to global liquidity conditions has strengthened materially. The 90-day rolling correlation between Bitcoin price and global M2 (lagged 3 months) has risen to 0.82 as of May 2024 — the highest reading since systematic tracking began. This is not coincidental. As institutional participation has grown, so has the tendency of sophisticated market participants to size Bitcoin positions as a function of the macro liquidity backdrop, effectively transforming BTC into a high-beta expression of global financial conditions.",
+      "On-chain data paints a picture of structural supply compression. Bitcoin exchange reserves — the amount of BTC held on centralized exchanges and available for immediate sale — have fallen to their lowest levels since 2017. Long-term holder supply (coins unmoved for 155+ days) continues to set all-time highs as a percentage of circulating supply. This combination of rising demand and declining available supply creates the conditions for outsized price responses to even modest incremental demand.",
+      "However, the derivatives market injects an important note of caution. Perpetual futures funding rates have been persistently positive, indicating that leveraged longs outnumber shorts — a positioning that historically precedes sharp, short-duration liquidation cascades. Open interest relative to market cap is elevated but not yet at the extreme levels that preceded the May 2021 and November 2022 corrections. The base case remains constructive given the macro and structural tailwinds, but position sizing should account for the possibility of a 20–30% drawdown before the next leg higher.",
+      "The post-halving period historically takes 12–18 months to fully manifest in price appreciation as the market absorbs the reduced supply. Combined with a favorable global liquidity backdrop and unprecedented institutional demand, the conditions for Bitcoin to test and ultimately surpass prior all-time highs appear to be in place. The new regime is not without risk, but the risk-reward for patient, leveraged-free allocations remains compelling."
+    ],
+    "chartLabel": "BTC PRICE VS. GLOBAL M2 (90-DAY LAGGED CORRELATION)"
+  },
+  {
+    "id": "dixie-index-financial-conditions",
+    "category": "MARKET OUTLOOK",
+    "title": "The DIXIE Index and Global Financial Conditions",
+    "date": "May 20, 2024",
+    "readTime": "9 min read",
+    "excerpt": "The US Dollar Index remains the most consequential single variable in global financial conditions — acting as both a thermometer and a thermostat for cross-border capital flows. We examine the current DIXIE setup and what dollar direction implies for equities, commodities, and emerging markets.",
+    "thumbnail": "#1a1f2a",
+    "keyTakeaways": [
+      "The DXY has declined 3.1% from its October 2023 peak, but remains historically elevated — a persistent headwind for non-USD assets and commodities.",
+      "A sustained move below DXY 102 would historically signal a meaningful easing of global financial conditions, potentially worth 200–300bps in equivalent rate cuts.",
+      "EM currencies and equities exhibit the strongest inverse sensitivity to the dollar — a weaker DXY has historically added ~8% to EM equity returns over 12 months.",
+      "The primary catalyst for a durable dollar decline is Fed rate cuts; absent that, tactical dollar weakness remains vulnerable to reversal on any macro surprise."
+    ],
+    "body": [
+      "The US Dollar Index — commonly called the 'DIXIE' in professional trading circles — is far more than a benchmark for currency traders. It is, in practical terms, the pressure gauge of global financial conditions. When the dollar strengthens, it tightens financial conditions globally by raising the cost of dollar-denominated debt, reducing the value of non-USD collateral, and compressing the purchasing power of commodity-importing nations. When it weakens, the reverse holds — a dollar decline is functionally equivalent to a global liquidity injection, even without any direct central bank action.",
+      "The current configuration is one of cautious optimism. After reaching a multi-decade high of 114.8 in September 2022, the DXY has been in a structurally weakening trend — albeit with significant volatility. The October 2023 rebound to 107.3 has partially reversed, and the index currently trades around 104.5. From a technical standpoint, the 102 level is the key threshold: a sustained break below would bring the 200-week moving average into play and historically has coincided with meaningful improvements in global risk appetite.",
+      "The transmission mechanism from dollar direction to asset prices is well-documented but worth reiterating. Dollar strength forces dollar-borrowers to allocate more domestic resources to servicing USD debt, compressing domestic investment and consumption. For commodity markets, a strong dollar reduces the purchasing power of non-US consumers, mechanically depressing demand. For EM equities, dollar strength triggers capital outflows as investors reduce exposure to volatile emerging economies in favor of USD assets. Each of these channels operates in reverse when the dollar weakens.",
+      "The geopolitical context adds complexity to any dollar forecast. Dollar weaponization — the use of USD financial infrastructure as a tool of foreign policy — has accelerated since 2022 and is structurally incentivizing de-dollarization efforts by BRICS nations and others. The practical near-term impact on DXY is limited, but the longer-term trajectory of dollar reserve share is clearly declining. This structural headwind to dollar demand may amplify cyclical weakness when the Fed pivot arrives.",
+      "For investors, the actionable implication is clear: dollar direction should be a primary variable in asset allocation decisions. An overweight to EM equities, gold, and commodities is structurally justified if one has conviction in dollar weakness — and the macro setup (Fed approaching end of tightening, global liquidity recovering, PBOC stimulating) argues for that view. However, the dollar has defied bearish consensus more often than not in recent years, so position sizing must account for the possibility of a delayed pivot and associated dollar resilience."
+    ],
+    "chartLabel": "DXY INDEX — 3-YEAR PRICE HISTORY"
+  },
+  {
+    "id": "why-yields-are-stuck",
+    "category": "RATES",
+    "title": "Why Yields Are Stuck (For Now)",
+    "date": "May 19, 2024",
+    "readTime": "8 min read",
+    "excerpt": "US 10-year Treasury yields have been trapped in a 4.2–4.7% range for months, confounding both bulls and bears. We examine the competing forces keeping rates rangebound and assess what it would take to decisively break the stalemate.",
+    "thumbnail": "#2a1a1a",
+    "keyTakeaways": [
+      "The 10-year yield is caught between sticky inflation (upward pressure) and slowing growth (downward pressure) — a tension that has produced the tightest 90-day trading range in 5 years.",
+      "Treasury supply is a structural upward force: the US is issuing $2T+ in net new debt in 2024, requiring sustained foreign and domestic demand at current yield levels.",
+      "The term premium component of the 10-year has risen to 50bps, the highest since 2014 — reflecting genuine uncertainty about the long-run neutral rate.",
+      "A break above 4.75% would likely require a re-acceleration in CPI; a break below 4.2% would most plausibly require either a clear recession signal or an explicit Fed pivot."
+    ],
+    "body": [
+      "The US 10-year Treasury yield has been a source of perpetual frustration for fixed income investors in 2024. After the dramatic repricing of 2022–2023, rates appear to have found a rangebound equilibrium — oscillating between 4.2% and 4.7% with no clear directional conviction. The cause is straightforward: an unusually balanced set of competing forces that offset each other in near-perfect proportion, leaving the market without a dominant narrative.",
+      "On the upside, inflation has proven stickier than the Fed — and markets — expected. Core CPI has decelerated from its 2022 peak of 6.6% to around 3.6%, but the last mile of disinflation is proving elusive. Services inflation, particularly in shelter and healthcare, remains elevated due to structural factors that monetary policy influences only with long lags. This residual inflation keeps the Fed on hold and limits the extent to which the market can price aggressive rate cuts without appearing naive.",
+      "On the downside, the real economy is clearly slowing. Consumer credit delinquencies are rising, small business confidence has deteriorated, and leading indicators point to sub-trend growth in H2 2024. A classic recession signal — the unemployment rate rising 0.5% from its cycle low — has not yet materialized, but the labor market is visibly softening at the margins. If growth deceleration accelerates, the bond market will price cuts aggressively regardless of where inflation prints.",
+      "The supply dimension is underappreciated. The US Treasury is running a roughly $2T annual deficit and must finance it in a market where the Fed is no longer a buyer (indeed, it is a seller under QT). Foreign central bank demand has been inconsistent — Japan, the largest foreign holder, is dealing with its own currency and policy pressures. Domestic buyers (pension funds, insurance companies, money market funds rotating out of bills) must fill the gap, but only at yield levels high enough to attract the capital. This structural supply overhang is a persistent upward force on term rates.",
+      "The term premium — the additional yield investors demand to hold long-duration bonds versus rolling short-term paper — has risen to approximately 50 basis points, the highest level since 2014. This reflects genuine uncertainty about the long-run neutral rate (r*) and fiscal sustainability rather than near-term inflation expectations. Until there is clarity on these structural questions, the term premium is unlikely to compress, putting a floor under long yields even as the cyclical case for cuts builds.",
+      "The range is likely to persist until one of three catalysts arrives: (1) a decisive re-acceleration in inflation data that forces the market to price a rate hike; (2) a clear and unambiguous Fed pivot signal backed by multiple weak inflation prints; or (3) a credit event or recession signal that triggers a flight to safety large enough to overpower the supply overhang. Absent these, investors are likely better served by harvesting carry in the 4.2–4.7% range than betting on a directional break."
+    ],
+    "chartLabel": "US 10-YEAR YIELD — 12-MONTH RANGE"
+  },
+  {
+    "id": "etf-flows-risk-on-rotation",
+    "category": "ETFs",
+    "title": "ETF Flows Signal Risk-On Rotation",
+    "date": "May 17, 2024",
+    "readTime": "7 min read",
+    "excerpt": "Weekly ETF flow data reveals a significant shift in investor positioning — with money moving out of defensive sectors and short-duration bonds into equities, crypto, and commodity-linked products. We decode the signals embedded in this rotation.",
+    "thumbnail": "#1a2a2a",
+    "keyTakeaways": [
+      "Equity ETFs recorded $48B in net inflows over the past 4 weeks — the strongest pace since Q4 2023 — led by technology, financials, and small-cap vehicles.",
+      "Bond ETF flows are bifurcating: short-duration products saw outflows while long-duration funds attracted buyers, suggesting the market is front-running a Fed pivot.",
+      "Crypto ETF inflows accelerated post-halving, with Bitcoin spot ETFs alone recording $1.2B in the most recent weekly data.",
+      "Defensive ETFs (utilities, consumer staples, low-volatility) saw $3.1B in outflows — a clear de-risking of recession hedges."
+    ],
+    "body": [
+      "ETF flows are among the most reliable real-time indicators of investor sentiment and positioning — not because they tell us what the market believes, but because they show us where actual capital is moving. The past four weeks have produced an unusually coherent signal: investors are de-risking their recession and rate-hike hedges and rotating into assets that outperform in a reflation or soft-landing environment.",
+      "Equity ETF inflows have been the headline story. Approximately $48B in net new money entered equity ETFs over the four-week period ending May 17 — the strongest pace of equity accumulation since the Q4 2023 bear market rally. The composition is revealing: technology sector ETFs led with $14B, followed by financials ($8B) and small-cap indices ($6B). These are not defensive postures — they are concentrated bets on economic resilience and continued margin expansion.",
+      "The bond ETF picture is more nuanced and arguably more informative. Aggregate bond ETF flows were net positive, but the distribution was striking: short-duration products (1-3 year) saw $2.4B in outflows while long-duration funds (10-20 year, 20+ year) attracted $3.8B in net inflows. This is a classic curve steepening trade, consistent with investors positioning for rate cuts: short rates fall first as the Fed pivots, while long rates may remain elevated due to supply and term premium pressures.",
+      "Crypto-linked ETFs have emerged as the most rapidly growing category in the fixed-income-to-risk rotation. The newly launched spot Bitcoin ETFs attracted $1.2B in the most recent single week — the eighth consecutive week of positive flows since the brief correction period in March. Ethereum ETF expectations are also influencing crypto market positioning, as approval of spot ETH products would represent another large pool of institutional demand entering the market.",
+      "Perhaps the most telling signal comes from the outflows side: defensive ETFs recorded $3.1B in net redemptions. Utilities, consumer staples, and low-volatility factor funds — the traditional hedges against recession and rate shocks — are being systematically liquidated. This de-risking of tail hedges suggests that the average institutional investor has meaningfully reduced their recession probability estimates and is repositioning for a more benign macro environment.",
+      "The risk to the flow narrative is positioning crowding: when everyone is in the same rotation trade, reversals can be violent. If the next CPI print surprises to the upside, the reversal in technology and long-duration ETFs could be swift and painful. Monitoring the rate of change in flows — not just the level — will be critical to identifying when the rotation trade has fully priced in the soft landing."
+    ],
+    "chartLabel": "EQUITY VS. BOND ETF FLOWS (4-WEEK ROLLING NET, $B)"
+  },
+  {
+    "id": "oil-markets-crossroads",
+    "category": "COMMODITIES",
+    "title": "Oil Markets at a Crossroads",
+    "date": "May 16, 2024",
+    "readTime": "6 min read",
+    "excerpt": "Crude oil sits at a strategic inflection point, caught between OPEC+ supply discipline, slowing Chinese demand, and the prospect of a synchronized global recovery. The next directional move will have significant implications for inflation, central bank policy, and equity valuations.",
+    "thumbnail": "#2a1f1a",
+    "keyTakeaways": [
+      "Brent crude has traded in a $78–$92 range for six months — an unusually tight band that reflects genuine supply-demand balance rather than speculative noise.",
+      "OPEC+ remains the fulcrum: the cartel's decision to extend or unwind voluntary cuts at the June meeting will likely determine H2 direction.",
+      "Chinese demand recovery has disappointed consensus expectations — crude imports are running roughly 8% below IEA projections, capping upside.",
+      "US shale production continues to surprise to the upside, with output near all-time highs — providing a structural ceiling on prices above $90."
+    ],
+    "body": [
+      "Crude oil has earned its reputation as the most complex commodity to forecast. Supply is a function of geopolitics, cartel discipline, and capital expenditure cycles that take years to play out. Demand is driven by economic growth, energy transition dynamics, and the opaque decision-making of the world's largest importer, China. And the price is set at the margin by speculative flows that can amplify or dampen fundamental moves by 20–30%. In 2024, all three of these variables are at genuine inflection points simultaneously.",
+      "OPEC+ remains the single most important supply-side variable. The cartel's decision in November 2023 to extend voluntary production cuts of approximately 2.2M barrels per day through Q1 2024 — and subsequently through Q2 — has been the primary factor preventing a supply glut despite weak Chinese demand. The June OPEC+ ministerial meeting will be a major catalyst: a decision to extend cuts into H2 2024 would likely support prices in the $85–$92 range, while any hint of quota relaxation could push Brent toward $75.",
+      "Chinese demand is the key uncertainty on the demand side. The IEA's baseline forecast for Chinese crude demand growth in 2024 was approximately 700,000 barrels per day — an optimistic assumption that implied a robust post-COVID consumer recovery. Year-to-date import data suggests actual growth is running roughly 8% below that projection. The structural reasons are becoming harder to dismiss: China's electric vehicle penetration is accelerating rapidly, reducing gasoline demand growth; the property sector slump is compressing petrochemical feedstock demand; and industrial growth has underwhelmed expectations.",
+      "US shale production provides a structural ceiling on prices. American output has recovered to near all-time highs of approximately 13.1M barrels per day, driven by productivity gains in the Permian Basin that have more than offset rig count declines. The shale 'call option' — where higher prices stimulate additional drilling — is well-documented and remains intact. At prices above $85–$90, the economics of incremental shale drilling become highly attractive, creating a price ceiling that limits OPEC+'s ability to target meaningfully higher prices without losing market share.",
+      "For macro investors, oil matters beyond commodity exposure. A sustained move above $90 would reignite energy-driven CPI prints, complicating the Fed's path toward rate cuts and potentially extending the rangebound environment in Treasury yields. Conversely, oil falling toward $70 — the level at which Saudi Arabia's fiscal balance requires support — would provide a meaningful disinflationary tailwind that could accelerate the Fed's pivot timeline. The base case of rangebound $78–$88 crude is the most probable outcome, but the tail risks in both directions are larger than typical."
+    ],
+    "chartLabel": "BRENT CRUDE — 6-MONTH PRICE BAND"
+  },
+  {
+    "id": "fed-patience-tested",
+    "category": "POLICY",
+    "title": "Fed Patience Tested",
+    "date": "May 15, 2024",
+    "readTime": "7 min read",
+    "excerpt": "The Federal Reserve's higher-for-longer posture is increasingly at odds with a softening labor market, rising credit stress, and the political calendar. We assess the conditions under which Fed patience breaks — and what a pivot would mean for markets.",
+    "thumbnail": "#2a1a2a",
+    "keyTakeaways": [
+      "The Fed's dual mandate is entering conflict: inflation above target (3.4% core PCE) but employment conditions softening with jobless claims trending higher.",
+      "Financial stress indicators — including investment grade credit spreads and small business lending surveys — have deteriorated notably since February.",
+      "The political calendar is a real consideration: historically, the Fed has been reluctant to cut rates within 90 days of a presidential election to avoid perceptions of political interference.",
+      "The market-implied probability of the first rate cut has shifted from March 2024 (priced at year-start) to September 2024 — with risks skewed toward December if inflation remains sticky."
+    ],
+    "body": [
+      "The Federal Open Market Committee has been remarkably consistent in its messaging throughout 2024: rates will stay higher for longer until there is compelling evidence that inflation is sustainably returning to the 2% target. Chair Powell has repeatedly emphasized that the committee will not be rushed into premature easing — a lesson drawn from the 1970s experience, when the Fed cut too early and allowed inflation to become entrenched. This is a defensible strategy in the abstract, but the real economy is beginning to push back.",
+      "The labor market — the second leg of the Fed's dual mandate — is visibly softening. Non-farm payrolls have decelerated from the 400,000+ monthly pace of 2022 to a more moderate 175,000–220,000 range. More tellingly, the household survey (from which the unemployment rate is derived) has shown considerably weaker employment growth than the establishment survey, and the gap is worth monitoring. Initial jobless claims have been trending up since January, and continuing claims — a more reliable indicator of labor market slack — are at their highest level since late 2021.",
+      "Credit conditions are tightening through channels that monetary policy acts on with long lags. The Fed's Senior Loan Officer Opinion Survey shows that banks are tightening lending standards for both commercial and consumer credit — a contractionary impulse that will flow through to economic activity over the next 6–12 months. Investment grade credit spreads have widened 25bps since their February tights, while high yield spreads have moved 40bps wider. These are not crisis levels, but the direction and pace of deterioration are consistent with a late-cycle credit environment.",
+      "The political calendar adds a layer of complexity that the Fed publicly dismisses but cannot entirely ignore. Historical analysis of Fed policy decisions in election years shows a statistically significant reluctance to make major policy changes — either hikes or cuts — within 90 days of a presidential election. With the November 2024 election looming, the window for a pre-election cut effectively closes in August. This creates a calendar-driven incentive to begin easing in June or July — or wait until December, extending the period of restrictive policy.",
+      "The base case for 2024 remains one or two rate cuts beginning in September, contingent on continued deceleration in core inflation and no reacceleration in wages. The risk scenario with the highest probability (25–30%) is no cuts in 2024 — driven by either a re-acceleration in services inflation or a hawkish Fed reassessment of the neutral rate. A smaller but non-trivial risk (15%) is three or more cuts if the labor market deteriorates faster than the consensus anticipates. For fixed income, this uncertainty argues for a barbell positioning: short-duration to hedge the 'no cut' scenario and long-duration to benefit from the 'recession pivot' scenario."
+    ],
+    "chartLabel": "FED FUNDS FUTURES — MARKET-IMPLIED CUT TIMING"
+  }
+]

@@ -1,0 +1,46 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "articles"
+    label: "Articles"
+    files:
+      - label: "All Articles"
+        name: "articles"
+        file: "articles.json"
+        fields:
+          - label: "Articles"
+            name: "articles"
+            widget: "list"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "ID (no spaces, use dashes)", name: "id", widget: "string" }
+              - label: "Category"
+                name: "category"
+                widget: "select"
+                options:
+                  - "MACRO LIQUIDITY"
+                  - "CRYPTO"
+                  - "MARKET OUTLOOK"
+                  - "RATES"
+                  - "ETFs"
+                  - "COMMODITIES"
+                  - "POLICY"
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Date (e.g. May 24, 2024)", name: "date", widget: "string" }
+              - { label: "Read Time (e.g. 8 min read)", name: "readTime", widget: "string" }
+              - { label: "Excerpt (2-sentence teaser)", name: "excerpt", widget: "text" }
+              - { label: "Thumbnail Color (hex, e.g. #1a2a3a)", name: "thumbnail", widget: "string", default: "#1a2a3a" }
+              - label: "Key Takeaways (4 bullet points)"
+                name: "keyTakeaways"
+                widget: "list"
+                field: { label: "Takeaway", name: "takeaway", widget: "string" }
+              - label: "Body Paragraphs"
+                name: "body"
+                widget: "list"
+                field: { label: "Paragraph", name: "paragraph", widget: "text" }
+              - { label: "Chart Label (optional)", name: "chartLabel", widget: "string", required: false }

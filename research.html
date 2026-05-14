@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research Terminal — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────── */
+    :root {
+      --gold:          #C9A84C;
+      --gold-dim:      rgba(201,168,76,0.15);
+      --gold-border:   rgba(201,168,76,0.35);
+      --bg:            #0A0A0A;
+      --bg-card:       #111111;
+      --bg-hover:      #181818;
+      --border:        rgba(255,255,255,0.08);
+      --border-hover:  rgba(255,255,255,0.14);
+      --text-primary:  #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:    #555555;
+      --green:         #4CAF50;
+      --red:           #EF5350;
+      --nav-h:         60px;
+      --sidebar-w:     210px;
+      --font-display:  'Playfair Display', serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    /* ── Reset / Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+
+    /* ── Scrollbar ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       TOP NAV
+    ══════════════════════════════════════════════════════════════ */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; text-decoration: none;
+    }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text {
+      font-family: var(--font-body);
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 0.18em; color: var(--text-primary); line-height: 1;
+    }
+    .nav-logo-sub {
+      font-size: 9px; letter-spacing: 0.22em;
+      color: var(--gold); margin-top: 2px;
+    }
+
+    .nav-search {
+      flex: 1; max-width: 440px; margin: 0 auto;
+      position: relative; display: flex; align-items: center;
+    }
+    .nav-search-icon {
+      position: absolute; left: 12px; color: var(--text-muted);
+      display: flex; align-items: center;
+    }
+    .nav-search input {
+      width: 100%; height: 36px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; padding: 0 44px 0 36px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .nav-search input::placeholder { color: var(--text-muted); }
+    .nav-search input:focus { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+    .search-kbd {
+      position: absolute; right: 10px;
+      background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 6px;
+      font-size: 11px; color: var(--text-muted); font-family: var(--font-body);
+    }
+
+    .nav-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .btn-upgrade {
+      height: 32px; padding: 0 14px;
+      border: 1px solid var(--gold-border); border-radius: 6px;
+      color: var(--gold); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; transition: background 0.2s;
+    }
+    .btn-upgrade:hover { background: var(--gold-dim); }
+
+    .nav-bell {
+      position: relative; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 8px;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .nav-bell:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .nav-bell-badge {
+      position: absolute; top: 4px; right: 4px;
+      width: 16px; height: 16px; background: var(--gold); border-radius: 50%;
+      font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #000;
+    }
+
+    .nav-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #C9A84C 0%, #7a6030 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #000; flex-shrink: 0;
+    }
+    .nav-user {
+      display: flex; align-items: center; gap: 6px;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+    .nav-user-caret { color: var(--text-muted); font-size: 10px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       LAYOUT SHELL
+    ══════════════════════════════════════════════════════════════ */
+    .layout {
+      display: flex;
+      padding-top: var(--nav-h);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      height: 100%;
+      overflow-y: auto;
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+      color: var(--text-muted); padding: 8px 20px 6px; text-transform: uppercase;
+    }
+
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px; color: var(--text-secondary);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      border-left: 2px solid transparent; transition: all 0.15s;
+    }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active {
+      color: var(--gold); border-left-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+    }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+
+    .sidebar-premium {
+      margin: 12px 14px; padding: 14px;
+      border: 1px solid var(--gold-border); border-radius: 10px;
+      background: rgba(201,168,76,0.04);
+    }
+    .sidebar-premium-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 6px;
+    }
+    .sidebar-premium-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .btn-manage {
+      width: 100%; height: 30px; border: 1px solid var(--gold-border); border-radius: 6px;
+      color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; transition: background 0.2s;
+    }
+    .btn-manage:hover { background: var(--gold-dim); }
+
+    .sidebar-signout {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 20px; color: var(--text-muted);
+      font-size: 13px; cursor: pointer;
+      border-top: 1px solid var(--border); transition: color 0.15s;
+    }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ══════════════════════════════════════════════════════════════
+       RESEARCH AREA (splits into list + reader)
+    ══════════════════════════════════════════════════════════════ */
+    .research-area {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* ── LEFT: Article List ──────────────────────────────────── */
+    .article-list-panel {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .list-header {
+      padding: 20px 20px 0;
+      flex-shrink: 0;
+    }
+
+    .list-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .list-title {
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 700;
+      color: var(--text-primary); letter-spacing: 0.02em;
+    }
+
+    .btn-filter {
+      display: flex; align-items: center; gap: 6px;
+      height: 30px; padding: 0 12px;
+      border: 1px solid var(--gold-border); border-radius: 6px;
+      color: var(--gold); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; transition: background 0.2s;
+    }
+    .btn-filter:hover { background: var(--gold-dim); }
+
+    /* Category tabs */
+    .cat-tabs {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+
+    .cat-tab {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--text-muted);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .cat-tab:hover { color: var(--text-secondary); }
+    .cat-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* Article list */
+    .article-list { flex: 1; }
+
+    .article-row {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background 0.15s;
+      position: relative;
+      border-left: 2px solid transparent;
+    }
+    .article-row:hover { background: var(--bg-hover); }
+    .article-row.active {
+      background: rgba(201,168,76,0.04);
+      border-left-color: var(--gold);
+    }
+
+    .article-thumb {
+      width: 100px; height: 72px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .article-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+
+    .article-top-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .article-cat {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gold);
+    }
+    .article-date { font-size: 11px; color: var(--text-muted); }
+
+    .article-title {
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary); line-height: 1.3;
+      transition: color 0.15s;
+    }
+    .article-row:hover .article-title, .article-row.active .article-title { color: var(--gold); }
+
+    .article-bottom-row {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
+    }
+    .article-excerpt {
+      font-size: 12px; color: var(--text-muted); line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      flex: 1;
+    }
+
+    .article-right-meta {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;
+    }
+    .article-readtime { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+    .bookmark-btn {
+      color: var(--text-muted); transition: color 0.15s;
+    }
+    .bookmark-btn:hover { color: var(--gold); }
+
+    /* Pagination */
+    .pagination {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .page-btn {
+      min-width: 30px; height: 30px; padding: 0 8px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; color: var(--text-muted);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .page-btn:hover { border-color: var(--border-hover); color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .page-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+    .page-btn.ellipsis { border: none; cursor: default; }
+    .page-btn.ellipsis:hover { background: none; color: var(--text-muted); }
+
+    /* Page footer */
+    .page-footer {
+      padding: 16px 20px;
+      font-size: 11px; color: var(--text-muted); text-align: center;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── RIGHT: Article Reader ───────────────────────────────── */
+    .article-reader-panel {
+      width: 42%;
+      flex-shrink: 0;
+      height: 100%;
+      overflow-y: auto;
+      background: var(--bg-card);
+    }
+
+    #article-reader {
+      padding: 28px 26px 48px;
+    }
+
+    /* Reader internals (built by JS) */
+    .reader-cat {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+    }
+    .reader-title {
+      font-family: var(--font-display);
+      font-size: 26px; font-weight: 700;
+      color: var(--text-primary); line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .reader-byline {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .reader-byline-left { display: flex; align-items: center; gap: 12px; }
+    .reader-date-time { font-size: 12px; color: var(--text-muted); }
+    .reader-actions { display: flex; align-items: center; gap: 8px; }
+    .reader-action-btn {
+      width: 30px; height: 30px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); color: var(--text-muted);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .reader-action-btn:hover { border-color: var(--gold-border); color: var(--gold); background: var(--gold-dim); }
+
+    .reader-hero {
+      width: 100%; height: 200px;
+      border-radius: 6px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    .reader-takeaways {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px 18px; margin-bottom: 22px;
+    }
+    .reader-takeaways-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 12px;
+    }
+    .reader-takeaways ul {
+      list-style: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .reader-takeaways li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 13px; color: var(--text-secondary); line-height: 1.5;
+    }
+    .reader-takeaways li::before {
+      content: '';
+      display: block; width: 6px; height: 6px;
+      border-radius: 50%; background: var(--gold);
+      flex-shrink: 0; margin-top: 5px;
+    }
+
+    .reader-body p {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    .reader-body p:last-child { margin-bottom: 0; }
+
+    .reader-chart {
+      margin: 22px 0;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .reader-chart-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .reader-chart svg { display: block; }
+
+    .reader-disclaimer {
+      margin-top: 32px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--text-muted); font-style: italic; line-height: 1.6;
+    }
+
+    /* Empty / loading states */
+    .reader-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; min-height: 400px;
+      color: var(--text-muted); gap: 12px;
+    }
+    .reader-empty-icon { opacity: 0.3; }
+    .reader-empty-text { font-size: 14px; }
+
+    /* No results */
+    .no-results {
+      padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 14px;
+    }
+  </style>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       TOP NAV
+  ══════════════════════════════════════════════════════════════ -->
+  <header class="top-nav">
+    <a href="homepage.html" class="nav-logo">
+      <img src="logo.png" alt="Liquidity Letter Logo">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+        <div class="nav-logo-sub">RESEARCH TERMINAL</div>
+      </div>
+    </a>
+
+    <div class="nav-search">
+      <span class="nav-search-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input type="text" id="search-input" placeholder="Search research, topics, tickers…" autocomplete="off">
+      <span class="search-kbd">/</span>
+    </div>
+
+    <div class="nav-right">
+      <button class="btn-upgrade">Upgrade</button>
+      <div class="nav-bell">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="nav-bell-badge">3</span>
+      </div>
+      <div class="nav-user">
+        <div class="nav-avatar">JD</div>
+        <span class="nav-user-name">Welcome back, John Doe</span>
+        <span class="nav-user-caret">▾</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       LAYOUT
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- ══════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+
+        <a href="dashboard.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <div class="sidebar-item active" id="sb-research">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Research
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Watchlist
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Alerts
+        </div>
+
+        <div class="sidebar-label" style="margin-top:8px;">Resources</div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Market Calendar
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Glossary
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          Video Library
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          About
+        </div>
+      </nav>
+
+      <!-- Premium card -->
+      <div class="sidebar-premium">
+        <div class="sidebar-premium-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none">
+            <path d="M2 20h20L12 4z"/>
+          </svg>
+          Premium Subscriber
+        </div>
+        <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+        <button class="btn-manage">Manage Subscription</button>
+      </div>
+
+      <div class="sidebar-signout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </div>
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════════════
+         RESEARCH AREA
+    ══════════════════════════════════════════════════════════ -->
+    <div class="research-area">
+
+      <!-- Left: Article List -->
+      <div class="article-list-panel">
+
+        <div class="list-header">
+          <div class="list-title-row">
+            <div class="list-title">RESEARCH TERMINAL</div>
+            <button class="btn-filter" id="filter-btn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+              </svg>
+              Filter ▼
+            </button>
+          </div>
+
+          <div class="cat-tabs" id="cat-tabs">
+            <div class="cat-tab active" data-cat="all">All</div>
+            <div class="cat-tab" data-cat="macro liquidity">Macro Liquidity</div>
+            <div class="cat-tab" data-cat="market outlook">Markets</div>
+            <div class="cat-tab" data-cat="crypto">Crypto</div>
+            <div class="cat-tab" data-cat="rates">Rates</div>
+            <div class="cat-tab" data-cat="etfs">ETFs</div>
+            <div class="cat-tab" data-cat="commodities">Commodities</div>
+            <div class="cat-tab" data-cat="policy">Policy</div>
+          </div>
+        </div>
+
+        <div class="article-list" id="article-list">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <div class="page-btn">←</div>
+          <div class="page-btn active">1</div>
+          <div class="page-btn">2</div>
+          <div class="page-btn">3</div>
+          <div class="page-btn ellipsis">…</div>
+          <div class="page-btn">24</div>
+          <div class="page-btn">→</div>
+        </div>
+
+        <div class="page-footer">
+          All data is delayed unless otherwise stated. Sources: TradingView, FactSet, ETF.com
+        </div>
+      </div>
+
+      <!-- Right: Article Reader -->
+      <div class="article-reader-panel">
+        <div id="article-reader">
+          <div class="reader-empty">
+            <div class="reader-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+            <div class="reader-empty-text">Loading articles…</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /research-area -->
+
+  </div><!-- /layout -->
+
+  <script>
+    // ── State ──────────────────────────────────────────────────
+    let allArticles = [];
+    let activeCategory = 'all';
+    let activeArticleId = null;
+
+    // ── DOM refs ───────────────────────────────────────────────
+    const articleListEl   = document.getElementById('article-list');
+    const articleReaderEl = document.getElementById('article-reader');
+    const catTabsEl       = document.getElementById('cat-tabs');
+    const searchInput     = document.getElementById('search-input');
+
+    // ── Keyboard shortcut: "/" focuses search ──────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+    });
+
+    // ── Sidebar click interactions ─────────────────────────────
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+      item.addEventListener('click', () => {
+        // Don't remove active from the <a> tag (Dashboard link)
+        document.querySelectorAll('.sidebar-item').forEach(i => {
+          if (!(i.tagName === 'A')) i.classList.remove('active');
+        });
+        if (item.tagName !== 'A') item.classList.add('active');
+      });
+    });
+
+    // ── Category tabs ──────────────────────────────────────────
+    catTabsEl.addEventListener('click', (e) => {
+      const tab = e.target.closest('.cat-tab');
+      if (!tab) return;
+      document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeCategory = tab.dataset.cat;
+      renderList();
+    });
+
+    // ── Helpers ────────────────────────────────────────────────
+    function filteredArticles() {
+      if (activeCategory === 'all') return allArticles;
+      return allArticles.filter(a => a.category.toLowerCase() === activeCategory.toLowerCase());
+    }
+
+    // ── Render Article List ────────────────────────────────────
+    function renderList() {
+      const articles = filteredArticles();
+      if (!articles.length) {
+        articleListEl.innerHTML = '<div class="no-results">No articles found for this category.</div>';
+        return;
+      }
+      articleListEl.innerHTML = articles.map(a => `
+        <div class="article-row ${a.id === activeArticleId ? 'active' : ''}" data-id="${a.id}">
+          <div class="article-thumb" style="background:${a.thumbnail};"></div>
+          <div class="article-meta">
+            <div class="article-top-row">
+              <span class="article-cat">${a.category}</span>
+              <span class="article-date">${a.date}</span>
+            </div>
+            <div class="article-title">${a.title}</div>
+            <div class="article-bottom-row">
+              <div class="article-excerpt">${a.excerpt}</div>
+              <div class="article-right-meta">
+                <span class="article-readtime">${a.readTime}</span>
+                <button class="bookmark-btn" title="Bookmark" onclick="event.stopPropagation()">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Attach click listeners
+      articleListEl.querySelectorAll('.article-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const id = row.dataset.id;
+          const article = allArticles.find(a => a.id === id);
+          if (!article) return;
+          activeArticleId = id;
+          document.querySelectorAll('.article-row').forEach(r => r.classList.remove('active'));
+          row.classList.add('active');
+          renderReader(article);
+        });
+      });
+    }
+
+    // ── Render Article Reader ──────────────────────────────────
+    function renderReader(article) {
+      // Build sparkline SVG if chartLabel present
+      let chartHtml = '';
+      if (article.chartLabel) {
+        // Generate a plausible sparkline path
+        const w = 320, h = 90;
+        const points = generateSparkline(w, h);
+        chartHtml = `
+          <div class="reader-chart">
+            <div class="reader-chart-label">${article.chartLabel}</div>
+            <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- grid lines -->
+              <line x1="0" y1="${h*0.25}" x2="${w}" y2="${h*0.25}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="0" y1="${h*0.5}"  x2="${w}" y2="${h*0.5}"  stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <line x1="0" y1="${h*0.75}" x2="${w}" y2="${h*0.75}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+              <!-- area fill -->
+              <path d="${points.area}" fill="url(#sparkGrad)"/>
+              <!-- line -->
+              <path d="${points.line}" fill="none" stroke="#C9A84C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- endpoint dot -->
+              <circle cx="${points.lastX}" cy="${points.lastY}" r="3" fill="#C9A84C"/>
+            </svg>
+          </div>`;
+      }
+
+      const bodyHtml = article.body.map(p => `<p>${p}</p>`).join('');
+      const takeawaysHtml = article.keyTakeaways.map(k => `<li>${k}</li>`).join('');
+
+      articleReaderEl.innerHTML = `
+        <div class="reader-cat">${article.category}</div>
+        <div class="reader-title">${article.title}</div>
+        <div class="reader-byline">
+          <div class="reader-byline-left">
+            <span class="reader-date-time">${article.date}</span>
+            <span class="reader-date-time">·</span>
+            <span class="reader-date-time">${article.readTime}</span>
+          </div>
+          <div class="reader-actions">
+            <button class="reader-action-btn" title="Bookmark">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
+            <button class="reader-action-btn" title="Share">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="reader-hero" style="background:${article.thumbnail};">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="reader-takeaways">
+          <div class="reader-takeaways-label">Key Takeaways</div>
+          <ul>${takeawaysHtml}</ul>
+        </div>
+        <div class="reader-body">
+          ${bodyHtml}
+        </div>
+        ${chartHtml}
+        <div class="reader-disclaimer">
+          This research is for informational purposes only and does not constitute investment advice. Past performance is not indicative of future results.
+        </div>
+      `;
+
+      // Scroll reader to top
+      document.querySelector('.article-reader-panel').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Sparkline generator ────────────────────────────────────
+    function generateSparkline(w, h) {
+      // Deterministic pseudo-random sequence for reproducibility per page load
+      const seed = Date.now() % 997;
+      function rand(i) {
+        const x = Math.sin(seed + i * 127.1) * 43758.5453;
+        return x - Math.floor(x);
+      }
+
+      const n = 28;
+      const padding = 6;
+      const rawY = [];
+      let val = 0.45;
+      for (let i = 0; i < n; i++) {
+        val += (rand(i) - 0.48) * 0.12;
+        val = Math.max(0.05, Math.min(0.95, val));
+        rawY.push(val);
+      }
+
+      const pts = rawY.map((y, i) => ({
+        x: padding + (i / (n - 1)) * (w - padding * 2),
+        y: padding + y * (h - padding * 2)
+      }));
+
+      // Smooth line using cubic bezier approximation
+      let line = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+      for (let i = 1; i < pts.length; i++) {
+        const prev = pts[i - 1];
+        const curr = pts[i];
+        const cx = (prev.x + curr.x) / 2;
+        line += ` C ${cx.toFixed(1)},${prev.y.toFixed(1)} ${cx.toFixed(1)},${curr.y.toFixed(1)} ${curr.x.toFixed(1)},${curr.y.toFixed(1)}`;
+      }
+
+      const last = pts[pts.length - 1];
+      const area = line + ` L ${last.x.toFixed(1)},${h} L ${pts[0].x.toFixed(1)},${h} Z`;
+
+      return { line, area, lastX: last.x.toFixed(1), lastY: last.y.toFixed(1) };
+    }
+
+    // ── Load Articles ──────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      fetch('articles.json')
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          allArticles = data;
+          renderList();
+          if (allArticles.length > 0) {
+            activeArticleId = allArticles[0].id;
+            renderList(); // re-render to mark first as active
+            renderReader(allArticles[0]);
+          }
+        })
+        .catch(err => {
+          articleListEl.innerHTML = `
+            <div class="no-results">
+              <div style="margin-bottom:8px;">Unable to load articles.</div>
+              <div style="font-size:12px;color:var(--text-muted);">${err.message}</div>
+            </div>`;
+          articleReaderEl.innerHTML = `
+            <div class="reader-empty">
+              <div class="reader-empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <div class="reader-empty-text">Failed to load article data.<br>Ensure articles.json is in the same directory.</div>
+            </div>`;
+        });
+    });
+  </script>
+</body>
+</html>

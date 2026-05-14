@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ───────────────────────────────────────────── */
+    :root {
+      --gold:          #C9A84C;
+      --gold-dim:      rgba(201,168,76,0.15);
+      --gold-border:   rgba(201,168,76,0.35);
+      --bg:            #0A0A0A;
+      --bg-card:       #111111;
+      --bg-hover:      #181818;
+      --border:        rgba(255,255,255,0.08);
+      --border-hover:  rgba(255,255,255,0.14);
+      --text-primary:  #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:    #555555;
+      --green:         #4CAF50;
+      --green-dim:     rgba(76,175,80,0.12);
+      --red:           #EF5350;
+      --red-dim:       rgba(239,83,80,0.12);
+      --nav-h:         60px;
+      --sidebar-w:     210px;
+      --rpanel-w:      300px;
+      --font-display:  'Playfair Display', serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    /* ── Reset / Base ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+    table { border-collapse: collapse; width: 100%; }
+
+    /* ── Scrollbar ───────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       TOP NAV
+    ══════════════════════════════════════════════════════════════ */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+
+    /* Logo */
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; text-decoration: none;
+    }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    .nav-logo-sub {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      color: var(--gold);
+      margin-top: 2px;
+    }
+
+    /* Search */
+    .nav-search {
+      flex: 1; max-width: 440px; margin: 0 auto;
+      position: relative; display: flex; align-items: center;
+    }
+    .nav-search-icon {
+      position: absolute; left: 12px; color: var(--text-muted);
+      display: flex; align-items: center;
+    }
+    .nav-search input {
+      width: 100%; height: 36px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 0 44px 0 36px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .nav-search input::placeholder { color: var(--text-muted); }
+    .nav-search input:focus { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+    .search-kbd {
+      position: absolute; right: 10px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+    }
+
+    /* Nav right */
+    .nav-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .btn-upgrade {
+      height: 32px; padding: 0 14px;
+      border: 1px solid var(--gold-border);
+      border-radius: 6px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      transition: background 0.2s;
+    }
+    .btn-upgrade:hover { background: var(--gold-dim); }
+
+    .nav-bell {
+      position: relative; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 8px;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .nav-bell:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .nav-bell-badge {
+      position: absolute; top: 4px; right: 4px;
+      width: 16px; height: 16px;
+      background: var(--gold);
+      border-radius: 50%;
+      font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: #000;
+    }
+
+    .nav-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #C9A84C 0%, #7a6030 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #000;
+      flex-shrink: 0;
+    }
+    .nav-user {
+      display: flex; align-items: center; gap: 6px;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+    .nav-user-caret { color: var(--text-muted); font-size: 10px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       LAYOUT SHELL
+    ══════════════════════════════════════════════════════════════ */
+    .layout {
+      display: flex;
+      padding-top: var(--nav-h);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      height: 100%;
+      overflow-y: auto;
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 0;
+    }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      padding: 8px 20px 6px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active {
+      color: var(--gold);
+      border-left-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+    }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+
+    /* Premium card */
+    .sidebar-premium {
+      margin: 12px 14px;
+      padding: 14px;
+      border: 1px solid var(--gold-border);
+      border-radius: 10px;
+      background: rgba(201,168,76,0.04);
+    }
+    .sidebar-premium-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .sidebar-premium-desc {
+      font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;
+    }
+    .btn-manage {
+      width: 100%; height: 30px;
+      border: 1px solid var(--gold-border);
+      border-radius: 6px;
+      color: var(--gold);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em;
+      transition: background 0.2s;
+    }
+    .btn-manage:hover { background: var(--gold-dim); }
+
+    .sidebar-signout {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      border-top: 1px solid var(--border);
+      transition: color 0.15s;
+    }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ══════════════════════════════════════════════════════════════
+       MAIN CONTENT
+    ══════════════════════════════════════════════════════════════ */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      overflow-y: auto;
+      padding: 28px 24px 48px;
+    }
+
+    /* Greeting */
+    .greeting-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .greeting-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Section headers */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    .section-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--green);
+    }
+    .section-status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+    .section-link {
+      font-size: 12px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 4px;
+      transition: color 0.15s;
+    }
+    .section-link:hover { color: var(--gold); }
+
+    /* ── Market Overview cards ───────────────────────────────────── */
+    .market-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .market-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      height: 220px;
+      transition: border-color 0.2s;
+    }
+    .market-card:hover { border-color: var(--border-hover); }
+    .market-card .tradingview-widget-container,
+    .market-card .tradingview-widget-container__widget { height: 100% !important; width: 100% !important; }
+
+    /* Two-column layout for research + ETF/Watchlist */
+    .content-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .col-left {}
+    .col-right { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ── Cards ───────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    /* ── Research list ───────────────────────────────────────────── */
+    .research-list { display: flex; flex-direction: column; }
+    .research-item {
+      display: flex; gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .research-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .research-item:first-child { padding-top: 0; }
+    .research-item:hover { opacity: 0.85; }
+    .research-thumb {
+      width: 60px; height: 60px;
+      flex-shrink: 0;
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      font-size: 20px;
+    }
+    .research-body { flex: 1; min-width: 0; }
+    .research-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .research-cat {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .research-date { font-size: 11px; color: var(--text-muted); }
+    .research-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3; margin-bottom: 5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .research-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .research-excerpt {
+      font-size: 11px; color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .research-read { font-size: 11px; color: var(--text-muted); flex-shrink: 0; margin-left: 8px; }
+    .research-bookmark {
+      flex-shrink: 0; margin-left: 10px; opacity: 0.4;
+      transition: opacity 0.15s;
+    }
+    .research-item:hover .research-bookmark { opacity: 0.8; }
+
+    /* ── Tables ──────────────────────────────────────────────────── */
+    .data-table th {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 0 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table th:not(:first-child) { text-align: right; }
+    .data-table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; padding-bottom: 0; }
+    .data-table td:not(:first-child) { text-align: right; }
+
+    .ticker-symbol { font-weight: 700; color: var(--text-primary); }
+    .ticker-name { font-size: 10px; color: var(--text-muted); }
+    .flow-pos { color: var(--green); font-weight: 600; }
+    .flow-neg { color: var(--red); font-weight: 600; }
+    .flow-neutral { color: var(--text-secondary); }
+
+    /* ══════════════════════════════════════════════════════════════
+       RIGHT PANEL
+    ══════════════════════════════════════════════════════════════ */
+    .right-panel {
+      width: var(--rpanel-w);
+      flex-shrink: 0;
+      height: 100%;
+      overflow-y: auto;
+      border-left: 1px solid var(--border);
+      padding: 24px 16px 40px;
+      background: var(--bg);
+    }
+
+    /* ── Calendar ────────────────────────────────────────────────── */
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .cal-nav-btn {
+      width: 26px; height: 26px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: var(--text-secondary);
+      transition: all 0.15s; cursor: pointer;
+    }
+    .cal-nav-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); }
+    .cal-date-label { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+
+    .cal-event {
+      display: flex; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cal-event:last-of-type { border-bottom: none; }
+    .cal-time { font-size: 10px; color: var(--text-muted); width: 52px; flex-shrink: 0; padding-top: 2px; }
+    .cal-body { flex: 1; min-width: 0; }
+    .cal-country { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
+    .cal-event-name { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; line-height: 1.3; }
+    .cal-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      padding: 2px 6px; border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .badge-high { background: rgba(239,83,80,0.18); color: var(--red); border: 1px solid rgba(239,83,80,0.3); }
+    .badge-med  { background: rgba(255,193,7,0.15); color: #FFC107; border: 1px solid rgba(255,193,7,0.3); }
+    .cal-data { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+    .cal-data span { color: var(--text-secondary); }
+
+    .btn-outline-full {
+      width: 100%;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 12px; font-weight: 500;
+      margin-top: 14px;
+      transition: all 0.15s;
+    }
+    .btn-outline-full:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); background: rgba(255,255,255,0.03); }
+
+    /* ── Newsletters ─────────────────────────────────────────────── */
+    .newsletter-item {
+      display: flex; gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .newsletter-item:last-of-type { border-bottom: none; }
+    .newsletter-icon {
+      width: 34px; height: 34px;
+      flex-shrink: 0;
+      background: var(--gold-dim);
+      border: 1px solid var(--gold-border);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    .newsletter-body { flex: 1; min-width: 0; }
+    .newsletter-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 6px;
+      margin-bottom: 3px;
+    }
+    .newsletter-title { font-size: 12px; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+    .newsletter-date { font-size: 10px; color: var(--text-muted); flex-shrink: 0; white-space: nowrap; }
+    .newsletter-excerpt { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+    .newsletter-lock { color: var(--text-muted); opacity: 0.5; flex-shrink: 0; margin-top: 2px; }
+
+    /* ── Section spacing ─────────────────────────────────────────── */
+    .section-block { margin-bottom: 24px; }
+
+    /* ── Page footer ─────────────────────────────────────────────── */
+    .page-footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    /* ── Sparkline helpers ───────────────────────────────────────── */
+    .sparkline { display: block; }
+
+    /* Right panel section titles slightly smaller */
+    .right-panel .section-title { font-size: 10px; }
+
+    /* Responsive guard (just don't break below ~900px) */
+    @media (max-width: 960px) {
+      .right-panel { display: none; }
+    }
+    @media (max-width: 720px) {
+      .sidebar { display: none; }
+      .market-grid { grid-template-columns: repeat(2, 1fr); }
+      .content-cols { grid-template-columns: 1fr; }
+    }
+  </style>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════════════
+       TOP NAV
+  ════════════════════════════════════════════════════════════ -->
+  <nav class="top-nav">
+    <a href="homepage.html" class="nav-logo">
+      <img src="logo.png" alt="LL" style="width:36px;height:36px;object-fit:contain;">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+      </div>
+    </a>
+
+    <div class="nav-search">
+      <span class="nav-search-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input type="text" placeholder="Search research, newsletters, tickers...">
+      <span class="search-kbd">/</span>
+    </div>
+
+    <div class="nav-right">
+      <button class="btn-upgrade">Upgrade</button>
+
+      <div class="nav-bell">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary)">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="nav-bell-badge">3</span>
+      </div>
+
+      <div class="nav-user">
+        <div class="nav-avatar">JD</div>
+        <span class="nav-user-name">Welcome back, John Doe</span>
+        <span class="nav-user-caret">▾</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════
+       LAYOUT
+  ════════════════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- ══════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+
+        <div class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Research
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Watchlist
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Alerts
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Macro Calendar
+        </div>
+
+        <div class="sidebar-label" style="margin-top:8px;">Resources</div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Glossary
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          Video Library
+        </div>
+
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          About
+        </div>
+      </nav>
+
+      <!-- Premium card -->
+      <div class="sidebar-premium">
+        <div class="sidebar-premium-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none">
+            <path d="M2 20h20L12 4z"/>
+          </svg>
+          Premium Subscriber
+        </div>
+        <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+        <button class="btn-manage">Manage Subscription</button>
+      </div>
+
+      <div class="sidebar-signout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </div>
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MAIN CONTENT
+    ══════════════════════════════════════════════════════════ -->
+    <main class="main-content">
+
+      <!-- Greeting -->
+      <div style="margin-bottom:24px;">
+        <div class="greeting-title">Good morning, John.</div>
+        <div class="greeting-sub">Here's what's moving markets today.</div>
+      </div>
+
+      <!-- ── Market Overview ──────────────────────────────────── -->
+      <div class="section-block">
+        <div class="section-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="section-title">Market Overview</span>
+            <span class="section-status">
+              <span class="section-status-dot"></span>
+              Markets Open
+            </span>
+          </div>
+          <a href="#" class="section-link">View all markets →</a>
+        </div>
+
+        <div class="market-grid">
+
+          <!-- Bitcoin -->
+          <div class="market-card">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+              {"symbol":"COINBASE:BTCUSD","width":"100%","height":"100%","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+              </script>
+            </div>
+          </div>
+
+          <!-- Ethereum -->
+          <div class="market-card">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+              {"symbol":"COINBASE:ETHUSD","width":"100%","height":"100%","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+              </script>
+            </div>
+          </div>
+
+          <!-- Solana -->
+          <div class="market-card">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+              {"symbol":"COINBASE:SOLUSD","width":"100%","height":"100%","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+              </script>
+            </div>
+          </div>
+
+          <!-- DIXIE / DXY -->
+          <div class="market-card">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+              {"symbol":"CAPITALCOM:DXY","width":"100%","height":"100%","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+              </script>
+            </div>
+          </div>
+
+          <!-- Gold -->
+          <div class="market-card">
+            <div class="tradingview-widget-container" style="height:100%;width:100%">
+              <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+              <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+              {"symbol":"TVC:GOLD","width":"100%","height":"100%","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+              </script>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /Market Overview -->
+
+      <!-- ── Two column: Research + ETF/Watchlist ─────────────── -->
+      <div class="content-cols">
+
+        <!-- ── Latest Research ────────────────────────────────── -->
+        <div class="col-left">
+          <div class="card">
+            <div class="section-header" style="margin-bottom:0;">
+              <span class="section-title">Latest Research</span>
+              <a href="#" class="section-link">View all research →</a>
+            </div>
+            <div class="research-list">
+
+              <!-- Article 1 -->
+              <div class="research-item">
+                <div class="research-thumb">📊</div>
+                <div class="research-body">
+                  <div class="research-meta">
+                    <span class="research-cat">Macro Liquidity</span>
+                    <span class="research-date">May 24, 2024</span>
+                  </div>
+                  <div class="research-title">Global Liquidity Rebounds: What Comes Next?</div>
+                  <div class="research-footer">
+                    <span class="research-excerpt">Central bank balance sheets are expanding again. We break down the data and what it signals for risk assets.</span>
+                    <span class="research-read">12 min</span>
+                    <svg class="research-bookmark" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Article 2 -->
+              <div class="research-item">
+                <div class="research-thumb">₿</div>
+                <div class="research-body">
+                  <div class="research-meta">
+                    <span class="research-cat">Crypto</span>
+                    <span class="research-date">May 22, 2024</span>
+                  </div>
+                  <div class="research-title">Bitcoin Liquidity Dynamics: A New Regime?</div>
+                  <div class="research-footer">
+                    <span class="research-excerpt">On-chain liquidity metrics suggest a structural shift. Here's what the data is telling us right now.</span>
+                    <span class="research-read">10 min</span>
+                    <svg class="research-bookmark" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Article 3 -->
+              <div class="research-item">
+                <div class="research-thumb">🌐</div>
+                <div class="research-body">
+                  <div class="research-meta">
+                    <span class="research-cat">Market Outlook</span>
+                    <span class="research-date">May 20, 2024</span>
+                  </div>
+                  <div class="research-title">The DIXIE Index and Global Financial Conditions</div>
+                  <div class="research-footer">
+                    <span class="research-excerpt">A stronger dollar tightens global liquidity. We explore the DIXIE's role as a key macro barometer.</span>
+                    <span class="research-read">9 min</span>
+                    <svg class="research-bookmark" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Article 4 -->
+              <div class="research-item">
+                <div class="research-thumb">📈</div>
+                <div class="research-body">
+                  <div class="research-meta">
+                    <span class="research-cat">Rates</span>
+                    <span class="research-date">May 19, 2024</span>
+                  </div>
+                  <div class="research-title">Why Yields Are Stuck (For Now)</div>
+                  <div class="research-footer">
+                    <span class="research-excerpt">Treasury yields refuse to break out despite hotter-than-expected data. We dig into the technicals and flows.</span>
+                    <span class="research-read">8 min</span>
+                    <svg class="research-bookmark" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Article 5 -->
+              <div class="research-item">
+                <div class="research-thumb">🔄</div>
+                <div class="research-body">
+                  <div class="research-meta">
+                    <span class="research-cat">ETFs</span>
+                    <span class="research-date">May 17, 2024</span>
+                  </div>
+                  <div class="research-title">ETF Flows Signal Risk-On Rotation</div>
+                  <div class="research-footer">
+                    <span class="research-excerpt">Record inflows into equity ETFs suggest institutions are positioning for a continued risk-on environment.</span>
+                    <span class="research-read">7 min</span>
+                    <svg class="research-bookmark" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /research-list -->
+          </div>
+        </div><!-- /col-left -->
+
+        <!-- ── Right column: ETF + Watchlist ──────────────────── -->
+        <div class="col-right">
+
+          <!-- ETF Flow Tracker -->
+          <div class="card">
+            <div class="section-header" style="margin-bottom:14px;">
+              <span class="section-title">ETF Flow Tracker</span>
+              <a href="#" class="section-link">View full tracker →</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Price</th>
+                  <th>1D Chg</th>
+                  <th>1D %</th>
+                  <th>AUM</th>
+                </tr>
+              </thead>
+              <tbody id="etf-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px 0;font-size:12px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div><!-- /ETF card -->
+
+          <!-- Watchlist -->
+          <div class="card">
+            <div class="section-header" style="margin-bottom:14px;">
+              <span class="section-title">Watchlist</span>
+              <a href="#" class="section-link">View watchlist →</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Price</th>
+                  <th>Change</th>
+                  <th>% Chg</th>
+                  <th style="text-align:right;">Chart</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- AAPL -->
+                <tr>
+                  <td>
+                    <div class="ticker-symbol">AAPL</div>
+                    <div class="ticker-name">Apple Inc.</div>
+                  </td>
+                  <td class="flow-neutral">$190.92</td>
+                  <td class="flow-pos">+1.32</td>
+                  <td class="flow-pos">+0.70%</td>
+                  <td style="text-align:right;">
+                    <svg width="60" height="26" viewBox="0 0 60 26" preserveAspectRatio="none">
+                      <defs><linearGradient id="wg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4CAF50" stop-opacity="0.25"/><stop offset="100%" stop-color="#4CAF50" stop-opacity="0"/></linearGradient></defs>
+                      <path d="M0,18 L10,16 L20,14 L30,15 L40,11 L50,8 L60,5" fill="none" stroke="#4CAF50" stroke-width="1.5"/>
+                      <path d="M0,18 L10,16 L20,14 L30,15 L40,11 L50,8 L60,5 L60,26 L0,26 Z" fill="url(#wg1)"/>
+                    </svg>
+                  </td>
+                </tr>
+                <!-- MSFT -->
+                <tr>
+                  <td>
+                    <div class="ticker-symbol">MSFT</div>
+                    <div class="ticker-name">Microsoft Corp.</div>
+                  </td>
+                  <td class="flow-neutral">$411.34</td>
+                  <td class="flow-pos">+2.21</td>
+                  <td class="flow-pos">+0.54%</td>
+                  <td style="text-align:right;">
+                    <svg width="60" height="26" viewBox="0 0 60 26" preserveAspectRatio="none">
+                      <defs><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4CAF50" stop-opacity="0.25"/><stop offset="100%" stop-color="#4CAF50" stop-opacity="0"/></linearGradient></defs>
+                      <path d="M0,20 L10,18 L20,19 L30,15 L40,13 L50,10 L60,7" fill="none" stroke="#4CAF50" stroke-width="1.5"/>
+                      <path d="M0,20 L10,18 L20,19 L30,15 L40,13 L50,10 L60,7 L60,26 L0,26 Z" fill="url(#wg2)"/>
+                    </svg>
+                  </td>
+                </tr>
+                <!-- NVDA -->
+                <tr>
+                  <td>
+                    <div class="ticker-symbol">NVDA</div>
+                    <div class="ticker-name">NVIDIA Corp.</div>
+                  </td>
+                  <td class="flow-neutral">$1,037.89</td>
+                  <td class="flow-pos">+15.36</td>
+                  <td class="flow-pos">+1.50%</td>
+                  <td style="text-align:right;">
+                    <svg width="60" height="26" viewBox="0 0 60 26" preserveAspectRatio="none">
+                      <defs><linearGradient id="wg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4CAF50" stop-opacity="0.25"/><stop offset="100%" stop-color="#4CAF50" stop-opacity="0"/></linearGradient></defs>
+                      <path d="M0,22 L10,19 L20,16 L30,18 L40,12 L50,7 L60,3" fill="none" stroke="#4CAF50" stroke-width="1.5"/>
+                      <path d="M0,22 L10,19 L20,16 L30,18 L40,12 L50,7 L60,3 L60,26 L0,26 Z" fill="url(#wg3)"/>
+                    </svg>
+                  </td>
+                </tr>
+                <!-- AMZN -->
+                <tr>
+                  <td>
+                    <div class="ticker-symbol">AMZN</div>
+                    <div class="ticker-name">Amazon.com Inc.</div>
+                  </td>
+                  <td class="flow-neutral">$186.57</td>
+                  <td class="flow-neg">-0.43</td>
+                  <td class="flow-neg">-0.23%</td>
+                  <td style="text-align:right;">
+                    <svg width="60" height="26" viewBox="0 0 60 26" preserveAspectRatio="none">
+                      <defs><linearGradient id="wr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#EF5350" stop-opacity="0.25"/><stop offset="100%" stop-color="#EF5350" stop-opacity="0"/></linearGradient></defs>
+                      <path d="M0,8 L10,10 L20,9 L30,13 L40,15 L50,17 L60,20" fill="none" stroke="#EF5350" stroke-width="1.5"/>
+                      <path d="M0,8 L10,10 L20,9 L30,13 L40,15 L50,17 L60,20 L60,26 L0,26 Z" fill="url(#wr1)"/>
+                    </svg>
+                  </td>
+                </tr>
+                <!-- TSLA -->
+                <tr>
+                  <td>
+                    <div class="ticker-symbol">TSLA</div>
+                    <div class="ticker-name">Tesla Inc.</div>
+                  </td>
+                  <td class="flow-neutral">$177.54</td>
+                  <td class="flow-neg">-1.08</td>
+                  <td class="flow-neg">-0.60%</td>
+                  <td style="text-align:right;">
+                    <svg width="60" height="26" viewBox="0 0 60 26" preserveAspectRatio="none">
+                      <defs><linearGradient id="wr2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#EF5350" stop-opacity="0.25"/><stop offset="100%" stop-color="#EF5350" stop-opacity="0"/></linearGradient></defs>
+                      <path d="M0,6 L10,8 L20,11 L30,10 L40,14 L50,18 L60,22" fill="none" stroke="#EF5350" stroke-width="1.5"/>
+                      <path d="M0,6 L10,8 L20,11 L30,10 L40,14 L50,18 L60,22 L60,26 L0,26 Z" fill="url(#wr2)"/>
+                    </svg>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div><!-- /Watchlist card -->
+
+        </div><!-- /col-right -->
+      </div><!-- /content-cols -->
+
+      <!-- Footer -->
+      <div class="page-footer">
+        All data is delayed unless otherwise stated. Sources: TradingView, FactSet, ETF.com
+      </div>
+
+    </main><!-- /main-content -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         RIGHT PANEL
+    ══════════════════════════════════════════════════════════ -->
+    <aside class="right-panel">
+
+      <!-- Macro Calendar -->
+      <div class="section-block">
+        <div class="section-header" style="margin-bottom:12px;">
+          <span class="section-title">Macro Calendar</span>
+          <a href="#" class="section-link">View full →</a>
+        </div>
+
+        <div class="cal-nav">
+          <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
+          <span class="cal-date-label" id="cal-date-label">Loading...</span>
+          <button class="cal-nav-btn" id="cal-next">&#8594;</button>
+        </div>
+
+        <div id="cal-events-container">
+          <div style="text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;">Loading calendar...</div>
+        </div>
+
+        <button class="btn-outline-full">View full macro calendar</button>
+      </div><!-- /Macro Calendar -->
+
+      <!-- Recent Newsletters -->
+      <div class="section-block">
+        <div class="section-header" style="margin-bottom:12px;">
+          <span class="section-title">Recent Newsletters</span>
+          <a href="#" class="section-link">View all →</a>
+        </div>
+
+        <!-- Newsletter 1 -->
+        <div class="newsletter-item">
+          <div class="newsletter-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="newsletter-body">
+            <div class="newsletter-head">
+              <span class="newsletter-title">Liquidity Letter Weekly – May 24, 2024</span>
+              <svg class="newsletter-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span class="newsletter-date">May 24, 2024</span>
+            </div>
+            <div class="newsletter-excerpt">Risk assets push higher as liquidity continues to expand globally.</div>
+          </div>
+        </div>
+
+        <!-- Newsletter 2 -->
+        <div class="newsletter-item">
+          <div class="newsletter-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="newsletter-body">
+            <div class="newsletter-head">
+              <span class="newsletter-title">Liquidity Letter Weekly – May 17, 2024</span>
+              <svg class="newsletter-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span class="newsletter-date">May 17, 2024</span>
+            </div>
+            <div class="newsletter-excerpt">Inflation cools, yields fall, and Bitcoin breaks out. Our full take inside.</div>
+          </div>
+        </div>
+
+        <!-- Newsletter 3 -->
+        <div class="newsletter-item" style="border-bottom:none;">
+          <div class="newsletter-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="newsletter-body">
+            <div class="newsletter-head">
+              <span class="newsletter-title">Liquidity Letter Weekly – May 10, 2024</span>
+              <svg class="newsletter-lock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span class="newsletter-date">May 10, 2024</span>
+            </div>
+            <div class="newsletter-excerpt">Market volatility returns as macro data surprises to the upside.</div>
+          </div>
+        </div>
+
+        <button class="btn-outline-full">View all newsletters</button>
+      </div><!-- /Newsletters -->
+
+    </aside><!-- /right-panel -->
+
+  </div><!-- /layout -->
+
+  <script>
+    // "/" keyboard shortcut focuses the search bar
+    document.addEventListener('keydown', function(e) {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.querySelector('.nav-search input').focus();
+      }
+    });
+
+    // Sidebar active state
+    document.querySelectorAll('.sidebar-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+        this.classList.add('active');
+      });
+    });
+
+    // Update greeting based on time of day
+    (function() {
+      var h = new Date().getHours();
+      var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+      var el = document.querySelector('.greeting-title');
+      if (el) el.textContent = greet + ', John.';
+    })();
+
+    // ── Macro Calendar (Finnhub) ──────────────────────────────────
+    (function() {
+      var FINNHUB_KEY = 'd82qj01r01qvkevnhh90d82qj01r01qvkevnhh9g';
+
+      var currentDate = new Date();
+
+      var FLAGS = {
+        'US':'🇺🇸','GB':'🇬🇧','EU':'🇪🇺','JP':'🇯🇵','DE':'🇩🇪',
+        'FR':'🇫🇷','IT':'🇮🇹','CA':'🇨🇦','AU':'🇦🇺','CN':'🇨🇳',
+        'NZ':'🇳🇿','CH':'🇨🇭','NO':'🇳🇴','SE':'🇸🇪','ES':'🇪🇸'
+      };
+
+      function pad(n) { return String(n).padStart(2,'0'); }
+
+      function formatDate(d) {
+        return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+      }
+
+      function formatDisplay(d) {
+        return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+      }
+
+      function formatTime(iso) {
+        var d = new Date(iso);
+        var h = d.getHours(), m = d.getMinutes();
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return pad(h) + ':' + pad(m) + ' ' + ampm;
+      }
+
+      function fmtVal(v, unit) {
+        if (v === null || v === undefined || v === '') return '—';
+        var n = parseFloat(v);
+        if (isNaN(n)) return v;
+        var abs = Math.abs(n);
+        var str = abs >= 1e9 ? (n/1e9).toFixed(2)+'B'
+                : abs >= 1e6 ? (n/1e6).toFixed(1)+'M'
+                : abs >= 1e3 ? (n/1e3).toFixed(1)+'K'
+                : n % 1 === 0 ? String(n) : n.toFixed(2);
+        return (unit === '%') ? str + '%' : str;
+      }
+
+      function badgeClass(impact) {
+        if (!impact) return 'badge-low';
+        var i = impact.toLowerCase();
+        return i === 'high' ? 'badge-high' : i === 'medium' || i === 'med' ? 'badge-med' : 'badge-low';
+      }
+
+      function render(events) {
+        var container = document.getElementById('cal-events-container');
+        if (!events || events.length === 0) {
+          container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;">No events scheduled.</div>';
+          return;
+        }
+
+        // Sort by time, prioritise high/medium, cap at 8
+        events.sort(function(a,b){ return new Date(a.time) - new Date(b.time); });
+        var priority = events.filter(function(e){
+          var i = (e.impact||'').toLowerCase();
+          return i === 'high' || i === 'medium';
+        });
+        var list = (priority.length ? priority : events).slice(0, 8);
+
+        container.innerHTML = list.map(function(e) {
+          var flag = FLAGS[e.country] || '🌐';
+          var time = e.time ? formatTime(e.time) : '—';
+          var bc   = badgeClass(e.impact);
+          var lbl  = e.impact ? e.impact.toUpperCase() : 'LOW';
+
+          var dataHtml = '';
+          var hasActual   = e.actual   !== null && e.actual   !== undefined && e.actual   !== '';
+          var hasEstimate = e.estimate !== null && e.estimate !== undefined && e.estimate !== '';
+          var hasPrev     = e.prev     !== null && e.prev     !== undefined && e.prev     !== '';
+
+          if (hasActual) {
+            dataHtml = 'Act: <span>' + fmtVal(e.actual, e.unit) + '</span>'
+                     + (hasPrev ? ' &nbsp; Prev: <span>' + fmtVal(e.prev, e.unit) + '</span>' : '');
+          } else if (hasEstimate) {
+            dataHtml = 'Exp: <span>' + fmtVal(e.estimate, e.unit) + '</span>'
+                     + (hasPrev ? ' &nbsp; Prev: <span>' + fmtVal(e.prev, e.unit) + '</span>' : '');
+          } else if (hasPrev) {
+            dataHtml = 'Prev: <span>' + fmtVal(e.prev, e.unit) + '</span>';
+          }
+
+          return '<div class="cal-event">'
+            + '<div class="cal-time">' + time + '</div>'
+            + '<div class="cal-body">'
+            + '<div class="cal-country">' + flag + ' ' + (e.country||'') + '</div>'
+            + '<div class="cal-event-name">' + (e.event||'') + '</div>'
+            + '<div class="cal-badges"><span class="badge ' + bc + '">' + lbl + '</span></div>'
+            + (dataHtml ? '<div class="cal-data">' + dataHtml + '</div>' : '')
+            + '</div></div>';
+        }).join('');
+      }
+
+      function fetchCalendar(date) {
+        var container = document.getElementById('cal-events-container');
+        document.getElementById('cal-date-label').textContent = formatDisplay(date);
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;">Loading...</div>';
+
+        var ds = formatDate(date);
+        fetch('https://finnhub.io/api/v1/calendar/economic?from=' + ds + '&to=' + ds + '&token=' + FINNHUB_KEY)
+          .then(function(r){ return r.json(); })
+          .then(function(data){ render(data.economicCalendar || []); })
+          .catch(function(){
+            container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;">Could not load data.</div>';
+          });
+      }
+
+      document.getElementById('cal-prev').addEventListener('click', function(){
+        currentDate.setDate(currentDate.getDate() - 1);
+        fetchCalendar(currentDate);
+      });
+      document.getElementById('cal-next').addEventListener('click', function(){
+        currentDate.setDate(currentDate.getDate() + 1);
+        fetchCalendar(currentDate);
+      });
+
+      fetchCalendar(currentDate);
+    })();
+
+    // ── ETF Flow Tracker (Finnhub quotes + AUM) ───────────────────
+    (function() {
+      var KEY = 'd82qj01r01qvkevnhh90d82qj01r01qvkevnhh9g';
+
+      var ETFS = [
+        { symbol: 'SPY',  name: 'SPDR S&P 500 ETF'        },
+        { symbol: 'QQQ',  name: 'Invesco QQQ Trust'        },
+        { symbol: 'IWM',  name: 'iShares Russell 2000'     },
+        { symbol: 'XLK',  name: 'Technology Select SPDR'   },
+        { symbol: 'XLF',  name: 'Financial Select SPDR'    }
+      ];
+
+      function fmtPrice(n) {
+        return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function fmtChg(n) {
+        var sign = n >= 0 ? '+' : '';
+        return sign + Number(n).toFixed(2);
+      }
+
+      function fmtPct(n) {
+        var sign = n >= 0 ? '+' : '';
+        return sign + Number(n).toFixed(2) + '%';
+      }
+
+      function fmtAUM(n) {
+        if (!n || isNaN(n)) return '—';
+        if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+        if (n >= 1e9)  return '$' + (n / 1e9).toFixed(2) + 'B';
+        if (n >= 1e6)  return '$' + (n / 1e6).toFixed(1) + 'M';
+        return '$' + n;
+      }
+
+      function fetchQuote(symbol) {
+        return fetch('https://finnhub.io/api/v1/quote?symbol=' + symbol + '&token=' + KEY)
+          .then(function(r) { return r.json(); });
+      }
+
+      function fetchProfile(symbol) {
+        return fetch('https://finnhub.io/api/v1/etf/profile?symbol=' + symbol + '&token=' + KEY)
+          .then(function(r) { return r.json(); })
+          .catch(function() { return {}; });
+      }
+
+      Promise.all(ETFS.map(function(etf) {
+        return Promise.all([fetchQuote(etf.symbol), fetchProfile(etf.symbol)])
+          .then(function(results) {
+            return { etf: etf, quote: results[0], profile: results[1] };
+          });
+      })).then(function(rows) {
+        var tbody = document.getElementById('etf-tbody');
+        tbody.innerHTML = rows.map(function(row) {
+          var q   = row.quote   || {};
+          var p   = row.profile || {};
+          var aum = (p.profile && p.profile.aum) ? p.profile.aum : null;
+          var chg = q.d  || 0;
+          var pct = q.dp || 0;
+          var chgClass = chg >= 0 ? 'flow-pos' : 'flow-neg';
+
+          return '<tr>'
+            + '<td><div class="ticker-symbol">' + row.etf.symbol + '</div>'
+            + '<div class="ticker-name">' + row.etf.name + '</div></td>'
+            + '<td class="flow-neutral">' + (q.c ? fmtPrice(q.c) : '—') + '</td>'
+            + '<td class="' + chgClass + '">' + fmtChg(chg) + '</td>'
+            + '<td class="' + chgClass + '">' + fmtPct(pct) + '</td>'
+            + '<td class="flow-neutral">' + fmtAUM(aum) + '</td>'
+            + '</tr>';
+        }).join('');
+      }).catch(function() {
+        document.getElementById('etf-tbody').innerHTML =
+          '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px 0;font-size:12px;">Could not load data.</td></tr>';
+      });
+    })();
+  </script>
+</body>
+</html>
