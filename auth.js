@@ -1,6 +1,6 @@
 (function () {
   const SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_FoYu6s6Ao9sfmyNH3rYffg_klLWtaVA';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
 
   let _client = null;
   function getClient() {
