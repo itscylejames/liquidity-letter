@@ -374,11 +374,10 @@
     function formatTime(timeStr) {
       if (!timeStr) return 'All Day';
       try {
-        // Finnhub returns times in Eastern Time as "YYYY-MM-DD HH:MM:SS"
-        const timePart = timeStr.includes(' ') ? timeStr.split(' ')[1] : timeStr;
-        const [h, m] = timePart.split(':');
-        const d = new Date(); d.setHours(+h, +m, 0);
-        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' ET';
+        // Finnhub returns times in UTC as "YYYY-MM-DD HH:MM:SS"
+        const [datePart, timePart] = timeStr.includes(' ') ? timeStr.split(' ') : [new Date().toISOString().split('T')[0], timeStr];
+        const utcDate = new Date(datePart + 'T' + timePart + 'Z');
+        return utcDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) + ' ET';
       } catch { return timeStr; }
     }
 
