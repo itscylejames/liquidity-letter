@@ -533,6 +533,74 @@
   .social-links a:hover { color: var(--gold); }
   .social-links svg { width: 18px; height: 18px; }
 
+  /* ── SUBSCRIBE GATE MODAL ── */
+  .gate-overlay {
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  .gate-overlay.visible { display: flex; }
+
+  .gate-modal {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border-gold);
+    padding: 48px 44px;
+    max-width: 420px; width: 90%;
+    text-align: center;
+    position: relative;
+    animation: fadeUp 0.25s both;
+  }
+
+  .gate-close {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 20px; line-height: 1;
+    transition: color 0.2s;
+  }
+  .gate-close:hover { color: var(--text-primary); }
+
+  .gate-icon {
+    width: 48px; height: 48px; margin: 0 auto 20px;
+    border: 1px solid var(--border-gold);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gate-icon svg { width: 22px; height: 22px; color: var(--gold); }
+
+  .gate-eyebrow {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); font-weight: 500; margin-bottom: 12px;
+  }
+
+  .gate-title {
+    font-family: var(--font-display); font-size: 26px; font-weight: 400;
+    color: var(--text-primary); margin-bottom: 12px;
+  }
+
+  .gate-desc {
+    font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .gate-actions {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .gate-btn-primary {
+    background: var(--gold); color: #0A0A0A;
+    font-family: var(--font-body); font-size: 14px; font-weight: 500;
+    padding: 13px 24px; border: none; cursor: pointer;
+    transition: background 0.2s; letter-spacing: 0.3px;
+  }
+  .gate-btn-primary:hover { background: var(--gold-light); }
+
+  .gate-btn-secondary {
+    background: transparent; color: var(--text-secondary);
+    font-family: var(--font-body); font-size: 14px;
+    padding: 13px 24px; border: 0.5px solid var(--border);
+    cursor: pointer; transition: color 0.2s, border-color 0.2s;
+  }
+  .gate-btn-secondary:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
   /* ── ANIMATIONS ── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -577,12 +645,12 @@
       </div>
     </div>
     <div class="nav-links">
-      <a href="#" class="active">Home</a>
-      <a href="#">Research</a>
-      <a href="#">Newsletters</a>
-      <a href="#">ETF Tracker</a>
-      <a href="#">About</a>
-      <a href="dashboard.html">Dashboard</a>
+      <a href="index.html" class="active">Home</a>
+      <a href="dashboard.html" onclick="return gateNav(event,'dashboard.html')">Dashboard</a>
+      <a href="etf-tracker.html" onclick="return gateNav(event,'etf-tracker.html')">ETF Tracker</a>
+      <a href="macro-calendar.html">Macro Calendar</a>
+      <a href="newsletters.html" onclick="return gateNav(event,'newsletters.html')">Newsletters</a>
+      <a href="research.html" onclick="return gateNav(event,'research.html')">Research</a>
     </div>
     <div class="nav-right">
       <button class="btn-subscribe">Subscribe</button>
@@ -706,7 +774,6 @@
         </div>
         <div class="panel-title">Live ETF Flows</div>
         <div class="panel-desc">Track real-time capital flows across major sectors, themes, and asset classes.</div>
-        <a href="#" class="btn-etf" style="margin-top:16px;">Go to ETF Tracker</a>
       </div>
     </div>
 
@@ -728,7 +795,7 @@
 
     <div class="etf-footer">
       <span class="data-attr">Data: <a href="https://etf.com" target="_blank">ETF.com</a>, <a href="https://factset.com" target="_blank">FactSet</a></span>
-      <a href="#" class="link-arrow">
+      <a href="etf-tracker.html" class="link-arrow" onclick="return gateNav(event,'etf-tracker.html')">
         View full ETF Tracker
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
@@ -741,7 +808,7 @@
       <div>
         <div class="panel-label">Latest Research</div>
       </div>
-      <a href="#" class="link-arrow">
+      <a href="research.html" class="link-arrow" onclick="return gateNav(event,'research.html')">
         View all articles
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
@@ -760,7 +827,7 @@
           </div>
           <div class="research-title">Global Liquidity Rebounds: What Comes Next?</div>
           <div class="research-excerpt">Our latest take on global liquidity trends and what they mean for risk assets.</div>
-          <a href="#" class="read-link">Read the full article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="research.html" class="read-link" onclick="return gateNav(event,'research.html')">Read the full article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </div>
       </div>
 
@@ -776,7 +843,7 @@
           </div>
           <div class="research-title">Bitcoin Liquidity Dynamics: A New Regime?</div>
           <div class="research-excerpt">On-chain liquidity, ETF flows, and what the data is telling us about Bitcoin's next move.</div>
-          <a href="#" class="read-link">Read the full article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="research.html" class="read-link" onclick="return gateNav(event,'research.html')">Read the full article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </div>
       </div>
 
@@ -792,7 +859,7 @@
           </div>
           <div class="research-title">The DIXIE Index and Global Financial Conditions</div>
           <div class="research-excerpt">Understanding the signal behind the DIXIE and what it implies for markets.</div>
-          <a href="#" class="read-link">Read the full article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+          <a href="research.html" class="read-link" onclick="return gateNav(event,'research.html')">Read the full article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
         </div>
       </div>
     </div>
@@ -812,21 +879,15 @@
     </div>
 
     <div class="footer-links">
-      <a href="#">Research</a>
-      <a href="#">Newsletters</a>
-      <a href="#">ETF Tracker</a>
       <a href="#">About</a>
       <a href="#">Contact</a>
     </div>
 
     <div class="footer-right">
-      <span class="footer-copy">© 2024 The Liquidity Letter. All rights reserved.</span>
+      <span class="footer-copy">© 2025 The Liquidity Letter. All rights reserved.</span>
       <div class="social-links">
-        <a href="#" title="Twitter/X">
+        <a href="https://x.com/liquidityletter" target="_blank" rel="noopener" title="Follow us on X">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        </a>
-        <a href="#" title="LinkedIn">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
         </a>
       </div>
     </div>
@@ -944,6 +1005,53 @@
         '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px 0;font-size:12px;">Could not load data.</td></tr>';
     });
   })();
+</script>
+
+<!-- SUBSCRIBE GATE MODAL -->
+<div class="gate-overlay" id="gate-overlay">
+  <div class="gate-modal">
+    <button class="gate-close" onclick="closeGate()">&#x2715;</button>
+    <div class="gate-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="gate-eyebrow">Members Only</div>
+    <div class="gate-title">Subscribe to Access</div>
+    <div class="gate-desc">Get full access to research, ETF tracking, newsletters, watchlists, and more. Join The Liquidity Letter today.</div>
+    <div class="gate-actions">
+      <button class="gate-btn-primary" onclick="closeGate(); document.querySelector('.btn-subscribe').click()">Subscribe Now</button>
+      <button class="gate-btn-secondary" onclick="closeGate(); document.querySelector('.btn-login').click()">Already a member? Log in</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var _gateLoggedIn = false;
+
+  (function() {
+    var SUPA_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+    var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+    sb.auth.getSession().then(function(res) {
+      if (res.data && res.data.session) {
+        _gateLoggedIn = true;
+      }
+    });
+  })();
+
+  function gateNav(e, href) {
+    if (_gateLoggedIn) return true;
+    e.preventDefault();
+    document.getElementById('gate-overlay').classList.add('visible');
+    return false;
+  }
+
+  function closeGate() {
+    document.getElementById('gate-overlay').classList.remove('visible');
+  }
+
+  document.getElementById('gate-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeGate();
+  });
 </script>
 
 <script src="auth.js"></script>
