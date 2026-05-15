@@ -615,13 +615,20 @@
         console.log('[publish] calling supabase insert...');
         const db = getSB();
         let err, data;
-        if (articleId) {
-          ({ error: err } = await db.from('articles').update(row).eq('id', articleId));
-        } else {
-          ({ data, error: err } = await db.from('articles').insert(row).select('id').single());
-          if (data) articleId = data.id;
-        }
-        console.log('[publish] supabase result — data:', data, 'error:', err);
+
+        const dbCall = articleId
+          ? db.from('articles').update(row).eq('id', articleId)
+          : db.from('articles').insert(row).select('id').single();
+
+        const result = await Promise.race([
+          dbCall,
+          new Promise((_, rej) => setTimeout(() => rej(new Error('Supabase timed out after 12s')), 12000))
+        ]);
+
+        data  = result.data;
+        err   = result.error;
+        if (!articleId && data) articleId = data.id;
+        console.log('[publish] supabase result — data:', data, 'error:', err ? err.message : null);
 
         if (err) {
           toast('Publish failed: ' + err.message, 'err');
