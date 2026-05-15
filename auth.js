@@ -12,8 +12,9 @@
   let _currentUser = null;
 
   window.Auth = {
-    isAdmin: function () { return _role === 'admin'; },
-    getUser:  function () { return _currentUser; }
+    isAdmin:   function () { return _role === 'admin'; },
+    getUser:   function () { return _currentUser; },
+    getClient: function () { return getClient(); }
   };
 
   async function loadUserRole(userId) {
