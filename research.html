@@ -804,9 +804,20 @@
 
         if (allArticles.length === 0) {
           articleListEl.innerHTML = `
-            <div class="no-results">
-              <div style="margin-bottom:8px;">No research published yet.</div>
-              <div style="font-size:12px;color:var(--text-muted);">Check back soon.</div>
+            <div class="no-results" style="padding:60px 20px;">
+              <div style="margin-bottom:12px;font-size:20px;">📬</div>
+              <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">No research articles yet</div>
+              <div style="font-size:12px;">Published articles will appear here.</div>
+            </div>`;
+          articleReaderEl.innerHTML = `
+            <div class="reader-empty">
+              <div class="reader-empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <div class="reader-empty-text">Select a research article to read</div>
             </div>`;
           return;
         }
