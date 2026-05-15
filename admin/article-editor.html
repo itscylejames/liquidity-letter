@@ -612,28 +612,22 @@
           author_id:    user ? user.id : null
         };
 
-        console.log('[publish] calling supabase insert...');
-        const db = getSB();
-        let err, data;
+        // Save as JSON file to Supabase Storage — bypasses database entirely
+        console.log('[publish] uploading to storage...');
+        const filename = `${Date.now()}-${toSlug(row.title) || 'article'}.json`;
+        const blob = new Blob([JSON.stringify(row)], { type: 'application/json' });
 
-        const dbCall = articleId
-          ? db.from('articles').update(row).eq('id', articleId)
-          : db.from('articles').insert(row).select('id').single();
+        const { error: upErr } = await getSB().storage
+          .from('media')
+          .upload(`posts/${filename}`, blob, { contentType: 'application/json', upsert: true });
 
-        const result = await Promise.race([
-          dbCall,
-          new Promise((_, rej) => setTimeout(() => rej(new Error('Supabase timed out after 12s')), 12000))
-        ]);
-
-        data  = result.data;
-        err   = result.error;
-        if (!articleId && data) articleId = data.id;
-        console.log('[publish] supabase result — data:', data, 'error:', err ? err.message : null);
-
-        if (err) {
-          toast('Publish failed: ' + err.message, 'err');
+        if (upErr) {
+          toast('Publish failed: ' + upErr.message, 'err');
           return;
         }
+
+        articleId = filename;
+        console.log('[publish] uploaded:', filename);
 
         closeModal();
         setBadge('Published ✓', true);
