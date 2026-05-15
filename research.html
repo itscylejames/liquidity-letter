@@ -783,7 +783,7 @@
         const sb = window.Auth.getClient();
         const { data, error } = await sb
           .from('articles')
-          .select('id, title, excerpt, type, published_at, cover_image, slug, body')
+          .select('id, title, excerpt, type, published_at, cover_image, slug')
           .eq('type', 'research')
           .eq('published', true)
           .order('published_at', { ascending: false });
