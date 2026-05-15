@@ -8,6 +8,25 @@
     return _client;
   }
 
+  let _role = null;
+  let _currentUser = null;
+
+  window.Auth = {
+    isAdmin: function () { return _role === 'admin'; },
+    getUser:  function () { return _currentUser; }
+  };
+
+  async function loadUserRole(userId) {
+    try {
+      const { data } = await getClient()
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      _role = (data && data.role) || 'user';
+    } catch { _role = 'user'; }
+  }
+
   const MODAL_HTML = `
 <div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
   <div style="background:#111111;border:1px solid rgba(201,168,76,0.22);width:100%;max-width:420px;padding:44px 40px 40px;position:relative;margin:20px;">
@@ -101,10 +120,8 @@
   }
 
   function updateNav(user) {
-    // index.html style — login/subscribe buttons
     var loginBtn = document.querySelector('.btn-login');
     var subscribeBtn = document.querySelector('.btn-subscribe');
-    // dashboard/research style — avatar + name
     var avatarEl = document.querySelector('.nav-avatar');
     var nameEl = document.querySelector('.nav-user-name');
 
@@ -116,15 +133,17 @@
       if (loginBtn) loginBtn.style.display = 'none';
       if (subscribeBtn) subscribeBtn.style.display = 'none';
 
-      // Remove old injected user nav if present
       var old = document.getElementById('user-nav');
       if (old) old.remove();
 
-      // Index.html: inject user greeting + logout into nav-right
       var navRight = document.querySelector('.nav-right');
       if (navRight && !avatarEl) {
+        var adminLink = _role === 'admin'
+          ? '<a href="/admin/index.html" style="font-family:\'DM Sans\',sans-serif;font-size:13px;color:#C9A84C;text-decoration:none;border:1px solid rgba(201,168,76,0.4);padding:5px 12px;">Admin</a>'
+          : '';
         navRight.insertAdjacentHTML('beforeend',
           '<div id="user-nav" style="display:flex;align-items:center;gap:16px;">' +
+            adminLink +
             '<span style="font-family:\'DM Sans\',sans-serif;font-size:14px;color:#F0EDE6;">Welcome, <strong style="color:#C9A84C;">' + firstName + '</strong></span>' +
             '<button id="btn-signout" style="background:transparent;border:none;color:#8A8780;font-family:\'DM Sans\',sans-serif;font-size:14px;cursor:pointer;">Log out</button>' +
           '</div>'
@@ -132,7 +151,6 @@
         document.getElementById('btn-signout').addEventListener('click', signOut);
       }
 
-      // Dashboard/research: populate avatar + name
       var avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
       if (avatarEl) {
         if (avatarUrl) {
@@ -156,8 +174,10 @@
 
   async function signOut() {
     await getClient().auth.signOut();
+    _role = null;
+    _currentUser = null;
     updateNav(null);
-    var isProtected = /dashboard\.html|research\.html/.test(window.location.pathname);
+    var isProtected = /dashboard\.html|research\.html|admin/.test(window.location.pathname);
     if (isProtected) window.location.href = 'index.html';
   }
 
@@ -171,6 +191,8 @@
     });
     btn.textContent = 'Log In'; btn.disabled = false;
     if (error) { showError(error.message); return; }
+    _currentUser = data.user;
+    await loadUserRole(data.user.id);
     updateNav(data.user);
     closeModal();
   }
@@ -191,6 +213,8 @@
     if (data.user && !data.session) {
       showSuccess('Almost there! Check your email to confirm your account, then log in.');
     } else {
+      _currentUser = data.user;
+      await loadUserRole(data.user.id);
       updateNav(data.user);
       closeModal();
     }
@@ -199,31 +223,49 @@
   async function init() {
     document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
 
-    // Check if this page requires auth
-    var requiresAuth = document.body.dataset.requireAuth === 'true';
+    const requiresAuth  = document.body.dataset.requireAuth  === 'true';
+    const requiresAdmin = document.body.dataset.requireAdmin === 'true';
 
-    var { data: { session } } = await getClient().auth.getSession();
+    const { data: { session } } = await getClient().auth.getSession();
 
-    if (requiresAuth && !session) {
+    if ((requiresAuth || requiresAdmin) && !session) {
       window.location.href = 'index.html?login=required';
+      return;
+    }
+
+    if (session) {
+      _currentUser = session.user;
+      await loadUserRole(session.user.id);
+    }
+
+    if (requiresAdmin && _role !== 'admin') {
+      window.location.href = 'index.html';
       return;
     }
 
     updateNav(session ? session.user : null);
 
-    // React to future auth state changes (e.g. token refresh, signout in another tab)
-    getClient().auth.onAuthStateChange(function(_event, sess) {
-      if (requiresAuth && !sess) {
+    getClient().auth.onAuthStateChange(async function(_event, sess) {
+      if ((requiresAuth || requiresAdmin) && !sess) {
         window.location.href = 'index.html?login=required';
+        return;
+      }
+      if (sess) {
+        _currentUser = sess.user;
+        await loadUserRole(sess.user.id);
+      } else {
+        _currentUser = null;
+        _role = null;
+      }
+      if (requiresAdmin && _role !== 'admin') {
+        window.location.href = 'index.html';
         return;
       }
       updateNav(sess ? sess.user : null);
     });
 
-    // Auto-open login modal if redirected from a protected page
     if (window.location.search.includes('login=required')) openModal('login');
 
-    // Wire up nav buttons
     document.querySelectorAll('.btn-login').forEach(function(b) {
       b.addEventListener('click', function() { openModal('login'); });
     });
@@ -231,7 +273,6 @@
       b.addEventListener('click', function() { openModal('signup'); });
     });
 
-    // Modal controls
     document.getElementById('auth-close').addEventListener('click', closeModal);
     document.getElementById('auth-overlay').addEventListener('click', function(e) {
       if (e.target.id === 'auth-overlay') closeModal();
