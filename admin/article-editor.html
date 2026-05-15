@@ -578,21 +578,27 @@
     async function doPublish() {
       const btn = document.getElementById('btn-confirm');
       btn.disabled = true; btn.textContent = 'Publishing…';
+      console.log('[publish] started');
 
       try {
-        // Save editor content with a 6-second timeout so we never hang
+        console.log('[publish] saving editor content...');
         let body = { blocks: [] };
         try {
           body = await Promise.race([
-            editor.save(),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('Editor save timed out')), 6000))
+            editor ? editor.save() : Promise.resolve({ blocks: [] }),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
           ]);
+          console.log('[publish] editor saved, blocks:', body.blocks.length);
         } catch (e) {
-          console.warn('Editor save issue:', e.message);
+          console.warn('[publish] editor save issue:', e.message, '— continuing with empty body');
         }
 
         const title   = document.getElementById('article-title').innerText.trim();
         const excerpt = document.getElementById('modal-excerpt').value.trim();
+        const user    = window.Auth.getUser();
+        console.log('[publish] user:', user ? user.email : 'NULL — not authenticated!');
+        console.log('[publish] title:', title);
+        console.log('[publish] type:', activeType);
 
         const row = {
           title,
@@ -603,18 +609,19 @@
           excerpt:      excerpt || null,
           cover_image:  coverUrl || null,
           slug:         toSlug(title),
-          author_id:    window.Auth.getUser()?.id || null
+          author_id:    user ? user.id : null
         };
 
+        console.log('[publish] calling supabase insert...');
         const db = getSB();
-        let err;
+        let err, data;
         if (articleId) {
           ({ error: err } = await db.from('articles').update(row).eq('id', articleId));
         } else {
-          const { data, error } = await db.from('articles').insert(row).select('id').single();
-          err = error;
+          ({ data, error: err } = await db.from('articles').insert(row).select('id').single());
           if (data) articleId = data.id;
         }
+        console.log('[publish] supabase result — data:', data, 'error:', err);
 
         if (err) {
           toast('Publish failed: ' + err.message, 'err');
@@ -626,9 +633,11 @@
         toast(`Published as ${activeType === 'newsletter' ? 'Newsletter' : 'Research'} ✓`, 'ok');
 
       } catch (e) {
-        toast('Unexpected error: ' + e.message, 'err');
+        console.error('[publish] unexpected error:', e);
+        toast('Error: ' + e.message, 'err');
       } finally {
         btn.disabled = false; btn.textContent = 'Publish Now';
+        console.log('[publish] done — button re-enabled');
       }
     }
 
