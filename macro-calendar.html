@@ -460,7 +460,7 @@
           : `<div class="no-events">No scheduled events</div>`;
 
         return `
-          <div class="day-block">
+          <div class="day-block"${isToday ? ' id="today-block"' : ''}>
             <div class="day-header">
               <span class="day-name">${dayName}</span>
               <span class="day-date">${dayDate}</span>
@@ -493,6 +493,8 @@
           'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         renderCalendar();
+        const todayBlock = document.getElementById('today-block');
+        if (todayBlock) todayBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (err) {
         grid.innerHTML = `<div class="status-msg" style="color:var(--red);">Failed to load calendar data. Please try again.</div>`;
       }
