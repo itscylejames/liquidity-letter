@@ -51,12 +51,33 @@
     .nav-logo-text { font-family: var(--font-body); font-weight: 700; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); line-height: 1; }
     .nav-logo-sub { font-size: 9px; letter-spacing: 0.22em; color: var(--gold); margin-top: 2px; }
     .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-    .btn-login { height: 32px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); font-size: 13px; font-weight: 500; transition: all 0.2s; }
-    .btn-login:hover { border-color: var(--border-hover); color: var(--text-primary); }
-    .btn-subscribe { height: 32px; padding: 0 16px; background: var(--gold); border-radius: 6px; color: #0A0A0A; font-size: 13px; font-weight: 700; transition: opacity 0.2s; }
-    .btn-subscribe:hover { opacity: 0.88; }
-    .nav-dash-link { height: 32px; padding: 0 14px; border: 1px solid var(--gold-border); border-radius: 6px; color: var(--gold); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
-    .nav-dash-link:hover { background: var(--gold-dim); }
+    .nav-bell { position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color 0.2s; }
+    .nav-bell:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .nav-bell-badge { position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; background: var(--gold); border-radius: 50%; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #000; }
+    .nav-bell-badge.hidden { display: none; }
+    .notif-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; background: #161616; border: 0.5px solid rgba(255,255,255,0.12); border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,0.8); z-index: 200; overflow: hidden; }
+    .notif-dropdown.open { display: block; }
+    .notif-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 12px; border-bottom: 0.5px solid var(--border); }
+    .notif-header-title { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); }
+    .notif-mark-read { font-size: 11px; color: var(--gold); cursor: pointer; background: none; border: none; font-family: var(--font-body); transition: color 0.2s; }
+    .notif-list { max-height: 340px; overflow-y: auto; }
+    .notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 0.5px solid var(--border); transition: background 0.15s; }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item.unread { background: rgba(201,168,76,0.04); }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 5px; }
+    .notif-dot.read { background: transparent; border: 1px solid var(--border); }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 13px; color: var(--text-primary); margin-bottom: 3px; line-height: 1.4; }
+    .notif-meta { font-size: 11px; color: var(--text-muted); }
+    .notif-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+    .notif-empty svg { display: block; margin: 0 auto 12px; opacity: 0.3; }
+    .notif-footer { padding: 10px 16px; border-top: 0.5px solid var(--border); text-align: center; }
+    .notif-footer a { font-size: 12px; color: var(--gold); transition: color 0.2s; }
+    .nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #C9A84C 0%, #7a6030 100%); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #000; flex-shrink: 0; }
+    .nav-user { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+    .nav-user-caret { color: var(--text-muted); font-size: 10px; }
 
     /* ── LAYOUT ── */
     .layout { display: flex; padding-top: var(--nav-h); min-height: calc(100vh - var(--nav-h)); }
@@ -172,15 +193,31 @@
       </div>
     </a>
     <div class="nav-right">
-      <a href="dashboard.html" class="nav-dash-link">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+      <div class="nav-bell" id="notif-bell" onclick="toggleNotifDropdown()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary)">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
-        Dashboard
+        <span class="nav-bell-badge hidden" id="notif-badge">0</span>
+        <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
+          <div class="notif-header">
+            <span class="notif-header-title">Notifications</span>
+            <button class="notif-mark-read" id="notif-mark-all" onclick="markAllRead()" style="display:none;">Mark all read</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              No new notifications
+            </div>
+          </div>
+          <div class="notif-footer"><a href="alerts.html">View all notifications →</a></div>
+        </div>
+      </div>
+      <a href="profile.html" class="nav-user">
+        <div class="nav-avatar" id="nav-avatar">?</div>
+        <span class="nav-user-name" id="nav-user-name">Welcome back</span>
+        <span class="nav-user-caret">▾</span>
       </a>
-      <button class="btn-login">Log In</button>
-      <button class="btn-subscribe">Subscribe</button>
     </div>
   </header>
 
@@ -189,14 +226,49 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <nav class="sidebar-nav">
-        <div class="sidebar-label">Public</div>
-        <a href="index.html" class="sidebar-item">
+        <div class="sidebar-label">Main</div>
+
+        <a href="dashboard.html" class="sidebar-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <polyline points="9 22 9 12 15 12 15 22"/>
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
           </svg>
-          Home
+          Dashboard
         </a>
+
+        <a href="research.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Research
+        </a>
+
+        <a href="newsletters.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </a>
+
+        <a href="etf-tracker.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </a>
+
+        <a href="alerts.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </a>
+
         <a href="macro-calendar.html" class="sidebar-item active">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -207,41 +279,15 @@
           Macro Calendar
         </a>
 
-        <div class="sidebar-label" style="margin-top:8px;">Members Only</div>
-        <a href="dashboard.html" class="sidebar-item locked">
+        <a href="about.html" class="sidebar-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          Dashboard <span class="lock-icon">🔒</span>
-        </a>
-        <a href="research.html" class="sidebar-item locked">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-          Research <span class="lock-icon">🔒</span>
-        </a>
-        <a href="newsletters.html" class="sidebar-item locked">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-          Newsletters <span class="lock-icon">🔒</span>
-        </a>
-        <a href="etf-tracker.html" class="sidebar-item locked">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-          ETF Tracker <span class="lock-icon">🔒</span>
+          About
         </a>
       </nav>
-
-      <div class="sidebar-cta">
-        <div class="sidebar-cta-head">Get Full Access</div>
-        <div class="sidebar-cta-desc">Subscribe to unlock research, newsletters, ETF tracker, and notifications.</div>
-        <button class="btn-cta btn-subscribe">Subscribe Now</button>
-      </div>
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -311,9 +357,15 @@
     }
 
     function impactLevel(event) {
+      // Use Finnhub's own impact field if present
+      const fi = (event.impact || '').toString().toLowerCase();
+      if (fi === 'high' || fi === '3') return 'high';
+      if (fi === 'medium' || fi === '2') return 'medium';
+      if (fi === 'low' || fi === '1') return 'low';
+      // Fallback keyword matching
       const name = (event.event || '').toLowerCase();
-      const high = ['fed', 'fomc', 'interest rate', 'cpi', 'nonfarm', 'payroll', 'gdp', 'pce', 'unemployment rate', 'inflation'];
-      const medium = ['ppi', 'retail sales', 'ism', 'pmi', 'consumer confidence', 'housing', 'trade balance', 'industrial'];
+      const high = ['fed', 'fomc', 'interest rate', 'cpi', 'ppi', 'nonfarm', 'payroll', 'gdp', 'pce', 'unemployment rate', 'unemployment claims', 'inflation', 'core inflation', 'jolts'];
+      const medium = ['retail sales', 'ism', 'pmi', 'consumer confidence', 'housing', 'trade balance', 'industrial', 'durable goods', 'building permits'];
       if (high.some(k => name.includes(k))) return 'high';
       if (medium.some(k => name.includes(k))) return 'medium';
       return 'low';
@@ -425,11 +477,13 @@
           `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${FINNHUB_KEY}`
         );
         const data = await r.json();
-        allEvents = (data.economicCalendar || []).sort((a, b) => {
-          const dateA = (a.date || a.atDate || '') + (a.time || '');
-          const dateB = (b.date || b.atDate || '') + (b.time || '');
-          return dateA.localeCompare(dateB);
-        });
+        allEvents = (data.economicCalendar || [])
+          .filter(e => (e.country || '').toUpperCase() === 'US')
+          .sort((a, b) => {
+            const dateA = (a.date || a.atDate || '') + (a.time || '');
+            const dateB = (b.date || b.atDate || '') + (b.time || '');
+            return dateA.localeCompare(dateB);
+          });
 
         document.getElementById('last-updated-cal').textContent =
           'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -456,6 +510,97 @@
 
     updateWeekLabel();
     loadCalendar();
+
+  // ── Notification Bell ──────────────────────────────────────────
+  (function() {
+    var SUPA_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+    var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+    var _notifOpen = false;
+    var _notifications = [];
+
+    window.toggleNotifDropdown = function() {
+      var dd = document.getElementById('notif-dropdown');
+      _notifOpen = !_notifOpen;
+      dd.classList.toggle('open', _notifOpen);
+      if (_notifOpen) loadNotifications();
+    };
+
+    document.addEventListener('click', function(e) {
+      var bell = document.getElementById('notif-bell');
+      if (bell && !bell.contains(e.target)) {
+        document.getElementById('notif-dropdown').classList.remove('open');
+        _notifOpen = false;
+      }
+    });
+
+    async function loadNotifications() {
+      var session = (await sb.auth.getSession()).data.session;
+      if (!session) return;
+      var userId = session.user.id;
+      var { data } = await sb.from('notifications').select('*')
+        .or('user_id.eq.' + userId + ',user_id.is.null')
+        .order('created_at', { ascending: false }).limit(20);
+      _notifications = data || [];
+      renderNotifications();
+    }
+
+    function renderNotifications() {
+      var list = document.getElementById('notif-list');
+      var badge = document.getElementById('notif-badge');
+      var markAll = document.getElementById('notif-mark-all');
+      var unread = _notifications.filter(function(n) { return !n.read_at; });
+      badge.textContent = unread.length > 9 ? '9+' : unread.length;
+      if (unread.length > 0) { badge.classList.remove('hidden'); markAll.style.display = ''; }
+      else { badge.classList.add('hidden'); markAll.style.display = 'none'; }
+      if (_notifications.length === 0) {
+        list.innerHTML = '<div class="notif-empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>No new notifications</div>';
+        return;
+      }
+      list.innerHTML = _notifications.map(function(n) {
+        var isUnread = !n.read_at;
+        var time = n.created_at ? new Date(n.created_at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '';
+        return '<div class="notif-item ' + (isUnread ? 'unread' : '') + '">'
+          + '<div class="notif-dot ' + (isUnread ? '' : 'read') + '"></div>'
+          + '<div class="notif-body"><div class="notif-title">' + (n.title || 'New notification') + '</div>'
+          + '<div class="notif-meta">' + time + '</div></div></div>';
+      }).join('');
+    }
+
+    window.markAllRead = async function() {
+      var session = (await sb.auth.getSession()).data.session;
+      if (!session) return;
+      var ids = _notifications.filter(function(n) { return !n.read_at; }).map(function(n) { return n.id; });
+      if (!ids.length) return;
+      await sb.from('notifications').update({ read_at: new Date().toISOString() }).in('id', ids);
+      _notifications.forEach(function(n) { if (ids.includes(n.id)) n.read_at = new Date().toISOString(); });
+      renderNotifications();
+    };
+
+    (async function initBadge() {
+      var session = (await sb.auth.getSession()).data.session;
+      if (!session) return;
+      var userId = session.user.id;
+      var { data } = await sb.from('notifications').select('id,read_at')
+        .or('user_id.eq.' + userId + ',user_id.is.null')
+        .order('created_at', { ascending: false }).limit(20);
+      _notifications = data || [];
+      var unread = _notifications.filter(function(n) { return !n.read_at; });
+      if (unread.length > 0) {
+        var badge = document.getElementById('notif-badge');
+        badge.textContent = unread.length > 9 ? '9+' : unread.length;
+        badge.classList.remove('hidden');
+      }
+      // Update user display name
+      var nameEl = document.getElementById('nav-user-name');
+      var avatarEl = document.getElementById('nav-avatar');
+      if (nameEl && session.user.user_metadata && session.user.user_metadata.full_name) {
+        var name = session.user.user_metadata.full_name;
+        nameEl.textContent = 'Welcome back, ' + name.split(' ')[0];
+        if (avatarEl) avatarEl.textContent = name.split(' ').map(function(w) { return w[0]; }).join('').slice(0,2).toUpperCase();
+      }
+    })();
+  })();
   </script>
   <script src="auth.js"></script>
 </body>
