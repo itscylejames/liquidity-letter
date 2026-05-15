@@ -163,22 +163,7 @@
     .btn-save:hover { opacity: 0.88; }
     .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ── AVATAR UPLOAD ── */
-    .avatar-wrap { position: relative; flex-shrink: 0; width: 72px; height: 72px; cursor: pointer; }
-    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
-    .avatar-overlay {
-      position: absolute; inset: 0; border-radius: 50%;
-      background: rgba(0,0,0,0.55); opacity: 0;
-      display: flex; align-items: center; justify-content: center;
-      transition: opacity 0.2s;
-    }
-    .avatar-overlay svg { color: #fff; }
-    .avatar-img {
-      width: 72px; height: 72px; border-radius: 50%;
-      object-fit: cover; border: 2px solid var(--gold-border);
-      display: none;
-    }
-    .avatar-upload-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .avatar-img { display: none; }
 
     /* ── FEEDBACK MESSAGES ── */
     .msg { font-size: 13px; padding: 10px 14px; border-radius: 6px; display: none; }
@@ -253,17 +238,7 @@
 
       <!-- Avatar block -->
       <div class="avatar-block">
-        <div>
-          <div class="avatar-wrap" id="avatar-wrap" title="Change photo">
-            <div class="avatar-large" id="profile-avatar">?</div>
-            <img class="avatar-img" id="profile-avatar-img" src="" alt="Profile photo">
-            <div class="avatar-overlay">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </div>
-          </div>
-          <p class="avatar-upload-hint">Click to change photo</p>
-          <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
-        </div>
+        <div class="avatar-large" id="profile-avatar">?</div>
         <div class="avatar-info">
           <h2 id="profile-fullname">Loading…</h2>
           <p id="profile-email-display"></p>
@@ -387,41 +362,6 @@
 
       setAvatarDisplay(avatarUrl, initials);
     }
-
-    // Avatar upload
-    document.getElementById('avatar-wrap').addEventListener('click', function() {
-      document.getElementById('avatar-file-input').click();
-    });
-
-    document.getElementById('avatar-file-input').addEventListener('change', async function(e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      var wrap = document.getElementById('avatar-wrap');
-      wrap.style.opacity = '0.5';
-
-      var { data: { session } } = await sb.auth.getSession();
-      var userId = session.user.id;
-      var ext = file.name.split('.').pop();
-      var path = userId + '/avatar.' + ext;
-
-      // Upload to Supabase Storage (upsert replaces existing)
-      var { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) { alert('Upload failed: ' + upErr.message); wrap.style.opacity = '1'; return; }
-
-      // Get public URL
-      var { data: urlData } = sb.storage.from('avatars').getPublicUrl(path);
-      var avatarUrl = urlData.publicUrl + '?t=' + Date.now(); // cache-bust
-
-      // Save to user metadata
-      var { error: metaErr } = await sb.auth.updateUser({ data: { avatar_url: avatarUrl } });
-      wrap.style.opacity = '1';
-      if (metaErr) { alert('Could not save photo: ' + metaErr.message); return; }
-
-      var firstName = document.getElementById('input-firstname').value.trim();
-      var lastName  = document.getElementById('input-lastname').value.trim();
-      setAvatarDisplay(avatarUrl, getInitials(firstName, lastName) || '?');
-      e.target.value = '';
-    });
 
     // Save name
     document.getElementById('btn-save-name').addEventListener('click', async function() {
