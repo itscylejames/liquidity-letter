@@ -374,10 +374,18 @@
     function formatTime(timeStr) {
       if (!timeStr) return 'All Day';
       try {
-        const [h, m] = timeStr.split(':');
+        // Finnhub returns "YYYY-MM-DD HH:MM:SS"
+        const timePart = timeStr.includes(' ') ? timeStr.split(' ')[1] : timeStr;
+        const [h, m] = timePart.split(':');
         const d = new Date(); d.setHours(+h, +m, 0);
         return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
       } catch { return timeStr; }
+    }
+
+    function eventDate(ev) {
+      // Finnhub embeds date in the time field: "YYYY-MM-DD HH:MM:SS"
+      if (ev.time && ev.time.includes(' ')) return ev.time.split(' ')[0];
+      return ev.date || ev.atDate || '';
     }
 
     function formatActual(val, forecast) {
@@ -413,7 +421,7 @@
       // Group by date
       const byDate = {};
       filtered.forEach(ev => {
-        const d = ev.date || ev.atDate || '';
+        const d = eventDate(ev);
         if (!byDate[d]) byDate[d] = [];
         byDate[d].push(ev);
       });
@@ -479,11 +487,7 @@
         const data = await r.json();
         allEvents = (data.economicCalendar || [])
           .filter(e => (e.country || '').toUpperCase() === 'US')
-          .sort((a, b) => {
-            const dateA = (a.date || a.atDate || '') + (a.time || '');
-            const dateB = (b.date || b.atDate || '') + (b.time || '');
-            return dateA.localeCompare(dateB);
-          });
+          .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
         document.getElementById('last-updated-cal').textContent =
           'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });

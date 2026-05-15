@@ -1279,7 +1279,10 @@
         var ds = formatDate(date);
         fetch('https://finnhub.io/api/v1/calendar/economic?from=' + ds + '&to=' + ds + '&token=' + FINNHUB_KEY)
           .then(function(r){ return r.json(); })
-          .then(function(data){ render(data.economicCalendar || []); })
+          .then(function(data){
+            var events = (data.economicCalendar || []).filter(function(e){ return (e.country||'').toUpperCase() === 'US'; });
+            render(events);
+          })
           .catch(function(){
             container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;">Could not load data.</div>';
           });
