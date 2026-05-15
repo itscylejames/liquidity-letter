@@ -531,10 +531,39 @@
       flex-shrink: 0;
       height: 100%;
       overflow-y: auto;
+      overflow-x: hidden;
       border-left: 1px solid var(--border);
       padding: 24px 16px 40px;
       background: var(--bg);
+      transition: width 0.25s ease, padding 0.25s ease, border-color 0.25s ease;
+      position: relative;
     }
+    .right-panel.collapsed {
+      width: 28px;
+      padding: 0;
+      border-left-color: var(--border);
+      overflow: hidden;
+    }
+    .right-panel.collapsed .right-panel-inner { opacity: 0; pointer-events: none; }
+    .right-panel-inner { transition: opacity 0.15s ease; }
+    .rpanel-toggle {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 52px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-right: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.15s, background 0.15s;
+      z-index: 10;
+    }
+    .rpanel-toggle:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+    .rpanel-toggle svg { transition: transform 0.25s ease; flex-shrink: 0; }
 
     /* ── Calendar ────────────────────────────────────────────────── */
     .cal-nav {
@@ -916,7 +945,15 @@
     <!-- ══════════════════════════════════════════════════════════
          RIGHT PANEL
     ══════════════════════════════════════════════════════════ -->
-    <aside class="right-panel">
+    <aside class="right-panel" id="right-panel">
+
+      <button class="rpanel-toggle" id="rpanel-toggle" title="Toggle panel">
+        <svg id="rpanel-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+
+      <div class="right-panel-inner">
 
       <!-- Macro Calendar -->
       <div class="section-block">
@@ -952,6 +989,7 @@
         <a href="newsletters.html" class="btn-outline-full" style="display:block;text-align:center;">View all newsletters</a>
       </div><!-- /Newsletters -->
 
+      </div><!-- /right-panel-inner -->
     </aside><!-- /right-panel -->
 
   </div><!-- /layout -->
@@ -1330,6 +1368,26 @@
     }
   })();
 })();
+</script>
+<script>
+  (function() {
+    var panel    = document.getElementById('right-panel');
+    var toggle   = document.getElementById('rpanel-toggle');
+    var chevron  = document.getElementById('rpanel-chevron');
+
+    var collapsed = localStorage.getItem('rpanel-collapsed') === 'true';
+    if (collapsed) {
+      panel.classList.add('collapsed');
+      chevron.style.transform = 'rotate(180deg)';
+    }
+
+    toggle.addEventListener('click', function() {
+      collapsed = !collapsed;
+      panel.classList.toggle('collapsed', collapsed);
+      chevron.style.transform = collapsed ? 'rotate(180deg)' : '';
+      localStorage.setItem('rpanel-collapsed', collapsed);
+    });
+  })();
 </script>
 <script src="auth.js"></script>
 <script>
