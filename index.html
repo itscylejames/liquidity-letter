@@ -562,7 +562,7 @@
   body { padding-top: 100px; }
   .hero { padding-top: 0; min-height: calc(100vh - 100px); }
 </style>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -946,17 +946,6 @@
   })();
 </script>
 
-<script>
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", function(user) {
-      if (!user) {
-        window.netlifyIdentity.on("login", function() {
-          document.location.href = "/admin/";
-        });
-      }
-    });
-  }
-</script>
-
+<script src="auth.js"></script>
 </body>
 </html>

@@ -395,9 +395,9 @@
       padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 14px;
     }
   </style>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
-<body>
+<body data-require-auth="true">
 
   <!-- ══════════════════════════════════════════════════════════════
        TOP NAV
@@ -787,5 +787,6 @@
         });
     });
   </script>
+<script src="auth.js"></script>
 </body>
 </html>
