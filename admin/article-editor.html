@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article Editor — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #C9A84C;
+      --gold-dim:    rgba(201,168,76,0.12);
+      --gold-border: rgba(201,168,76,0.35);
+      --bg:          #0A0A0A;
+      --bg-card:     #111111;
+      --border:      rgba(255,255,255,0.08);
+      --text:        #F0EDE6;
+      --muted:       #8A8780;
+      --nav-h:       56px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: 'DM Sans', sans-serif; }
+
+    /* ── Top Nav ─────────────────────────────────────────────── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.96);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; padding: 0 28px; gap: 16px;
+    }
+    .nav-left  { display: flex; align-items: center; gap: 14px; }
+    .nav-back  { font-size: 13px; color: var(--muted); transition: color 0.15s; }
+    .nav-back:hover { color: var(--text); }
+    .nav-sep   { color: rgba(255,255,255,0.15); }
+    .nav-label { font-size: 13px; color: var(--muted); }
+
+    /* Type toggle */
+    .type-toggle {
+      display: flex; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 6px; padding: 3px; gap: 2px;
+    }
+    .type-btn {
+      padding: 6px 22px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+      text-transform: uppercase; border-radius: 4px; border: none; cursor: pointer;
+      transition: all 0.18s; color: var(--muted); background: none;
+    }
+    .type-btn.active { background: var(--gold); color: #0A0A0A; }
+
+    .nav-right  { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+    .save-badge {
+      font-size: 11px; color: var(--muted); letter-spacing: 0.5px; min-width: 70px; text-align: right;
+      transition: color 0.3s;
+    }
+    .save-badge.saved { color: #2ECC8A; }
+    .btn-ghost {
+      padding: 7px 18px; font-size: 13px; font-weight: 500;
+      border: 1px solid var(--border); background: none; color: var(--text);
+      cursor: pointer; border-radius: 4px; transition: border-color 0.15s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); }
+    .btn-gold {
+      padding: 7px 22px; font-size: 13px; font-weight: 700;
+      background: var(--gold); color: #0A0A0A; border: none;
+      cursor: pointer; border-radius: 4px; letter-spacing: 0.3px; transition: opacity 0.15s;
+    }
+    .btn-gold:hover { opacity: 0.88; }
+
+    /* ── Editor page ─────────────────────────────────────────── */
+    .editor-page { padding-top: var(--nav-h); min-height: 100vh; }
+    .editor-wrap { max-width: 740px; margin: 0 auto; padding: 52px 28px 140px; }
+
+    /* Cover image zone */
+    .cover-zone {
+      width: 100%; height: 300px; margin-bottom: 44px;
+      border: 2px dashed rgba(255,255,255,0.07); background: var(--bg-card);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .cover-zone:hover { border-color: var(--gold-border); }
+    .cover-zone.filled { border-style: solid; border-color: transparent; }
+    .cover-ph { display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+    .cover-ph-icon { font-size: 30px; opacity: 0.25; }
+    .cover-ph-text { font-size: 13px; color: var(--muted); }
+    #cover-preview { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+    .cover-remove-btn {
+      position: absolute; top: 12px; right: 12px; display: none;
+      background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.15);
+      color: var(--text); font-size: 12px; padding: 5px 12px; cursor: pointer;
+      border-radius: 3px; font-family: 'DM Sans', sans-serif; transition: background 0.15s;
+    }
+    .cover-remove-btn:hover { background: rgba(0,0,0,0.9); }
+    .cover-zone.filled .cover-remove-btn { display: block; }
+
+    /* Title */
+    .article-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 40px; font-weight: 700; line-height: 1.18;
+      color: var(--text); outline: none; margin-bottom: 14px; min-height: 52px;
+    }
+    .article-title:empty::before {
+      content: attr(data-placeholder); color: rgba(255,255,255,0.14); pointer-events: none;
+    }
+
+    /* Subtitle */
+    .article-subtitle {
+      font-size: 17px; color: rgba(240,237,230,0.55); outline: none;
+      margin-bottom: 36px; line-height: 1.6; min-height: 26px; font-weight: 300;
+    }
+    .article-subtitle:empty::before {
+      content: attr(data-placeholder); color: rgba(255,255,255,0.1); pointer-events: none;
+    }
+
+    .body-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 28px; }
+
+    /* ── Editor.js overrides ─────────────────────────────────── */
+    #editorjs { color: var(--text); }
+    .ce-block__content  { max-width: 100% !important; }
+    .cdx-block          { color: var(--text) !important; }
+
+    /* + button & gear */
+    .ce-toolbar__plus {
+      color: var(--gold) !important;
+      border: 1px solid var(--gold-border) !important;
+      background: var(--bg-card) !important;
+    }
+    .ce-toolbar__plus:hover { background: var(--gold-dim) !important; }
+    .ce-toolbar__settings-btn {
+      color: var(--muted) !important;
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border) !important;
+    }
+
+    /* Popover (block picker) */
+    .ce-popover, .ce-popover--inline {
+      background: #1A1A1A !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7) !important;
+    }
+    .ce-popover-item:hover .ce-popover-item__icon,
+    .ce-popover-item--focused .ce-popover-item__icon { background: var(--gold-dim) !important; }
+    .ce-popover-item__title { color: var(--text) !important; font-size: 14px !important; }
+    .ce-popover-item__secondary-title { color: var(--muted) !important; }
+    .ce-popover-item__icon { background: rgba(255,255,255,0.05) !important; color: var(--text) !important; }
+    .cdx-search-field { background: rgba(255,255,255,0.05) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .cdx-search-field__icon svg { fill: var(--muted) !important; }
+    .cdx-search-field__input { color: var(--text) !important; }
+    .cdx-search-field__input::placeholder { color: var(--muted) !important; }
+
+    /* Inline toolbar */
+    .ce-inline-toolbar {
+      background: #1A1A1A !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.7) !important;
+    }
+    .ce-inline-tool { color: var(--muted) !important; }
+    .ce-inline-tool:hover, .ce-inline-tool--active { color: var(--gold) !important; }
+    .ce-inline-toolbar__toggler-and-button-wrapper svg { fill: currentColor !important; }
+
+    /* Paragraph */
+    .ce-paragraph { font-size: 17px !important; line-height: 1.75 !important; color: var(--text) !important; }
+    .ce-paragraph[data-placeholder]:empty::before { color: rgba(255,255,255,0.14) !important; }
+
+    /* Headers */
+    .ce-header { color: var(--text) !important; font-family: 'Playfair Display', serif !important; margin: 8px 0 4px !important; }
+    h1.ce-header { font-size: 34px !important; font-weight: 700 !important; }
+    h2.ce-header { font-size: 26px !important; font-weight: 600 !important; }
+    h3.ce-header { font-size: 20px !important; font-weight: 600 !important; }
+
+    /* List */
+    .cdx-list__item { color: var(--text) !important; font-size: 17px !important; line-height: 1.75 !important; }
+    .cdx-list { padding-left: 24px !important; }
+
+    /* Quote */
+    .cdx-quote { padding: 4px 0 !important; }
+    .cdx-quote__text {
+      color: var(--text) !important; font-size: 18px !important; font-style: italic !important;
+      border-left: 3px solid var(--gold) !important; padding: 8px 20px !important;
+      background: rgba(201,168,76,0.04) !important; min-height: unset !important;
+    }
+    .cdx-quote__caption { color: var(--muted) !important; font-size: 13px !important; margin-top: 8px !important; padding-left: 4px !important; }
+
+    /* Delimiter */
+    .ce-delimiter { color: var(--gold) !important; letter-spacing: 8px !important; opacity: 0.6; }
+    .ce-delimiter::before { content: '· · ·' !important; color: var(--gold) !important; }
+
+    /* Image tool */
+    .image-tool__image { border: 1px solid var(--border) !important; }
+    .image-tool__caption, .cdx-input.image-tool__caption {
+      color: var(--muted) !important; font-size: 13px !important; text-align: center !important;
+      background: transparent !important; border: none !important; border-top: 1px solid var(--border) !important;
+    }
+    .image-tool__image-preloader { background: var(--bg-card) !important; }
+    .cdx-button { background: var(--bg-card) !important; border: 1px solid var(--border) !important; color: var(--text) !important; transition: border-color 0.15s !important; }
+    .cdx-button:hover { border-color: var(--gold-border) !important; }
+
+    /* ── Publish Modal ────────────────────────────────────────── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.82); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      background: #121212; border: 1px solid var(--gold-border);
+      width: 100%; max-width: 480px; padding: 40px; margin: 20px; position: relative;
+    }
+    .modal-close-btn {
+      position: absolute; top: 14px; right: 18px;
+      background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; line-height: 1;
+    }
+    .modal-close-btn:hover { color: var(--text); }
+    .modal-h { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 5px; }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+    .modal-field { margin-bottom: 22px; }
+    .modal-lbl { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+    .type-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .type-card {
+      border: 1px solid var(--border); padding: 18px 14px; cursor: pointer;
+      text-align: center; transition: all 0.18s;
+    }
+    .type-card:hover { border-color: var(--gold-border); }
+    .type-card.on { border-color: var(--gold); background: var(--gold-dim); }
+    .type-card-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .type-card-info { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+    .modal-textarea {
+      width: 100%; background: #1C1C1C; border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6;
+      padding: 12px 14px; outline: none; resize: vertical; min-height: 80px;
+      transition: border-color 0.15s;
+    }
+    .modal-textarea:focus { border-color: var(--gold-border); }
+    .modal-textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+    .btn-publish-confirm {
+      width: 100%; padding: 14px; margin-top: 4px;
+      background: var(--gold); border: none; color: #0A0A0A;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-publish-confirm:hover { opacity: 0.9; }
+    .btn-publish-confirm:disabled { opacity: 0.45; cursor: default; }
+
+    /* ── Toast ───────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1C1C1C; border: 1px solid var(--border); color: var(--text);
+      font-size: 13px; padding: 11px 22px; z-index: 400;
+      opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .toast.ok   { border-color: rgba(46,204,138,0.4); color: #2ECC8A; }
+    .toast.err  { border-color: rgba(226,83,74,0.4);  color: #E2534A; }
+  </style>
+</head>
+<body data-require-admin="true">
+
+  <!-- ── Top Nav ── -->
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="index.html" class="nav-back">← Admin</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-label">Article Editor</span>
+    </div>
+
+    <div class="type-toggle" id="type-toggle">
+      <button class="type-btn active" data-type="newsletter">Newsletter</button>
+      <button class="type-btn"        data-type="research">Research</button>
+    </div>
+
+    <div class="nav-right">
+      <span class="save-badge" id="save-badge">Unsaved</span>
+      <button class="btn-ghost" id="btn-save">Save Draft</button>
+      <button class="btn-gold"  id="btn-publish">Publish →</button>
+    </div>
+  </nav>
+
+  <!-- ── Writing area ── -->
+  <div class="editor-page">
+    <div class="editor-wrap">
+
+      <!-- Cover image -->
+      <div class="cover-zone" id="cover-zone" onclick="triggerCover()">
+        <input type="file" id="cover-input" accept="image/*" hidden onchange="onCoverPicked(this)">
+        <div class="cover-ph" id="cover-ph">
+          <div class="cover-ph-icon">🖼</div>
+          <div class="cover-ph-text">Click to add a cover image</div>
+        </div>
+        <img id="cover-preview" alt="Cover">
+        <button class="cover-remove-btn" onclick="removeCover(event)">Remove cover</button>
+      </div>
+
+      <!-- Title -->
+      <div
+        class="article-title"
+        id="article-title"
+        contenteditable="true"
+        data-placeholder="Title"
+        spellcheck="true"
+      ></div>
+
+      <!-- Subtitle / excerpt -->
+      <div
+        class="article-subtitle"
+        id="article-subtitle"
+        contenteditable="true"
+        data-placeholder="Add a subtitle or brief description…"
+        spellcheck="true"
+      ></div>
+
+      <hr class="body-divider">
+
+      <!-- Editor.js body -->
+      <div id="editorjs"></div>
+
+    </div>
+  </div>
+
+  <!-- ── Publish modal ── -->
+  <div class="modal-bg" id="publish-modal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal()">×</button>
+      <div class="modal-h">Ready to publish?</div>
+      <div class="modal-sub">Confirm the details before going live.</div>
+
+      <div class="modal-field">
+        <span class="modal-lbl">Publish as</span>
+        <div class="type-cards">
+          <div class="type-card on" id="mc-newsletter" onclick="setModalType('newsletter')">
+            <div class="type-card-name">Newsletter</div>
+            <div class="type-card-info">Appears in the Newsletters tab for subscribers</div>
+          </div>
+          <div class="type-card" id="mc-research" onclick="setModalType('research')">
+            <div class="type-card-name">Research</div>
+            <div class="type-card-info">In-depth report shown in the Research tab</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-lbl" for="modal-excerpt">Excerpt (shown in article previews)</label>
+        <textarea class="modal-textarea" id="modal-excerpt" placeholder="A short description readers will see before clicking in…" rows="3"></textarea>
+      </div>
+
+      <button class="btn-publish-confirm" id="btn-confirm" onclick="doPublish()">Publish Now</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ── Scripts ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../auth.js"></script>
+
+  <!-- Editor.js core + tools -->
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/image@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@latest"></script>
+
+  <script>
+    const SB_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+
+    let _sb = null;
+    const getSB = () => _sb || (_sb = window.supabase.createClient(SB_URL, SB_KEY));
+
+    let editor       = null;
+    let articleId    = null;
+    let activeType   = 'newsletter';
+    let coverUrl     = null;
+    let autoSaveTmr  = null;
+
+    /* ── Editor init ── */
+    function initEditor() {
+      editor = new EditorJS({
+        holder: 'editorjs',
+        placeholder: 'Tell your story…',
+        tools: {
+          header: {
+            class: Header,
+            config: { levels: [1, 2, 3], defaultLevel: 2 }
+          },
+          list: {
+            class: List,
+            inlineToolbar: true
+          },
+          quote: {
+            class: Quote,
+            inlineToolbar: true,
+            config: {
+              quotePlaceholder: 'Enter a quote…',
+              captionPlaceholder: '— Source'
+            }
+          },
+          delimiter: Delimiter,
+          image: {
+            class: ImageTool,
+            config: {
+              uploader: {
+                uploadByFile: uploadFile,
+                uploadByUrl:  async url => ({ success: 1, file: { url } })
+              }
+            }
+          },
+          inlineCode: { class: InlineCode }
+        },
+        onChange: markUnsaved
+      });
+    }
+
+    /* ── Image upload to Supabase Storage ── */
+    async function uploadFile(file) {
+      try {
+        const ext  = file.name.split('.').pop();
+        const path = `articles/${Date.now()}.${ext}`;
+        const { error } = await getSB().storage.from('media').upload(path, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = getSB().storage.from('media').getPublicUrl(path);
+        return { success: 1, file: { url: publicUrl } };
+      } catch (e) {
+        toast('Image upload failed — make sure the "media" storage bucket exists in Supabase.', 'err');
+        return { success: 0 };
+      }
+    }
+
+    /* ── Cover image ── */
+    function triggerCover() { document.getElementById('cover-input').click(); }
+
+    async function onCoverPicked(input) {
+      const file = input.files[0];
+      if (!file) return;
+      // Show local preview immediately
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.getElementById('cover-preview');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        document.getElementById('cover-ph').style.display = 'none';
+        document.getElementById('cover-zone').classList.add('filled');
+      };
+      reader.readAsDataURL(file);
+      // Upload to storage
+      try {
+        const ext  = file.name.split('.').pop();
+        const path = `covers/${Date.now()}.${ext}`;
+        const { error } = await getSB().storage.from('media').upload(path, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = getSB().storage.from('media').getPublicUrl(path);
+        coverUrl = publicUrl;
+      } catch {
+        coverUrl = null;
+        toast('Cover preview shown locally. Storage bucket may need setup in Supabase.', 'err');
+      }
+    }
+
+    function removeCover(e) {
+      e.stopPropagation();
+      coverUrl = null;
+      const img = document.getElementById('cover-preview');
+      img.src = ''; img.style.display = 'none';
+      document.getElementById('cover-ph').style.display = 'flex';
+      document.getElementById('cover-zone').classList.remove('filled');
+      document.getElementById('cover-input').value = '';
+    }
+
+    /* ── Type toggle ── */
+    document.getElementById('type-toggle').addEventListener('click', e => {
+      const btn = e.target.closest('.type-btn');
+      if (!btn) return;
+      setType(btn.dataset.type);
+    });
+
+    function setType(t) {
+      activeType = t;
+      document.querySelectorAll('#type-toggle .type-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.type === t)
+      );
+      setModalType(t);
+    }
+
+    function setModalType(t) {
+      activeType = t;
+      document.getElementById('mc-newsletter').classList.toggle('on', t === 'newsletter');
+      document.getElementById('mc-research').classList.toggle('on', t === 'research');
+      document.querySelectorAll('#type-toggle .type-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.type === t)
+      );
+    }
+
+    /* ── Auto-save ── */
+    function markUnsaved() {
+      setBadge('Unsaved');
+      clearTimeout(autoSaveTmr);
+      autoSaveTmr = setTimeout(() => saveDraft(true), 30000);
+    }
+
+    function setBadge(text, saved) {
+      const el = document.getElementById('save-badge');
+      el.textContent = text;
+      el.className = 'save-badge' + (saved ? ' saved' : '');
+    }
+
+    /* ── Save draft ── */
+    document.getElementById('btn-save').addEventListener('click', () => saveDraft(false));
+
+    async function saveDraft(silent = false) {
+      const title = document.getElementById('article-title').innerText.trim();
+      if (!title) {
+        if (!silent) toast('Add a title before saving.', 'err');
+        return;
+      }
+      if (!silent) setBadge('Saving…');
+
+      let body = { blocks: [] };
+      try { body = await editor.save(); } catch {}
+
+      const row = {
+        title,
+        content:     body,
+        type:        activeType,
+        published:   false,
+        excerpt:     document.getElementById('article-subtitle').innerText.trim() || null,
+        cover_image: coverUrl || null,
+        slug:        toSlug(title),
+        author_id:   window.Auth.getUser()?.id || null
+      };
+
+      const db = getSB();
+      let err;
+      if (articleId) {
+        ({ error: err } = await db.from('articles').update(row).eq('id', articleId));
+      } else {
+        const { data, error } = await db.from('articles').insert(row).select('id').single();
+        err = error;
+        if (data) articleId = data.id;
+      }
+
+      if (err) {
+        setBadge('Error');
+        if (!silent) toast('Save failed: ' + err.message, 'err');
+        return;
+      }
+      setBadge('Saved', true);
+      if (!silent) toast('Draft saved.', 'ok');
+      clearTimeout(autoSaveTmr);
+    }
+
+    /* ── Publish ── */
+    document.getElementById('btn-publish').addEventListener('click', openModal);
+
+    function openModal() {
+      const title = document.getElementById('article-title').innerText.trim();
+      if (!title) { toast('Add a title before publishing.', 'err'); return; }
+      const sub = document.getElementById('article-subtitle').innerText.trim();
+      if (sub) document.getElementById('modal-excerpt').value = sub;
+      setModalType(activeType);
+      document.getElementById('publish-modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('publish-modal').classList.remove('open');
+    }
+
+    document.getElementById('publish-modal').addEventListener('click', e => {
+      if (e.target.id === 'publish-modal') closeModal();
+    });
+
+    async function doPublish() {
+      const btn = document.getElementById('btn-confirm');
+      btn.disabled = true; btn.textContent = 'Publishing…';
+
+      let body = { blocks: [] };
+      try { body = await editor.save(); } catch {}
+
+      const title   = document.getElementById('article-title').innerText.trim();
+      const excerpt = document.getElementById('modal-excerpt').value.trim();
+
+      const row = {
+        title,
+        content:      body,
+        type:         activeType,
+        published:    true,
+        published_at: new Date().toISOString(),
+        excerpt:      excerpt || null,
+        cover_image:  coverUrl || null,
+        slug:         toSlug(title),
+        author_id:    window.Auth.getUser()?.id || null
+      };
+
+      const db = getSB();
+      let err;
+      if (articleId) {
+        ({ error: err } = await db.from('articles').update(row).eq('id', articleId));
+      } else {
+        const { data, error } = await db.from('articles').insert(row).select('id').single();
+        err = error;
+        if (data) articleId = data.id;
+      }
+
+      btn.disabled = false; btn.textContent = 'Publish Now';
+
+      if (err) { toast('Publish failed: ' + err.message, 'err'); return; }
+
+      closeModal();
+      setBadge('Published ✓', true);
+      toast(`Published as ${activeType === 'newsletter' ? 'Newsletter' : 'Research'} ✓`, 'ok');
+    }
+
+    /* ── Keyboard UX ── */
+    document.getElementById('article-title').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        document.getElementById('article-subtitle').focus();
+      }
+    });
+    document.getElementById('article-subtitle').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        if (editor) editor.focus();
+      }
+    });
+
+    /* ── Helpers ── */
+    function toSlug(s) {
+      return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+               .replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 80);
+    }
+
+    let _toastTmr;
+    function toast(msg, type) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (type ? ' ' + type : '');
+      clearTimeout(_toastTmr);
+      _toastTmr = setTimeout(() => { el.className = 'toast'; }, 3500);
+    }
+
+    /* ── Boot ── */
+    // auth.js handles the admin gate; editor inits after DOM + scripts are ready
+    window.addEventListener('load', () => setTimeout(initEditor, 80));
+  </script>
+</body>
+</html>
