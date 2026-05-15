@@ -536,7 +536,7 @@
         .from('articles')
         .select('*')
         .eq('type', 'newsletter')
-        .eq('is_published', true)
+        .eq('published', true)
         .order('published_at', { ascending: false });
 
       if (error) {
