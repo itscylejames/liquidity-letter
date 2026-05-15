@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Macro Calendar — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:          #C9A84C;
+      --gold-dim:      rgba(201,168,76,0.15);
+      --gold-border:   rgba(201,168,76,0.35);
+      --bg:            #0A0A0A;
+      --bg-card:       #111111;
+      --bg-hover:      #181818;
+      --border:        rgba(255,255,255,0.08);
+      --border-hover:  rgba(255,255,255,0.14);
+      --text-primary:  #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:    #555555;
+      --green:         #4CAF50;
+      --red:           #EF5350;
+      --orange:        #FF9800;
+      --nav-h:         60px;
+      --sidebar-w:     210px;
+      --font-display:  'Playfair Display', serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h); background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text { font-family: var(--font-body); font-weight: 700; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); line-height: 1; }
+    .nav-logo-sub { font-size: 9px; letter-spacing: 0.22em; color: var(--gold); margin-top: 2px; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .btn-login { height: 32px; padding: 0 16px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-secondary); font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .btn-login:hover { border-color: var(--border-hover); color: var(--text-primary); }
+    .btn-subscribe { height: 32px; padding: 0 16px; background: var(--gold); border-radius: 6px; color: #0A0A0A; font-size: 13px; font-weight: 700; transition: opacity 0.2s; }
+    .btn-subscribe:hover { opacity: 0.88; }
+    .nav-dash-link { height: 32px; padding: 0 14px; border: 1px solid var(--gold-border); border-radius: 6px; color: var(--gold); font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
+    .nav-dash-link:hover { background: var(--gold-dim); }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; padding-top: var(--nav-h); min-height: calc(100vh - var(--nav-h)); }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar-w); flex-shrink: 0; min-height: 100%; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: var(--nav-h); height: calc(100vh - var(--nav-h)); overflow-y: auto; }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); padding: 8px 20px 6px; text-transform: uppercase; }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-item.locked { opacity: 0.45; cursor: default; }
+    .sidebar-item.locked:hover { color: var(--text-secondary); background: none; }
+    .lock-icon { font-size: 10px; margin-left: auto; }
+    .sidebar-cta { margin: 12px 14px; padding: 14px; border: 1px solid var(--gold-border); border-radius: 10px; background: rgba(201,168,76,0.04); }
+    .sidebar-cta-head { font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+    .sidebar-cta-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .btn-cta { width: 100%; height: 30px; background: var(--gold); border-radius: 6px; color: #0A0A0A; font-size: 11px; font-weight: 700; transition: opacity 0.2s; }
+    .btn-cta:hover { opacity: 0.88; }
+
+    /* ── MAIN ── */
+    .main-content { flex: 1; min-width: 0; overflow-y: auto; }
+
+    .page-header { padding: 28px 32px 0; }
+    .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+
+    /* ── CONTROLS ── */
+    .controls-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; padding: 0 32px; }
+    .week-nav { display: flex; align-items: center; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .week-btn { height: 34px; padding: 0 12px; font-size: 13px; color: var(--text-secondary); transition: all 0.15s; border-right: 1px solid var(--border); }
+    .week-btn:last-child { border-right: none; }
+    .week-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .week-label { height: 34px; padding: 0 16px; font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; border-right: 1px solid var(--border); }
+    .btn-today { height: 34px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--text-secondary); transition: all 0.15s; }
+    .btn-today:hover { border-color: var(--gold-border); color: var(--gold); }
+
+    .filter-row { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .filter-chip { height: 28px; padding: 0 12px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); color: var(--text-muted); transition: all 0.15s; cursor: pointer; }
+    .filter-chip:hover { border-color: var(--border-hover); color: var(--text-secondary); }
+    .filter-chip.active { border-color: var(--gold-border); color: var(--gold); background: var(--gold-dim); }
+
+    /* ── LEGEND ── */
+    .legend { display: flex; align-items: center; gap: 16px; padding: 0 32px; margin-bottom: 20px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-dot.high { background: var(--red); }
+    .legend-dot.medium { background: var(--orange); }
+    .legend-dot.low { background: var(--text-muted); }
+
+    /* ── CALENDAR GRID ── */
+    .calendar-grid { padding: 0 32px 40px; }
+    .day-block { margin-bottom: 24px; }
+    .day-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 0; margin-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .day-name { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    .day-date { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .day-today-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-border); }
+    .day-count { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 70px 24px 1fr auto auto auto;
+      gap: 0 14px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .event-row:hover { background: var(--bg-hover); }
+    .event-row:last-child { border-bottom: none; }
+
+    .event-time { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .event-impact { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .event-impact.high   { background: var(--red); box-shadow: 0 0 5px rgba(239,83,80,0.4); }
+    .event-impact.medium { background: var(--orange); }
+    .event-impact.low    { background: var(--text-muted); }
+
+    .event-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .event-country { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 3px; justify-self: end; }
+    .event-actual { font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; min-width: 60px; }
+    .event-actual.beat { color: var(--green); }
+    .event-actual.miss { color: var(--red); }
+    .event-actual.neutral { color: var(--text-secondary); }
+    .event-actual.pending { color: var(--text-muted); font-style: italic; }
+    .event-forecast { font-size: 12px; color: var(--text-muted); text-align: right; min-width: 60px; font-variant-numeric: tabular-nums; }
+
+    .no-events { padding: 10px 14px; font-size: 12px; color: var(--text-muted); }
+
+    /* Loading / error */
+    .status-msg { padding: 60px 32px; text-align: center; color: var(--text-muted); font-size: 14px; }
+    .loading-dots::after { content: '…'; animation: dots 1.2s steps(3, end) infinite; }
+    @keyframes dots { 0%,100% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
+
+    .page-footer { padding: 0 32px 32px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+  <header class="top-nav">
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="Liquidity Letter Logo">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+        <div class="nav-logo-sub">MACRO CALENDAR</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <a href="dashboard.html" class="nav-dash-link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </a>
+      <button class="btn-login">Log In</button>
+      <button class="btn-subscribe">Subscribe</button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Public</div>
+        <a href="index.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Home
+        </a>
+        <a href="macro-calendar.html" class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Macro Calendar
+        </a>
+
+        <div class="sidebar-label" style="margin-top:8px;">Members Only</div>
+        <a href="dashboard.html" class="sidebar-item locked">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard <span class="lock-icon">🔒</span>
+        </a>
+        <a href="research.html" class="sidebar-item locked">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          Research <span class="lock-icon">🔒</span>
+        </a>
+        <a href="newsletters.html" class="sidebar-item locked">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters <span class="lock-icon">🔒</span>
+        </a>
+        <a href="etf-tracker.html" class="sidebar-item locked">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker <span class="lock-icon">🔒</span>
+        </a>
+        <a href="watchlist.html" class="sidebar-item locked">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Watchlist <span class="lock-icon">🔒</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-cta">
+        <div class="sidebar-cta-head">Get Full Access</div>
+        <div class="sidebar-cta-desc">Subscribe to unlock research, newsletters, ETF tracker, and watchlists.</div>
+        <button class="btn-cta btn-subscribe">Subscribe Now</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <div class="page-header">
+        <div class="page-title">MACRO CALENDAR</div>
+        <div class="page-subtitle">Economic events, central bank decisions, and key data releases</div>
+      </div>
+
+      <div class="controls-row">
+        <div class="week-nav">
+          <button class="week-btn" id="btn-prev">←</button>
+          <span class="week-label" id="week-label">This Week</span>
+          <button class="week-btn" id="btn-next">→</button>
+        </div>
+        <button class="btn-today" id="btn-today">Today</button>
+
+        <div class="filter-row">
+          <div class="filter-chip active" data-impact="all">All</div>
+          <div class="filter-chip" data-impact="high" style="border-color:rgba(239,83,80,0.3);color:var(--red);">High Impact</div>
+          <div class="filter-chip" data-impact="medium">Medium</div>
+          <div class="filter-chip" data-impact="low">Low</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot high"></div>High impact</div>
+        <div class="legend-item"><div class="legend-dot medium"></div>Medium impact</div>
+        <div class="legend-item"><div class="legend-dot low"></div>Low impact</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--text-muted);" id="last-updated-cal"></div>
+      </div>
+
+      <div class="calendar-grid" id="calendar-grid">
+        <div class="status-msg"><span class="loading-dots">Loading calendar</span></div>
+      </div>
+
+      <div class="page-footer">
+        Data sourced from Finnhub Economic Calendar. Times shown in local browser timezone. Not financial advice.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const FINNHUB_KEY = 'd82qj01r01qvkevnhh90d82qj01r01qvkevnhh9g';
+
+    // Wire auth buttons
+    const SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+
+    let weekOffset = 0;
+    let activeImpact = 'all';
+    let allEvents = [];
+
+    function getWeekRange(offset) {
+      const now = new Date();
+      const day = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+      monday.setHours(0, 0, 0, 0);
+      const friday = new Date(monday);
+      friday.setDate(monday.getDate() + 6);
+      return { start: monday, end: friday };
+    }
+
+    function toYMD(d) {
+      return d.toISOString().split('T')[0];
+    }
+
+    function impactLevel(event) {
+      const name = (event.event || '').toLowerCase();
+      const high = ['fed', 'fomc', 'interest rate', 'cpi', 'nonfarm', 'payroll', 'gdp', 'pce', 'unemployment rate', 'inflation'];
+      const medium = ['ppi', 'retail sales', 'ism', 'pmi', 'consumer confidence', 'housing', 'trade balance', 'industrial'];
+      if (high.some(k => name.includes(k))) return 'high';
+      if (medium.some(k => name.includes(k))) return 'medium';
+      return 'low';
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return 'All Day';
+      try {
+        const [h, m] = timeStr.split(':');
+        const d = new Date(); d.setHours(+h, +m, 0);
+        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      } catch { return timeStr; }
+    }
+
+    function formatActual(val, forecast) {
+      if (val == null || val === '') return '<span class="event-actual pending">Pending</span>';
+      const v = parseFloat(val);
+      const f = parseFloat(forecast);
+      let cls = 'neutral';
+      if (!isNaN(f)) { cls = v >= f ? 'beat' : 'miss'; }
+      return `<span class="event-actual ${cls}">${val}</span>`;
+    }
+
+    function updateWeekLabel() {
+      const { start, end } = getWeekRange(weekOffset);
+      const opts = { month: 'short', day: 'numeric' };
+      if (weekOffset === 0) {
+        document.getElementById('week-label').textContent = 'This Week';
+      } else if (weekOffset === 1) {
+        document.getElementById('week-label').textContent = 'Next Week';
+      } else if (weekOffset === -1) {
+        document.getElementById('week-label').textContent = 'Last Week';
+      } else {
+        document.getElementById('week-label').textContent =
+          start.toLocaleDateString('en-US', opts) + ' – ' + end.toLocaleDateString('en-US', opts);
+      }
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      const today = toYMD(new Date());
+
+      let filtered = activeImpact === 'all' ? allEvents : allEvents.filter(e => impactLevel(e) === activeImpact);
+
+      // Group by date
+      const byDate = {};
+      filtered.forEach(ev => {
+        const d = ev.date || ev.atDate || '';
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push(ev);
+      });
+
+      const { start, end } = getWeekRange(weekOffset);
+      const days = [];
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push(toYMD(new Date(d)));
+      }
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div class="status-msg">No ${activeImpact !== 'all' ? activeImpact + ' impact ' : ''}events found for this period.</div>`;
+        return;
+      }
+
+      grid.innerHTML = days.map(dateStr => {
+        const events = byDate[dateStr] || [];
+        const dateObj = new Date(dateStr + 'T12:00:00');
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+        const dayDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        const isToday = dateStr === today;
+
+        const eventsHtml = events.length
+          ? events.map(ev => {
+              const impact = impactLevel(ev);
+              return `
+                <div class="event-row">
+                  <span class="event-time">${formatTime(ev.time)}</span>
+                  <div class="event-impact ${impact}"></div>
+                  <span class="event-name">${ev.event || 'Economic Event'}</span>
+                  <span class="event-country">${ev.country || 'US'}</span>
+                  ${formatActual(ev.actual, ev.estimate)}
+                  <span class="event-forecast">${ev.estimate != null && ev.estimate !== '' ? ev.estimate : '–'}</span>
+                </div>`;
+            }).join('')
+          : `<div class="no-events">No scheduled events</div>`;
+
+        return `
+          <div class="day-block">
+            <div class="day-header">
+              <span class="day-name">${dayName}</span>
+              <span class="day-date">${dayDate}</span>
+              ${isToday ? '<span class="day-today-badge">Today</span>' : ''}
+              <span class="day-count">${events.length} event${events.length !== 1 ? 's' : ''}</span>
+            </div>
+            ${eventsHtml}
+          </div>`;
+      }).join('');
+    }
+
+    async function loadCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '<div class="status-msg"><span class="loading-dots">Loading calendar</span></div>';
+
+      const { start, end } = getWeekRange(weekOffset);
+      const from = toYMD(start);
+      const to = toYMD(end);
+
+      try {
+        const r = await fetch(
+          `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${FINNHUB_KEY}`
+        );
+        const data = await r.json();
+        allEvents = (data.economicCalendar || []).sort((a, b) => {
+          const dateA = (a.date || a.atDate || '') + (a.time || '');
+          const dateB = (b.date || b.atDate || '') + (b.time || '');
+          return dateA.localeCompare(dateB);
+        });
+
+        document.getElementById('last-updated-cal').textContent =
+          'Updated ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        renderCalendar();
+      } catch (err) {
+        grid.innerHTML = `<div class="status-msg" style="color:var(--red);">Failed to load calendar data. Please try again.</div>`;
+      }
+    }
+
+    // Controls
+    document.getElementById('btn-prev').addEventListener('click', () => { weekOffset--; updateWeekLabel(); loadCalendar(); });
+    document.getElementById('btn-next').addEventListener('click', () => { weekOffset++; updateWeekLabel(); loadCalendar(); });
+    document.getElementById('btn-today').addEventListener('click', () => { weekOffset = 0; updateWeekLabel(); loadCalendar(); });
+
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeImpact = chip.dataset.impact;
+        renderCalendar();
+      });
+    });
+
+    updateWeekLabel();
+    loadCalendar();
+  </script>
+  <script src="auth.js"></script>
+</body>
+</html>

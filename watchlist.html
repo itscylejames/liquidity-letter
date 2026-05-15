@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watchlist — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:          #C9A84C;
+      --gold-dim:      rgba(201,168,76,0.15);
+      --gold-border:   rgba(201,168,76,0.35);
+      --bg:            #0A0A0A;
+      --bg-card:       #111111;
+      --bg-hover:      #181818;
+      --border:        rgba(255,255,255,0.08);
+      --border-hover:  rgba(255,255,255,0.14);
+      --text-primary:  #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:    #555555;
+      --green:         #4CAF50;
+      --red:           #EF5350;
+      --nav-h:         60px;
+      --sidebar-w:     210px;
+      --font-display:  'Playfair Display', serif;
+      --font-body:     'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h); background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text { font-family: var(--font-body); font-weight: 700; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); line-height: 1; }
+    .nav-logo-sub { font-size: 9px; letter-spacing: 0.22em; color: var(--gold); margin-top: 2px; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .btn-upgrade { height: 32px; padding: 0 14px; border: 1px solid var(--gold-border); border-radius: 6px; color: var(--gold); font-size: 12px; font-weight: 600; transition: background 0.2s; }
+    .btn-upgrade:hover { background: var(--gold-dim); }
+    .nav-bell { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color 0.2s; }
+    .nav-bell:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #C9A84C 0%, #7a6030 100%); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #000; flex-shrink: 0; }
+    .nav-user { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+    .nav-user-caret { color: var(--text-muted); font-size: 10px; }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; padding-top: var(--nav-h); height: 100vh; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar-w); flex-shrink: 0; height: 100%; overflow-y: auto; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); padding: 8px 20px 6px; text-transform: uppercase; }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-premium { margin: 12px 14px; padding: 14px; border: 1px solid var(--gold-border); border-radius: 10px; background: rgba(201,168,76,0.04); }
+    .sidebar-premium-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+    .sidebar-premium-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .btn-manage { width: 100%; height: 30px; border: 1px solid var(--gold-border); border-radius: 6px; color: var(--gold); font-size: 11px; font-weight: 600; transition: background 0.2s; }
+    .btn-manage:hover { background: var(--gold-dim); }
+    .sidebar-signout { display: flex; align-items: center; gap: 8px; padding: 14px 20px; color: var(--text-muted); font-size: 13px; cursor: pointer; border-top: 1px solid var(--border); transition: color 0.15s; }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ── MAIN ── */
+    .main-content { flex: 1; min-width: 0; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+
+    .page-header { padding: 24px 28px 0; }
+    .page-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .page-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+    /* Add symbol bar */
+    .add-bar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .add-input-wrap { position: relative; flex: 1; max-width: 320px; }
+    .add-input {
+      width: 100%; height: 38px; padding: 0 14px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-primary); font-family: var(--font-body); font-size: 14px;
+      outline: none; transition: border-color 0.2s; text-transform: uppercase;
+    }
+    .add-input::placeholder { text-transform: none; color: var(--text-muted); }
+    .add-input:focus { border-color: var(--gold-border); }
+    .btn-add {
+      height: 38px; padding: 0 18px;
+      background: var(--gold); border-radius: 8px;
+      color: #0A0A0A; font-size: 13px; font-weight: 700;
+      transition: opacity 0.2s; letter-spacing: 0.02em;
+    }
+    .btn-add:hover { opacity: 0.88; }
+    .btn-add:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-refresh-wl {
+      display: flex; align-items: center; gap: 5px;
+      height: 38px; padding: 0 14px;
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-secondary); font-size: 12px; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-refresh-wl:hover { border-color: var(--gold-border); color: var(--gold); }
+    .btn-refresh-wl.spinning svg { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .add-error { font-size: 12px; color: var(--red); margin-left: 4px; }
+
+    /* ── WATCHLIST TABLE ── */
+    .wl-table-wrap { padding: 0 28px; }
+    .wl-table { width: 100%; border-collapse: collapse; }
+    .wl-table th {
+      text-align: left; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted); padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .wl-table th.right { text-align: right; }
+    .wl-table td { padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; white-space: nowrap; }
+    .wl-table tr:hover td { background: var(--bg-hover); }
+    .wl-table tr:last-child td { border-bottom: none; }
+
+    .wl-symbol { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+    .wl-price { text-align: right; font-size: 15px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .wl-change { text-align: right; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+    .wl-pct { text-align: right; }
+    .wl-high, .wl-low { text-align: right; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .wl-added { text-align: right; font-size: 11px; color: var(--text-muted); }
+
+    .pct-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .pct-badge.pos { background: rgba(76,175,80,0.12); color: var(--green); }
+    .pct-badge.neg { background: rgba(239,83,80,0.12); color: var(--red); }
+    .pct-badge.flat { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .flat { color: var(--text-muted); }
+
+    .btn-remove {
+      opacity: 0; transition: opacity 0.15s;
+      color: var(--text-muted); font-size: 18px; line-height: 1;
+      padding: 0 4px;
+    }
+    tr:hover .btn-remove { opacity: 1; }
+    .btn-remove:hover { color: var(--red); }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 80px 20px; color: var(--text-muted); gap: 12px; text-align: center;
+    }
+    .empty-state-icon { font-size: 40px; opacity: 0.4; }
+    .empty-state-title { font-size: 16px; color: var(--text-secondary); }
+    .empty-state-sub { font-size: 13px; }
+
+    .last-updated { font-size: 12px; color: var(--text-muted); }
+    .page-footer { padding: 20px 28px 28px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); margin-top: auto; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-require-auth="true">
+
+  <header class="top-nav">
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="Liquidity Letter Logo">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+        <div class="nav-logo-sub">WATCHLIST</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <button class="btn-upgrade">Upgrade</button>
+      <a href="alerts.html" class="nav-bell">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </a>
+      <a href="profile.html" class="nav-user">
+        <div class="nav-avatar">?</div>
+        <span class="nav-user-name">Welcome back</span>
+        <span class="nav-user-caret">▾</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+        <a href="dashboard.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="research.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Research
+        </a>
+        <a href="newsletters.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </a>
+        <a href="etf-tracker.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </a>
+        <a href="watchlist.html" class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Watchlist
+        </a>
+        <a href="alerts.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Alerts
+        </a>
+        <div class="sidebar-label" style="margin-top:8px;">Resources</div>
+        <a href="macro-calendar.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Macro Calendar
+        </a>
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          Glossary
+        </div>
+        <div class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          Video Library
+        </div>
+      </nav>
+      <div class="sidebar-premium">
+        <div class="sidebar-premium-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none"><path d="M2 20h20L12 4z"/></svg>
+          Premium Subscriber
+        </div>
+        <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+        <button class="btn-manage">Manage Subscription</button>
+      </div>
+      <div class="sidebar-signout" id="sidebar-signout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <div class="page-header">
+        <div class="page-title">WATCHLIST</div>
+        <div class="page-subtitle">Track any ticker — ETFs, stocks, crypto ETFs. Prices update live.</div>
+
+        <div class="add-bar">
+          <div class="add-input-wrap">
+            <input type="text" class="add-input" id="add-input" placeholder="Add a symbol (e.g. AAPL, BTC-USD)" maxlength="12" autocomplete="off">
+          </div>
+          <button class="btn-add" id="btn-add">+ Add</button>
+          <button class="btn-refresh-wl" id="btn-refresh-wl">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Refresh
+          </button>
+          <span class="last-updated" id="last-updated"></span>
+          <span class="add-error" id="add-error"></span>
+        </div>
+      </div>
+
+      <div class="wl-table-wrap" id="wl-content">
+        <div class="empty-state">
+          <div class="empty-state-icon">⭐</div>
+          <div class="empty-state-title">Your watchlist is empty</div>
+          <div class="empty-state-sub">Add a ticker above to start tracking prices</div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        Prices sourced from Finnhub. Data may be delayed 15–20 minutes. Not financial advice.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+    const FINNHUB_KEY  = 'd82qj01r01qvkevnhh90d82qj01r01qvkevnhh9g';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let userId = null;
+    let watchItems = [];
+    let quotes = {};
+
+    document.getElementById('sidebar-signout').addEventListener('click', () => {
+      sb.auth.signOut().then(() => { window.location.href = 'index.html'; });
+    });
+
+    async function getUser() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) userId = session.user.id;
+    }
+
+    async function loadWatchlist() {
+      if (!userId) return;
+      const { data } = await sb.from('watchlists').select('*').eq('user_id', userId).order('added_at', { ascending: true });
+      watchItems = data || [];
+    }
+
+    async function fetchQuote(symbol) {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`);
+        const d = await r.json();
+        return d;
+      } catch { return null; }
+    }
+
+    async function refreshQuotes() {
+      const btn = document.getElementById('btn-refresh-wl');
+      btn.classList.add('spinning');
+      const results = await Promise.all(watchItems.map(item => fetchQuote(item.symbol)));
+      watchItems.forEach((item, i) => { if (results[i]) quotes[item.symbol] = results[i]; });
+      const now = new Date();
+      document.getElementById('last-updated').textContent =
+        'Updated ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      btn.classList.remove('spinning');
+    }
+
+    function fmt(n) { return (n == null || isNaN(n)) ? '–' : n.toFixed(2); }
+    function cls(v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : 'flat'; }
+    function arrow(v) { return v > 0 ? '▲ ' : v < 0 ? '▼ ' : ''; }
+    function fmtDate(iso) {
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function renderTable() {
+      const wrap = document.getElementById('wl-content');
+      if (!watchItems.length) {
+        wrap.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⭐</div>
+            <div class="empty-state-title">Your watchlist is empty</div>
+            <div class="empty-state-sub">Add a ticker above to start tracking prices</div>
+          </div>`;
+        return;
+      }
+
+      const rows = watchItems.map(item => {
+        const q = quotes[item.symbol];
+        const hasData = q && q.c && q.c !== 0;
+        const change = hasData ? q.c - q.pc : 0;
+        const pct = hasData && q.pc ? (change / q.pc) * 100 : 0;
+        const c = cls(change);
+        return `
+          <tr data-symbol="${item.symbol}">
+            <td><span class="wl-symbol">${item.symbol}</span></td>
+            <td class="wl-price">${hasData ? '$' + fmt(q.c) : '–'}</td>
+            <td class="wl-change ${c}">${hasData ? arrow(change) + '$' + Math.abs(change).toFixed(2) : '–'}</td>
+            <td class="wl-pct"><span class="pct-badge ${c}">${hasData ? arrow(pct) + Math.abs(pct).toFixed(2) + '%' : '–'}</span></td>
+            <td class="wl-high">${hasData ? '$' + fmt(q.h) : '–'}</td>
+            <td class="wl-low">${hasData ? '$' + fmt(q.l) : '–'}</td>
+            <td class="wl-added">${fmtDate(item.added_at)}</td>
+            <td><button class="btn-remove" data-symbol="${item.symbol}" title="Remove">×</button></td>
+          </tr>`;
+      }).join('');
+
+      wrap.innerHTML = `
+        <table class="wl-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th class="right">Price</th>
+              <th class="right">Change</th>
+              <th class="right">% Change</th>
+              <th class="right">High</th>
+              <th class="right">Low</th>
+              <th class="right">Added</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+
+      wrap.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', () => removeSymbol(btn.dataset.symbol));
+      });
+    }
+
+    async function addSymbol() {
+      const input = document.getElementById('add-input');
+      const errEl = document.getElementById('add-error');
+      const symbol = input.value.trim().toUpperCase();
+      errEl.textContent = '';
+
+      if (!symbol) return;
+      if (!userId) { errEl.textContent = 'Not logged in.'; return; }
+      if (watchItems.find(w => w.symbol === symbol)) {
+        errEl.textContent = symbol + ' is already in your watchlist.'; return;
+      }
+
+      const btn = document.getElementById('btn-add');
+      btn.disabled = true;
+
+      // Verify symbol exists
+      const q = await fetchQuote(symbol);
+      if (!q || !q.c || q.c === 0) {
+        errEl.textContent = 'Symbol not found or no data available.';
+        btn.disabled = false; return;
+      }
+
+      const { error } = await sb.from('watchlists').insert({ user_id: userId, symbol });
+      if (error) { errEl.textContent = error.message; btn.disabled = false; return; }
+
+      quotes[symbol] = q;
+      watchItems.push({ symbol, added_at: new Date().toISOString() });
+      input.value = '';
+      renderTable();
+      btn.disabled = false;
+    }
+
+    async function removeSymbol(symbol) {
+      await sb.from('watchlists').delete().eq('user_id', userId).eq('symbol', symbol);
+      watchItems = watchItems.filter(w => w.symbol !== symbol);
+      delete quotes[symbol];
+      renderTable();
+    }
+
+    document.getElementById('btn-add').addEventListener('click', addSymbol);
+    document.getElementById('add-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addSymbol();
+    });
+    document.getElementById('btn-refresh-wl').addEventListener('click', async () => {
+      await refreshQuotes();
+      renderTable();
+    });
+
+    async function init() {
+      await getUser();
+      await loadWatchlist();
+      if (watchItems.length) {
+        await refreshQuotes();
+      }
+      renderTable();
+    }
+
+    init();
+    setInterval(async () => { if (watchItems.length) { await refreshQuotes(); renderTable(); } }, 5 * 60 * 1000);
+  </script>
+  <script src="auth.js"></script>
+</body>
+</html>
