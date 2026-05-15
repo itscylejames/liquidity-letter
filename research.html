@@ -778,39 +778,61 @@
     }
 
     // ── Load Articles ──────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-      fetch('articles.json')
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          allArticles = data;
-          renderList();
-          if (allArticles.length > 0) {
-            activeArticleId = allArticles[0].id;
-            renderList(); // re-render to mark first as active
-            renderReader(allArticles[0]);
-          }
-        })
-        .catch(err => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const sb = window.Auth.getClient();
+        const { data, error } = await sb
+          .from('articles')
+          .select('id, title, excerpt, type, published_at, cover_image, slug, body')
+          .eq('type', 'research')
+          .eq('published', true)
+          .order('published_at', { ascending: false });
+
+        if (error) throw error;
+
+        allArticles = (data || []).map(a => ({
+          id: a.id,
+          title: a.title || 'Untitled',
+          excerpt: a.excerpt || '',
+          category: 'Research',
+          date: a.published_at ? new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+          readTime: '',
+          slug: a.slug || '',
+          coverImage: a.cover_image || '',
+          body: a.body || null
+        }));
+
+        if (allArticles.length === 0) {
           articleListEl.innerHTML = `
             <div class="no-results">
-              <div style="margin-bottom:8px;">Unable to load articles.</div>
-              <div style="font-size:12px;color:var(--text-muted);">${err.message}</div>
+              <div style="margin-bottom:8px;">No research published yet.</div>
+              <div style="font-size:12px;color:var(--text-muted);">Check back soon.</div>
             </div>`;
-          articleReaderEl.innerHTML = `
-            <div class="reader-empty">
-              <div class="reader-empty-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-              </div>
-              <div class="reader-empty-text">Failed to load article data.<br>Ensure articles.json is in the same directory.</div>
-            </div>`;
-        });
+          return;
+        }
+
+        renderList();
+        activeArticleId = allArticles[0].id;
+        renderList();
+        renderReader(allArticles[0]);
+      } catch (err) {
+        articleListEl.innerHTML = `
+          <div class="no-results">
+            <div style="margin-bottom:8px;">Unable to load research.</div>
+            <div style="font-size:12px;color:var(--text-muted);">${err.message || 'Something went wrong.'}</div>
+          </div>`;
+        articleReaderEl.innerHTML = `
+          <div class="reader-empty">
+            <div class="reader-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div class="reader-empty-text">Unable to load research.<br><span style="font-size:12px;color:var(--text-muted);">Please try again later.</span></div>
+          </div>`;
+      }
     });
 
   // ── Notification Bell ──────────────────────────────────────────
