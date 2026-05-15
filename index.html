@@ -972,19 +972,9 @@
 <script>
   var _gateLoggedIn = false;
 
-  (function() {
-    var SUPA_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
-    var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
-    var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-    sb.auth.getSession().then(function(res) {
-      if (res.data && res.data.session) {
-        _gateLoggedIn = true;
-      }
-    });
-  })();
-
   function gateNav(e, href) {
-    if (_gateLoggedIn) return true;
+    var loggedIn = (window.Auth && window.Auth.getUser()) || _gateLoggedIn;
+    if (loggedIn) return true;
     e.preventDefault();
     document.getElementById('gate-overlay').classList.add('visible');
     return false;
