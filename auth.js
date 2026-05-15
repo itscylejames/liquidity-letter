@@ -133,7 +133,14 @@
       }
 
       // Dashboard/research: populate avatar + name
-      if (avatarEl) avatarEl.textContent = initials;
+      var avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
+      if (avatarEl) {
+        if (avatarUrl) {
+          avatarEl.innerHTML = '<img src="' + avatarUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+        } else {
+          avatarEl.textContent = initials;
+        }
+      }
       if (nameEl) nameEl.textContent = 'Welcome back, ' + firstName + (lastName ? ' ' + lastName : '');
       if (typeof window.updateGreeting === 'function') window.updateGreeting(firstName);
 
