@@ -535,35 +535,62 @@
       border-left: 1px solid var(--border);
       padding: 24px 16px 40px;
       background: var(--bg);
-      transition: width 0.25s ease, padding 0.25s ease, border-color 0.25s ease;
+      transition: width 0.3s ease, padding 0.3s ease;
       position: relative;
     }
     .right-panel.collapsed {
-      width: 28px;
+      width: 36px;
       padding: 0;
-      border-left-color: var(--border);
       overflow: hidden;
+      cursor: pointer;
     }
-    .right-panel.collapsed .right-panel-inner { opacity: 0; pointer-events: none; }
-    .right-panel-inner { transition: opacity 0.15s ease; }
+    .right-panel.collapsed .right-panel-inner { opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }
+    .right-panel-inner { transition: opacity 0.2s ease; }
+
+    /* collapsed strip — full height, click to expand */
+    .rpanel-collapsed-strip {
+      display: none;
+      position: absolute;
+      inset: 0;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.15s;
+      z-index: 10;
+    }
+    .rpanel-collapsed-strip:hover { color: var(--gold); }
+    .right-panel.collapsed .rpanel-collapsed-strip { display: flex; }
+    .rpanel-collapsed-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* expand button — visible when panel is open */
     .rpanel-toggle {
       position: absolute;
-      top: 50%;
-      left: 0;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 52px;
-      background: var(--bg-card);
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      background: none;
       border: 1px solid var(--border);
-      border-right: none;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       color: var(--text-muted);
-      transition: color 0.15s, background 0.15s;
-      z-index: 10;
+      transition: color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
     }
-    .rpanel-toggle:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
-    .rpanel-toggle svg { transition: transform 0.25s ease; flex-shrink: 0; }
+    .rpanel-toggle:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.2); }
+    .right-panel.collapsed .rpanel-toggle { display: none; }
 
     /* ── Calendar ────────────────────────────────────────────────── */
     .cal-nav {
@@ -947,8 +974,17 @@
     ══════════════════════════════════════════════════════════ -->
     <aside class="right-panel" id="right-panel">
 
-      <button class="rpanel-toggle" id="rpanel-toggle" title="Toggle panel">
-        <svg id="rpanel-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Collapsed strip — full height, click to expand -->
+      <div class="rpanel-collapsed-strip" id="rpanel-strip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+        <span class="rpanel-collapsed-label">Macro Calendar &amp; Newsletters</span>
+      </div>
+
+      <!-- Collapse button — visible when panel is open -->
+      <button class="rpanel-toggle" id="rpanel-toggle" title="Collapse panel">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
@@ -1371,22 +1407,21 @@
 </script>
 <script>
   (function() {
-    var panel    = document.getElementById('right-panel');
-    var toggle   = document.getElementById('rpanel-toggle');
-    var chevron  = document.getElementById('rpanel-chevron');
+    var panel  = document.getElementById('right-panel');
+    var toggle = document.getElementById('rpanel-toggle');
+    var strip  = document.getElementById('rpanel-strip');
 
     var collapsed = localStorage.getItem('rpanel-collapsed') === 'true';
-    if (collapsed) {
-      panel.classList.add('collapsed');
-      chevron.style.transform = 'rotate(180deg)';
+    if (collapsed) panel.classList.add('collapsed');
+
+    function setCollapsed(val) {
+      collapsed = val;
+      panel.classList.toggle('collapsed', collapsed);
+      localStorage.setItem('rpanel-collapsed', collapsed);
     }
 
-    toggle.addEventListener('click', function() {
-      collapsed = !collapsed;
-      panel.classList.toggle('collapsed', collapsed);
-      chevron.style.transform = collapsed ? 'rotate(180deg)' : '';
-      localStorage.setItem('rpanel-collapsed', collapsed);
-    });
+    toggle.addEventListener('click', function() { setCollapsed(true); });
+    strip.addEventListener('click',  function() { setCollapsed(false); });
   })();
 </script>
 <script src="auth.js"></script>
