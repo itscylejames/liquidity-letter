@@ -145,6 +145,77 @@
       display: flex; align-items: center; justify-content: center;
       color: #000;
     }
+    .nav-bell-badge.hidden { display: none; }
+
+    .notif-dropdown {
+      display: none;
+      position: absolute; top: calc(100% + 8px); right: 0;
+      width: 320px;
+      background: var(--bg-card2);
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      z-index: 200;
+      overflow: hidden;
+    }
+    .notif-dropdown.open { display: block; }
+
+    .notif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .notif-header-title {
+      font-size: 12px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-secondary);
+    }
+    .notif-mark-read {
+      font-size: 11px; color: var(--gold); cursor: pointer;
+      background: none; border: none; font-family: var(--font-body);
+      transition: color 0.2s;
+    }
+    .notif-mark-read:hover { color: var(--gold-light); }
+
+    .notif-list { max-height: 340px; overflow-y: auto; }
+
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 0.5px solid var(--border);
+      transition: background 0.15s;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--bg-card3); }
+    .notif-item.unread { background: rgba(201,168,76,0.04); }
+
+    .notif-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0; margin-top: 5px;
+    }
+    .notif-dot.read { background: transparent; border: 1px solid var(--border); }
+
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 13px; color: var(--text-primary); margin-bottom: 3px; line-height: 1.4; }
+    .notif-meta { font-size: 11px; color: var(--text-muted); }
+
+    .notif-empty {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .notif-empty svg { display: block; margin: 0 auto 12px; opacity: 0.3; }
+
+    .notif-footer {
+      padding: 10px 16px;
+      border-top: 0.5px solid var(--border);
+      text-align: center;
+    }
+    .notif-footer a {
+      font-size: 12px; color: var(--gold);
+      transition: color 0.2s;
+    }
+    .notif-footer a:hover { color: var(--gold-light); }
 
     .nav-avatar {
       width: 32px; height: 32px;
@@ -594,12 +665,29 @@
     </div>
 
     <div class="nav-right">
-      <div class="nav-bell">
+      <div class="nav-bell" id="notif-bell" onclick="toggleNotifDropdown()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary)">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
-        <span class="nav-bell-badge">3</span>
+        <span class="nav-bell-badge hidden" id="notif-badge">0</span>
+
+        <!-- Notification dropdown -->
+        <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
+          <div class="notif-header">
+            <span class="notif-header-title">Notifications</span>
+            <button class="notif-mark-read" id="notif-mark-all" onclick="markAllRead()" style="display:none;">Mark all read</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              No new notifications
+            </div>
+          </div>
+          <div class="notif-footer">
+            <a href="alerts.html">Manage alerts →</a>
+          </div>
+        </div>
       </div>
 
       <a href="profile.html" class="nav-user">
@@ -1396,6 +1484,108 @@
       });
     })();
   </script>
+<script>
+(function() {
+  var SUPA_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+  var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+  var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  var _notifOpen = false;
+  var _notifications = [];
+
+  window.toggleNotifDropdown = function() {
+    var dd = document.getElementById('notif-dropdown');
+    _notifOpen = !_notifOpen;
+    dd.classList.toggle('open', _notifOpen);
+    if (_notifOpen) loadNotifications();
+  };
+
+  document.addEventListener('click', function(e) {
+    if (!document.getElementById('notif-bell').contains(e.target)) {
+      document.getElementById('notif-dropdown').classList.remove('open');
+      _notifOpen = false;
+    }
+  });
+
+  async function loadNotifications() {
+    var session = (await sb.auth.getSession()).data.session;
+    if (!session) return;
+    var userId = session.user.id;
+
+    var { data } = await sb
+      .from('alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('triggered', true)
+      .order('triggered_at', { ascending: false })
+      .limit(20);
+
+    _notifications = data || [];
+    renderNotifications();
+  }
+
+  function renderNotifications() {
+    var list = document.getElementById('notif-list');
+    var badge = document.getElementById('notif-badge');
+    var markAll = document.getElementById('notif-mark-all');
+    var unread = _notifications.filter(function(n) { return !n.read_at; });
+
+    if (unread.length > 0) {
+      badge.textContent = unread.length > 9 ? '9+' : unread.length;
+      badge.classList.remove('hidden');
+      markAll.style.display = '';
+    } else {
+      badge.classList.add('hidden');
+      markAll.style.display = 'none';
+    }
+
+    if (_notifications.length === 0) {
+      list.innerHTML = '<div class="notif-empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>No new notifications</div>';
+      return;
+    }
+
+    list.innerHTML = _notifications.map(function(n) {
+      var isUnread = !n.read_at;
+      var dir = n.condition === 'above' ? '↑' : '↓';
+      var time = n.triggered_at ? new Date(n.triggered_at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '';
+      return '<div class="notif-item ' + (isUnread ? 'unread' : '') + '">'
+        + '<div class="notif-dot ' + (isUnread ? '' : 'read') + '"></div>'
+        + '<div class="notif-body">'
+        + '<div class="notif-title">' + n.symbol + ' alert triggered ' + dir + ' $' + Number(n.price).toLocaleString() + '</div>'
+        + '<div class="notif-meta">' + time + '</div>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  window.markAllRead = async function() {
+    var session = (await sb.auth.getSession()).data.session;
+    if (!session) return;
+    var ids = _notifications.filter(function(n) { return !n.read_at; }).map(function(n) { return n.id; });
+    if (!ids.length) return;
+    await sb.from('alerts').update({ read_at: new Date().toISOString() }).in('id', ids);
+    _notifications.forEach(function(n) { if (ids.includes(n.id)) n.read_at = new Date().toISOString(); });
+    renderNotifications();
+  };
+
+  // Initial badge load on page open
+  (async function() {
+    var session = (await sb.auth.getSession()).data.session;
+    if (!session) return;
+    var { data } = await sb
+      .from('alerts')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('triggered', true)
+      .is('read_at', null);
+    var count = (data || []).length;
+    if (count > 0) {
+      var badge = document.getElementById('notif-badge');
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.classList.remove('hidden');
+    }
+  })();
+})();
+</script>
 <script src="auth.js"></script>
 </body>
 </html>
