@@ -1149,12 +1149,15 @@
       });
     });
 
-    // Update greeting based on time of day
-    (function() {
+    // Update greeting based on time of day — name filled in by auth.js via updateGreeting()
+    window.updateGreeting = function(firstName) {
       var h = new Date().getHours();
       var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
       var el = document.querySelector('.greeting-title');
-      if (el) el.textContent = greet + ', John.';
+      if (el) el.textContent = greet + (firstName ? ', ' + firstName + '.' : '.');
+    };
+    (function() {
+      window.updateGreeting(null);
     })();
 
     // ── Macro Calendar (Finnhub) ──────────────────────────────────

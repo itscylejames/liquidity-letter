@@ -135,6 +135,7 @@
       // Dashboard/research: populate avatar + name
       if (avatarEl) avatarEl.textContent = initials;
       if (nameEl) nameEl.textContent = 'Welcome back, ' + firstName + (lastName ? ' ' + lastName : '');
+      if (typeof window.updateGreeting === 'function') window.updateGreeting(firstName);
 
     } else {
       if (loginBtn) loginBtn.style.display = '';
