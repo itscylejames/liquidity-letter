@@ -371,11 +371,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@latest"></script>
 
   <script>
-    const SB_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
-
-    let _sb = null;
-    const getSB = () => _sb || (_sb = window.supabase.createClient(SB_URL, SB_KEY));
+    // Use the client auth.js already created — avoids multiple GoTrueClient conflict
+    const getSB = () => window.Auth.getClient();
 
     let editor       = null;
     let articleId    = null;
