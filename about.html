@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:          #C9A84C;
+      --gold-dim:      rgba(201,168,76,0.15);
+      --gold-border:   rgba(201,168,76,0.35);
+      --bg:            #0A0A0A;
+      --bg-card:       #111111;
+      --border:        rgba(255,255,255,0.08);
+      --text-primary:  #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:    #555555;
+      --nav-h:         60px;
+      --sidebar-w:     210px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: 'Inter', sans-serif; cursor: pointer; border: none; background: none; color: inherit; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text { font-weight: 700; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); }
+    .nav-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+    .nav-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--gold-dim); border: 1px solid var(--gold-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: 0.05em;
+    }
+    .nav-user { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; padding-top: var(--nav-h); height: 100vh; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0; height: 100%;
+      overflow-y: auto; background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); padding: 8px 20px 6px; text-transform: uppercase; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px; color: var(--text-secondary);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      border-left: 2px solid transparent; transition: all 0.15s;
+    }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-signout {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 20px; color: var(--text-muted);
+      font-size: 13px; cursor: pointer;
+      border-top: 1px solid var(--border); transition: color 0.15s;
+    }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ── MAIN ── */
+    .main-content {
+      flex: 1; min-width: 0; height: 100%;
+      overflow-y: auto; position: relative;
+    }
+
+    /* ── HERO ── */
+    .hero-wrap {
+      position: relative;
+      min-height: 100%;
+    }
+    .hero-image {
+      position: fixed;
+      top: var(--nav-h);
+      right: 0;
+      width: calc(100% - var(--sidebar-w));
+      height: calc(100% - var(--nav-h));
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+    }
+    .hero-overlay {
+      position: fixed;
+      top: var(--nav-h);
+      right: 0;
+      width: calc(100% - var(--sidebar-w));
+      height: calc(100% - var(--nav-h));
+      background: linear-gradient(
+        90deg,
+        rgba(10,10,10,0.97) 0%,
+        rgba(10,10,10,0.92) 38%,
+        rgba(10,10,10,0.55) 65%,
+        rgba(10,10,10,0.25) 100%
+      );
+      z-index: 1;
+    }
+
+    /* ── CONTENT ── */
+    .about-content {
+      position: relative;
+      z-index: 2;
+      max-width: 640px;
+      padding: 56px 56px 100px;
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .about-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 20px;
+    }
+    .about-h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 38px; font-weight: 600;
+      line-height: 1.2; color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    .about-h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 500; font-style: italic;
+      color: var(--gold); line-height: 1.35;
+      margin-bottom: 28px;
+    }
+    .about-divider {
+      width: 48px; height: 1.5px;
+      background: var(--gold); opacity: 0.6;
+      margin-bottom: 28px;
+    }
+    .about-body {
+      color: rgba(245,245,245,0.82);
+      font-size: 14px; line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    .about-body strong {
+      color: var(--text-primary); font-weight: 600;
+    }
+    .about-body em {
+      color: var(--gold); font-style: normal;
+    }
+    .section-break {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+    .section-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px; font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+    .about-list {
+      list-style: none;
+      margin: 16px 0 20px;
+      padding: 0;
+    }
+    .about-list li {
+      color: rgba(245,245,245,0.78);
+      font-size: 14px; line-height: 1.8;
+      padding-left: 18px;
+      position: relative;
+      margin-bottom: 4px;
+    }
+    .about-list li::before {
+      content: '—';
+      position: absolute; left: 0;
+      color: var(--gold); font-size: 12px;
+    }
+    .about-closing {
+      margin-top: 48px;
+      border-top: 1px solid var(--gold-border);
+      padding-top: 36px;
+    }
+    .about-closing-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 600;
+      color: var(--gold); margin-bottom: 16px;
+    }
+    .about-closing p {
+      color: rgba(245,245,245,0.75);
+      font-size: 14px; line-height: 1.85;
+      margin-bottom: 8px;
+    }
+    .about-closing .sign-off {
+      margin-top: 20px;
+      font-family: 'Playfair Display', serif;
+      font-size: 16px; font-style: italic;
+      color: var(--text-primary);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-require-auth="true">
+
+  <nav class="top-nav">
+    <a href="index.html" class="nav-logo">
+      <img src="logo.png" alt="LL">
+      <div class="nav-logo-text">LIQUIDITY LETTER</div>
+    </a>
+    <div class="nav-right">
+      <div class="nav-user">
+        <div class="nav-avatar" id="nav-avatar-top">?</div>
+        <span class="nav-user-name" id="nav-name-top"></span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+
+        <a href="dashboard.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+
+        <a href="research.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Research
+        </a>
+
+        <a href="newsletters.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Newsletters
+        </a>
+
+        <a href="etf-tracker.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          ETF Tracker
+        </a>
+
+        <div class="sidebar-label" style="margin-top:8px;">Resources</div>
+
+        <a href="macro-calendar.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Macro Calendar
+        </a>
+
+        <a href="watchlist.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Watchlist
+        </a>
+
+        <div class="sidebar-label" style="margin-top:8px;">Account</div>
+
+        <a href="profile.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Profile
+        </a>
+
+        <a href="about.html" class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          About
+        </a>
+
+      </nav>
+
+      <div class="sidebar-signout" id="sidebar-logout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+      <img class="hero-image" src="hero.jpg" alt="">
+      <div class="hero-overlay"></div>
+
+      <div class="about-content">
+
+        <div class="about-eyebrow">The Liquidity Letter</div>
+        <h1 class="about-h1">About</h1>
+        <h2 class="about-h2">We Follow Liquidity Because<br>Liquidity Moves Everything.</h2>
+        <div class="about-divider"></div>
+
+        <p class="about-body">Markets no longer move in isolation.</p>
+        <p class="about-body">
+          Bitcoin reacts to bond yields.<br>
+          Stocks react to central bank balance sheets.<br>
+          Oil reacts to geopolitics.<br>
+          Gold reacts to real rates.<br>
+          And behind all of it sits one core driver:
+        </p>
+        <p class="about-body"><strong>Global liquidity.</strong></p>
+        <p class="about-body">The Liquidity Letter was built to track the capital flows, macro shifts, policy decisions, geopolitical events, and institutional positioning that shape modern markets — before they fully reach the headlines.</p>
+        <p class="about-body">
+          We are not a breaking news website.<br>
+          We are not a generic crypto blog.<br>
+          And we are not here to chase narratives after they become obvious.
+        </p>
+        <p class="about-body"><strong>We exist to connect the dots early.</strong></p>
+
+        <hr class="section-break">
+
+        <h3 class="section-heading">Our Mission</h3>
+        <p class="about-body">The financial world is becoming increasingly interconnected.</p>
+        <p class="about-body">
+          A policy decision in Washington can impact Bitcoin in minutes.<br>
+          An oil disruption in the Middle East can reshape inflation expectations globally.<br>
+          A shift in central bank liquidity can drive risk assets higher long before most investors understand why.
+        </p>
+        <p class="about-body">Our mission is simple:</p>
+        <p class="about-body"><strong>Deliver clear, high-signal macro and crypto intelligence that helps investors understand what is happening beneath the surface of the market.</strong></p>
+        <p class="about-body">We focus on:</p>
+        <ul class="about-list">
+          <li>Global liquidity trends</li>
+          <li>Central bank policy</li>
+          <li>Institutional capital flows</li>
+          <li>Crypto market structure</li>
+          <li>Geopolitics and energy markets</li>
+          <li>Risk positioning</li>
+          <li>Market psychology</li>
+          <li>Long-term macro cycles</li>
+        </ul>
+        <p class="about-body">The goal is not just to report events. The goal is to explain why they matter.</p>
+
+        <hr class="section-break">
+
+        <h3 class="section-heading">Why We Started</h3>
+        <p class="about-body">Most financial media is reactive. By the time a story reaches mainstream coverage, markets have often already positioned around it.</p>
+        <p class="about-body">The Liquidity Letter was created to solve that problem. We wanted a platform that approached markets through a macro-first lens — one capable of connecting:</p>
+        <ul class="about-list">
+          <li>Federal Reserve policy</li>
+          <li>Treasury liquidity</li>
+          <li>ETF flows</li>
+          <li>Global credit conditions</li>
+          <li>Stablecoin expansion</li>
+          <li>Institutional crypto adoption</li>
+          <li>Geopolitical instability</li>
+          <li>Energy market disruptions</li>
+          <li>Equity market positioning</li>
+        </ul>
+        <p class="about-body">…into one coherent framework.</p>
+        <p class="about-body">Because in modern markets, nothing operates independently anymore. The biggest opportunities often come from understanding the relationships between systems before consensus catches up.</p>
+
+        <hr class="section-break">
+
+        <h3 class="section-heading">What We Publish</h3>
+        <p class="about-body">The Liquidity Letter delivers:</p>
+        <ul class="about-list">
+          <li>Daily market intelligence</li>
+          <li>Macro and crypto deep dives</li>
+          <li>Liquidity cycle analysis</li>
+          <li>Geopolitical market breakdowns</li>
+          <li>ETF and institutional flow tracking</li>
+          <li>Central bank policy analysis</li>
+          <li>Market risk assessments</li>
+          <li>Long-form research reports</li>
+          <li>High-impact market summaries</li>
+        </ul>
+        <p class="about-body">Everything is built around one principle: <strong>Clarity over noise.</strong></p>
+
+        <hr class="section-break">
+
+        <h3 class="section-heading">Built For Investors Who Want Context</h3>
+        <p class="about-body">We write for investors, traders, founders, analysts, and operators who understand that modern markets are driven by more than price action alone.</p>
+        <p class="about-body">Our readers want:</p>
+        <ul class="about-list">
+          <li>Context, not headlines</li>
+          <li>Frameworks, not hype</li>
+          <li>Signal, not noise</li>
+          <li>Conviction built on understanding</li>
+        </ul>
+        <p class="about-body">The world is entering a new financial era shaped by digital assets, rising debt cycles, geopolitical fragmentation, and rapidly evolving monetary systems. Understanding liquidity is no longer optional. It is becoming essential.</p>
+
+        <hr class="section-break">
+
+        <h3 class="section-heading">The Bigger Picture</h3>
+        <p class="about-body">We believe the next decade will redefine:</p>
+        <ul class="about-list">
+          <li>Money</li>
+          <li>Markets</li>
+          <li>Capital flows</li>
+          <li>Banking infrastructure</li>
+          <li>Global reserve systems</li>
+          <li>Digital ownership</li>
+          <li>Financial sovereignty</li>
+        </ul>
+        <p class="about-body">Bitcoin, stablecoins, tokenized assets, AI-driven productivity, sovereign debt dynamics, and geopolitical realignment are all converging at the same time.</p>
+        <p class="about-body">The Liquidity Letter exists to help navigate that transition. Not through sensationalism. Not through tribalism. But through research, clarity, and macro perspective.</p>
+
+        <div class="about-closing">
+          <div class="about-closing-title">Welcome To The Liquidity Layer Of Markets.</div>
+          <p>This is where macro meets crypto.<br>
+          Where geopolitics meets capital flows.<br>
+          Where liquidity becomes the lens through which markets make sense.</p>
+          <div class="sign-off">Welcome to The Liquidity Letter.</div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+<script src="auth.js"></script>
+<script>
+  (function() {
+    function loadNav() {
+      var tries = 0;
+      var interval = setInterval(function() {
+        if (window.Auth && window.Auth.getClient) {
+          clearInterval(interval);
+          window.Auth.getClient().auth.getSession().then(function(res) {
+            var session = res.data.session;
+            if (!session) return;
+            var u = session.user;
+            var firstName = (u.user_metadata && u.user_metadata.first_name) || u.email.split('@')[0];
+            var lastName  = (u.user_metadata && u.user_metadata.last_name)  || '';
+            var initials  = ((firstName[0] || '') + (lastName[0] || '')).toUpperCase() || '?';
+            var navAvatar = document.getElementById('nav-avatar-top');
+            var navName   = document.getElementById('nav-name-top');
+            if (navAvatar) navAvatar.textContent = initials;
+            if (navName)   navName.textContent   = 'Welcome back, ' + firstName;
+          });
+        } else if (++tries > 20) {
+          clearInterval(interval);
+        }
+      }, 100);
+    }
+
+    document.getElementById('sidebar-logout').addEventListener('click', function() {
+      if (window.Auth && window.Auth.getClient) {
+        window.Auth.getClient().auth.signOut().then(function() {
+          window.location.href = 'index.html';
+        });
+      }
+    });
+
+    loadNav();
+  })();
+</script>
+</body>
+</html>
