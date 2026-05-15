@@ -309,6 +309,22 @@
     @keyframes pulse {
       0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
     }
+    .mkt-session {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .mkt-session.open {
+      background: rgba(76,175,80,0.1); border-color: rgba(76,175,80,0.25); color: var(--green);
+    }
+    .mkt-session.closed {
+      background: rgba(255,255,255,0.04); border-color: var(--border); color: var(--text-muted);
+    }
+    .mkt-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .mkt-session.open .mkt-dot { background: var(--green); box-shadow: 0 0 4px var(--green); animation: pulse 2s infinite; }
+    .mkt-session.closed .mkt-dot { background: var(--text-muted); }
     .section-link {
       font-size: 12px; color: var(--text-muted);
       display: flex; align-items: center; gap: 4px;
@@ -726,14 +742,11 @@
       <!-- ── Market Overview ──────────────────────────────────── -->
       <div class="section-block">
         <div class="section-header">
-          <div style="display:flex;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
             <span class="section-title">Market Overview</span>
-            <span class="section-status">
-              <span class="section-status-dot"></span>
-              Markets Open
-            </span>
+            <div id="market-sessions" style="display:flex;gap:6px;"></div>
           </div>
-          <a href="#" class="section-link">View all markets →</a>
+          <a href="etf-tracker.html" class="section-link">View all markets →</a>
         </div>
 
         <div class="market-grid">
@@ -799,7 +812,7 @@
           <div class="card">
             <div class="section-header" style="margin-bottom:0;">
               <span class="section-title">Latest Research</span>
-              <a href="#" class="section-link">View all research →</a>
+              <a href="research.html" class="section-link">View all research →</a>
             </div>
             <div class="research-list">
 
@@ -899,7 +912,7 @@
           <div class="card">
             <div class="section-header" style="margin-bottom:14px;">
               <span class="section-title">ETF Flow Tracker</span>
-              <a href="#" class="section-link">View full tracker →</a>
+              <a href="etf-tracker.html" class="section-link">View full tracker →</a>
             </div>
             <table class="data-table">
               <thead>
@@ -921,7 +934,7 @@
           <div class="card">
             <div class="section-header" style="margin-bottom:14px;">
               <span class="section-title">Watchlist</span>
-              <a href="#" class="section-link">View watchlist →</a>
+              <a href="watchlist.html" class="section-link">View watchlist →</a>
             </div>
             <table class="data-table">
               <thead>
@@ -1042,7 +1055,7 @@
       <div class="section-block">
         <div class="section-header" style="margin-bottom:12px;">
           <span class="section-title">Macro Calendar</span>
-          <a href="#" class="section-link">View full →</a>
+          <a href="macro-calendar.html" class="section-link">View full →</a>
         </div>
 
         <div class="cal-nav">
@@ -1055,14 +1068,14 @@
           <div style="text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;">Loading calendar...</div>
         </div>
 
-        <button class="btn-outline-full">View full macro calendar</button>
+        <a href="macro-calendar.html" class="btn-outline-full" style="display:block;text-align:center;">View full macro calendar</a>
       </div><!-- /Macro Calendar -->
 
       <!-- Recent Newsletters -->
       <div class="section-block">
         <div class="section-header" style="margin-bottom:12px;">
           <span class="section-title">Recent Newsletters</span>
-          <a href="#" class="section-link">View all →</a>
+          <a href="newsletters.html" class="section-link">View all →</a>
         </div>
 
         <!-- Newsletter 1 -->
@@ -1125,7 +1138,7 @@
           </div>
         </div>
 
-        <button class="btn-outline-full">View all newsletters</button>
+        <a href="newsletters.html" class="btn-outline-full" style="display:block;text-align:center;">View all newsletters</a>
       </div><!-- /Newsletters -->
 
     </aside><!-- /right-panel -->
@@ -1133,6 +1146,52 @@
   </div><!-- /layout -->
 
   <script>
+    // ── Market Session Indicators ─────────────────────────────────
+    function isUKSummer(d) {
+      var y = d.getUTCFullYear();
+      var marchLast = new Date(Date.UTC(y, 2, 31));
+      while (marchLast.getUTCDay() !== 0) marchLast.setUTCDate(marchLast.getUTCDate() - 1);
+      var octLast = new Date(Date.UTC(y, 9, 31));
+      while (octLast.getUTCDay() !== 0) octLast.setUTCDate(octLast.getUTCDate() - 1);
+      return d >= marchLast && d < octLast;
+    }
+    function isUSSummer(d) {
+      var y = d.getUTCFullYear();
+      var mar = new Date(Date.UTC(y, 2, 1)), n = 0;
+      while (n < 2) { if (mar.getUTCDay() === 0) n++; if (n < 2) mar.setUTCDate(mar.getUTCDate() + 1); }
+      var nov = new Date(Date.UTC(y, 10, 1));
+      while (nov.getUTCDay() !== 0) nov.setUTCDate(nov.getUTCDate() + 1);
+      return d >= mar && d < nov;
+    }
+    function getMarketSessions() {
+      var now = new Date();
+      var day = now.getUTCDay();
+      var t = now.getUTCHours() * 60 + now.getUTCMinutes();
+      var wd = day >= 1 && day <= 5;
+      var asia   = wd && t >= 0 && t < 390;                                           // 00:00-06:30 UTC (Tokyo)
+      var lOpen  = isUKSummer(now) ? 420 : 480, lClose = isUKSummer(now) ? 930 : 990; // BST: 07:00-15:30 / GMT: 08:00-16:30
+      var london = wd && t >= lOpen && t < lClose;
+      var uOpen  = isUSSummer(now) ? 810 : 870, uClose = isUSSummer(now) ? 1200 : 1260; // EDT: 13:30-20:00 / EST: 14:30-21:00
+      var us     = wd && t >= uOpen && t < uClose;
+      return { asia: asia, london: london, us: us };
+    }
+    function renderSessions() {
+      var s = getMarketSessions();
+      var markets = [
+        { label: 'Asia',   key: 'asia' },
+        { label: 'London', key: 'london' },
+        { label: 'US',     key: 'us' }
+      ];
+      document.getElementById('market-sessions').innerHTML = markets.map(function(m) {
+        var open = s[m.key];
+        return '<div class="mkt-session ' + (open ? 'open' : 'closed') + '">' +
+          '<div class="mkt-dot"></div>' + m.label + '&nbsp;' + (open ? 'Open' : 'Closed') +
+          '</div>';
+      }).join('');
+    }
+    renderSessions();
+    setInterval(renderSessions, 60000);
+
     // "/" keyboard shortcut focuses the search bar
     document.addEventListener('keydown', function(e) {
       if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
