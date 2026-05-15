@@ -92,15 +92,56 @@
       display: flex; align-items: center; gap: 10px;
       margin-bottom: 24px;
     }
-    .add-input-wrap { position: relative; flex: 1; max-width: 320px; }
+    .add-input-wrap { position: relative; flex: 1; max-width: 360px; }
     .add-input {
       width: 100%; height: 38px; padding: 0 14px;
       background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
       color: var(--text-primary); font-family: var(--font-body); font-size: 14px;
-      outline: none; transition: border-color 0.2s; text-transform: uppercase;
+      outline: none; transition: border-color 0.2s;
     }
-    .add-input::placeholder { text-transform: none; color: var(--text-muted); }
+    .add-input::placeholder { color: var(--text-muted); }
     .add-input:focus { border-color: var(--gold-border); }
+
+    /* Autocomplete dropdown */
+    .symbol-suggest {
+      display: none;
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #161616;
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+      z-index: 300;
+      overflow: hidden;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .symbol-suggest.open { display: block; }
+
+    .suggest-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; cursor: pointer;
+      transition: background 0.12s;
+      border-bottom: 0.5px solid rgba(255,255,255,0.05);
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover, .suggest-item.active { background: rgba(201,168,76,0.08); }
+
+    .suggest-ticker {
+      font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+      color: var(--text-primary); flex-shrink: 0; min-width: 80px;
+    }
+    .suggest-name {
+      font-size: 12px; color: var(--text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .suggest-type {
+      font-size: 10px; color: var(--gold); letter-spacing: 0.5px;
+      margin-left: auto; flex-shrink: 0;
+    }
+    .suggest-loading, .suggest-empty {
+      padding: 14px; text-align: center;
+      font-size: 13px; color: var(--text-muted);
+    }
     .btn-add {
       height: 38px; padding: 0 18px;
       background: var(--gold); border-radius: 8px;
@@ -295,7 +336,8 @@
 
         <div class="add-bar">
           <div class="add-input-wrap">
-            <input type="text" class="add-input" id="add-input" placeholder="Add a symbol (e.g. AAPL, BTC-USD)" maxlength="12" autocomplete="off">
+            <input type="text" class="add-input" id="add-input" placeholder="Search symbol or name (e.g. AAPL, Bitcoin...)" autocomplete="off">
+            <div class="symbol-suggest" id="symbol-suggest"></div>
           </div>
           <button class="btn-add" id="btn-add">+ Add</button>
           <button class="btn-refresh-wl" id="btn-refresh-wl">
@@ -429,10 +471,86 @@
       });
     }
 
+    /* ── Autocomplete ── */
+    let suggestTimer = null;
+    let activeIdx = -1;
+    const addInput = document.getElementById('add-input');
+    const suggestBox = document.getElementById('symbol-suggest');
+
+    addInput.addEventListener('input', () => {
+      clearTimeout(suggestTimer);
+      const q = addInput.value.trim();
+      if (q.length < 1) { closeSuggest(); return; }
+      suggestBox.innerHTML = '<div class="suggest-loading">Searching…</div>';
+      suggestBox.classList.add('open');
+      activeIdx = -1;
+      suggestTimer = setTimeout(() => searchSymbols(q), 280);
+    });
+
+    addInput.addEventListener('keydown', (e) => {
+      const items = suggestBox.querySelectorAll('.suggest-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIdx = Math.min(activeIdx + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIdx = Math.max(activeIdx - 1, 0);
+        items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+      } else if (e.key === 'Enter') {
+        if (activeIdx >= 0 && items[activeIdx]) {
+          items[activeIdx].click();
+        } else {
+          addSymbol();
+        }
+      } else if (e.key === 'Escape') {
+        closeSuggest();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('add-input').closest('.add-input-wrap').contains(e.target)) {
+        closeSuggest();
+      }
+    });
+
+    async function searchSymbols(query) {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/search?q=${encodeURIComponent(query)}&token=${FINNHUB_KEY}`);
+        const data = await r.json();
+        const results = (data.result || []).slice(0, 8);
+        if (!results.length) {
+          suggestBox.innerHTML = '<div class="suggest-empty">No results found</div>';
+          return;
+        }
+        suggestBox.innerHTML = results.map((item, i) =>
+          `<div class="suggest-item" data-symbol="${item.symbol}" data-idx="${i}">
+            <span class="suggest-ticker">${item.displaySymbol}</span>
+            <span class="suggest-name">${item.description}</span>
+            <span class="suggest-type">${item.type || ''}</span>
+          </div>`
+        ).join('');
+        suggestBox.querySelectorAll('.suggest-item').forEach(el => {
+          el.addEventListener('click', () => {
+            addInput.value = el.dataset.symbol;
+            closeSuggest();
+            addSymbol();
+          });
+        });
+      } catch {
+        suggestBox.innerHTML = '<div class="suggest-empty">Could not fetch results</div>';
+      }
+    }
+
+    function closeSuggest() {
+      suggestBox.classList.remove('open');
+      suggestBox.innerHTML = '';
+      activeIdx = -1;
+    }
+
     async function addSymbol() {
-      const input = document.getElementById('add-input');
       const errEl = document.getElementById('add-error');
-      const symbol = input.value.trim().toUpperCase();
+      const symbol = addInput.value.trim().toUpperCase();
       errEl.textContent = '';
 
       if (!symbol) return;
@@ -444,7 +562,6 @@
       const btn = document.getElementById('btn-add');
       btn.disabled = true;
 
-      // Verify symbol exists
       const q = await fetchQuote(symbol);
       if (!q || !q.c || q.c === 0) {
         errEl.textContent = 'Symbol not found or no data available.';
@@ -456,7 +573,7 @@
 
       quotes[symbol] = q;
       watchItems.push({ symbol, added_at: new Date().toISOString() });
-      input.value = '';
+      addInput.value = '';
       renderTable();
       btn.disabled = false;
     }
@@ -469,9 +586,6 @@
     }
 
     document.getElementById('btn-add').addEventListener('click', addSymbol);
-    document.getElementById('add-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') addSymbol();
-    });
     document.getElementById('btn-refresh-wl').addEventListener('click', async () => {
       await refreshQuotes();
       renderTable();
