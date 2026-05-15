@@ -46,11 +46,25 @@
         <label style="display:block;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8A8780;margin-bottom:8px;">Email</label>
         <input type="email" id="login-email" required autocomplete="email" style="width:100%;background:#1C1C1C;border:1px solid rgba(255,255,255,0.1);color:#F0EDE6;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s;" placeholder="you@example.com">
       </div>
-      <div style="margin-bottom:28px;">
+      <div style="margin-bottom:8px;">
         <label style="display:block;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8A8780;margin-bottom:8px;">Password</label>
         <input type="password" id="login-password" required autocomplete="current-password" style="width:100%;background:#1C1C1C;border:1px solid rgba(255,255,255,0.1);color:#F0EDE6;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s;" placeholder="••••••••">
       </div>
+      <div style="text-align:right;margin-bottom:24px;">
+        <button type="button" id="btn-forgot" style="background:none;border:none;color:#8A8780;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:color 0.2s;" onmouseover="this.style.color='#C9A84C'" onmouseout="this.style.color='#8A8780'">Forgot password?</button>
+      </div>
       <button type="submit" id="btn-login-submit" style="width:100%;background:#C9A84C;border:none;color:#0A0A0A;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:14px;cursor:pointer;letter-spacing:0.5px;transition:opacity 0.2s;">Log In</button>
+    </form>
+
+    <form id="form-reset" style="display:none;">
+      <button type="button" id="btn-back-to-login" style="background:none;border:none;color:#8A8780;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;margin-bottom:24px;padding:0;display:flex;align-items:center;gap:6px;">← Back to log in</button>
+      <div style="margin-bottom:6px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#F0EDE6;">Reset your password</div>
+      <div style="margin-bottom:24px;font-family:'DM Sans',sans-serif;font-size:13px;color:#8A8780;">Enter your email and we'll send you a reset link.</div>
+      <div style="margin-bottom:24px;">
+        <label style="display:block;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8A8780;margin-bottom:8px;">Email</label>
+        <input type="email" id="reset-email" required autocomplete="email" style="width:100%;background:#1C1C1C;border:1px solid rgba(255,255,255,0.1);color:#F0EDE6;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s;" placeholder="you@example.com">
+      </div>
+      <button type="submit" id="btn-reset-submit" style="width:100%;background:#C9A84C;border:none;color:#0A0A0A;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;padding:14px;cursor:pointer;letter-spacing:0.5px;transition:opacity 0.2s;">Send Reset Link</button>
     </form>
 
     <form id="form-signup" style="display:none;">
@@ -221,6 +235,20 @@
     }
   }
 
+  async function handleReset(e) {
+    e.preventDefault();
+    var btn = document.getElementById('btn-reset-submit');
+    btn.textContent = 'Sending…'; btn.disabled = true;
+    var email = document.getElementById('reset-email').value;
+    var { error } = await getClient().auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://liquidity-letter.cylejames-dj.workers.dev/reset-password.html'
+    });
+    btn.textContent = 'Send Reset Link'; btn.disabled = false;
+    if (error) { showError(error.message); return; }
+    showSuccess('Check your email for a password reset link.');
+    document.getElementById('reset-email').value = '';
+  }
+
   async function init() {
     document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
 
@@ -284,6 +312,21 @@
 
     document.getElementById('form-login').addEventListener('submit', handleLogin);
     document.getElementById('form-signup').addEventListener('submit', handleSignup);
+    document.getElementById('form-reset').addEventListener('submit', handleReset);
+
+    document.getElementById('btn-forgot').addEventListener('click', function() {
+      document.getElementById('form-login').style.display = 'none';
+      document.getElementById('form-reset').style.display = 'block';
+      document.querySelector('.auth-tab[data-tab="login"]').style.borderBottomColor = 'transparent';
+      clearMsgs();
+    });
+
+    document.getElementById('btn-back-to-login').addEventListener('click', function() {
+      document.getElementById('form-reset').style.display = 'none';
+      document.getElementById('form-login').style.display = 'block';
+      document.querySelector('.auth-tab[data-tab="login"]').style.borderBottomColor = '#C9A84C';
+      clearMsgs();
+    });
   }
 
   if (document.readyState === 'loading') {
