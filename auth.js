@@ -199,6 +199,10 @@
     }
   }
 
+  function isHomePage() {
+    return /^\/?$|\/index\.html/.test(window.location.pathname) || window.location.pathname === '/';
+  }
+
   async function signOut() {
     await getClient().auth.signOut();
     _role = null;
@@ -222,6 +226,7 @@
     await loadUserRole(data.user.id);
     updateNav(data.user);
     closeModal();
+    if (isHomePage()) { window.location.href = 'dashboard.html'; return; }
   }
 
   async function handleSignup(e) {
@@ -244,6 +249,7 @@
       await loadUserRole(data.user.id);
       updateNav(data.user);
       closeModal();
+      if (isHomePage()) { window.location.href = 'dashboard.html'; return; }
     }
   }
 
@@ -301,6 +307,10 @@
       if (sess) {
         _currentUser = sess.user;
         await loadUserRole(sess.user.id);
+        if (_event === 'SIGNED_IN' && isHomePage()) {
+          window.location.href = 'dashboard.html';
+          return;
+        }
       } else {
         _currentUser = null;
         _role = null;
