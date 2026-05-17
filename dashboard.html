@@ -688,6 +688,29 @@
     /* Right panel section titles slightly smaller */
     .right-panel .section-title { font-size: 10px; }
 
+    /* ── Economic Calendar Banner ────────────────────────────────── */
+    .eco-banner {
+      display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .eco-event {
+      flex: 1; min-width: 180px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .eco-event-info { flex: 1; min-width: 0; }
+    .eco-event-name { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .eco-event-date { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .eco-event-countdown { font-size: 11px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+    .eco-zeus-btn {
+      background: none; border: 1px solid rgba(201,168,76,0.3); color: var(--gold);
+      font-size: 13px; padding: 4px 8px; cursor: pointer; border-radius: 2px;
+      transition: background 0.15s; flex-shrink: 0;
+    }
+    .eco-zeus-btn:hover { background: rgba(201,168,76,0.1); }
+
     /* Responsive guard (just don't break below ~900px) */
     @media (max-width: 960px) {
       .right-panel { display: none; }
@@ -777,6 +800,13 @@
           Dashboard
         </div>
 
+        <a href="newsfeed.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10l6 6v8a2 2 0 0 1-2 2z"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Newsfeed
+        </a>
+
         <a href="research.html" class="sidebar-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -845,6 +875,9 @@
          MAIN CONTENT
     ══════════════════════════════════════════════════════════ -->
     <main class="main-content">
+
+      <!-- Economic Calendar Banner -->
+      <div class="eco-banner" id="eco-banner"></div>
 
       <!-- Greeting -->
       <div style="margin-bottom:24px;">
@@ -1510,6 +1543,62 @@
       }
     }, 100);
   });
+})();
+</script>
+<script src="zeus.js"></script>
+<script>
+(function() {
+  var API = 'https://ll-api.cylejames-dj.workers.dev';
+
+  function timeAgo(dateStr) {
+    var diff = Date.now() - new Date(dateStr).getTime();
+    var mins = Math.floor(diff / 60000);
+    var hrs  = Math.floor(mins / 60);
+    var days = Math.floor(hrs / 24);
+    if (mins < 60)  return mins + 'm';
+    if (hrs  < 24)  return hrs  + 'h';
+    return days + 'd';
+  }
+
+  function countdown(dateStr) {
+    var diff = new Date(dateStr).getTime() - Date.now();
+    if (diff <= 0) return 'Today';
+    var days = Math.floor(diff / 86400000);
+    var hrs  = Math.floor((diff % 86400000) / 3600000);
+    if (days > 0) return 'in ' + days + 'd ' + hrs + 'h';
+    return 'in ' + hrs + 'h';
+  }
+
+  function fmtEventDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+  }
+
+  async function loadCalendarBanner() {
+    var banner = document.getElementById('eco-banner');
+    if (!banner) return;
+    try {
+      var res  = await fetch(API + '/calendar');
+      var data = await res.json();
+      var events = (data.events || []).slice(0, 3);
+      if (!events.length) { banner.style.display = 'none'; return; }
+      banner.innerHTML = events.map(function(e) {
+        var dateStr = e.time ? e.date + 'T' + e.time : e.date;
+        var prompt  = 'Explain what ' + e.event + ' is, why markets care about it, and what a surprise in either direction typically means for risk assets.';
+        return '<div class="eco-event">' +
+          '<div class="eco-event-info">' +
+            '<div class="eco-event-name">' + e.event + '</div>' +
+            '<div class="eco-event-date">' + fmtEventDate(e.date) + '</div>' +
+          '</div>' +
+          '<span class="eco-event-countdown">' + countdown(dateStr) + '</span>' +
+          '<button class="eco-zeus-btn" title="Ask Zeus" onclick="window.Zeus&&window.Zeus.ask(\'' + prompt.replace(/'/g, "\\'") + '\')">⚡</button>' +
+        '</div>';
+      }).join('');
+    } catch(e) {
+      banner.style.display = 'none';
+    }
+  }
+
+  loadCalendarBanner();
 })();
 </script>
 </body>
