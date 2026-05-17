@@ -788,17 +788,25 @@
             });
           });
 
-          /* Sort newest first */
+          /* Sort newest first, drop items with no valid date */
+          items = items.filter(function (a) { return a.date && a.date.getTime() > 0; });
           items.sort(function (a, b) { return b.date - a.date; });
+
+          /* Try last 2 hours, fall back to 24h if fewer than 5 results */
+          var now = Date.now();
+          var twoHours = items.filter(function (a) { return now - a.date.getTime() <= 2 * 60 * 60 * 1000; });
+          var displayed = twoHours.length >= 5 ? twoHours : items.filter(function (a) { return now - a.date.getTime() <= 24 * 60 * 60 * 1000; });
+          var windowLabel = twoHours.length >= 5 ? 'last 2 hours' : 'last 24 hours';
 
           clearSkeletons();
 
-          if (items.length === 0) {
-            feed.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px 0;font-size:14px;">No news articles available right now.</div>';
+          if (displayed.length === 0) {
+            feed.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px 0;font-size:14px;">No recent news articles available right now.</div>';
             return;
           }
 
-          feed.innerHTML = items.map(renderCard).join('');
+          var header = '<div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;">Showing ' + displayed.length + ' articles — ' + windowLabel + '</div>';
+          feed.innerHTML = header + displayed.map(renderCard).join('');
           document.getElementById('news-footer').style.display = '';
         })
         .catch(function () {

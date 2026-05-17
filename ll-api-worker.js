@@ -46,12 +46,26 @@ export default {
 
       // ── News Feed ──────────────────────────────────────────────────
       if (url.pathname === '/news') {
-        const [fRes, mRes] = await Promise.all([
+        const [fGenRes, fCryptoRes, fForexRes, mRes] = await Promise.all([
           fetch(`https://finnhub.io/api/v1/news?category=general&minId=0&token=${env.FINNHUB_KEY}`),
-          fetch(`https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&limit=20&api_token=${env.MARKETAUX_KEY}`),
+          fetch(`https://finnhub.io/api/v1/news?category=crypto&minId=0&token=${env.FINNHUB_KEY}`),
+          fetch(`https://finnhub.io/api/v1/news?category=forex&minId=0&token=${env.FINNHUB_KEY}`),
+          fetch(`https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&limit=100&api_token=${env.MARKETAUX_KEY}`),
         ]);
 
-        const [finnhub, marketaux] = await Promise.all([fRes.json(), mRes.json()]);
+        const [fGen, fCrypto, fForex, marketaux] = await Promise.all([
+          fGenRes.json(), fCryptoRes.json(), fForexRes.json(), mRes.json()
+        ]);
+
+        // Merge and deduplicate Finnhub by headline
+        const seen = new Set();
+        const finnhub = [];
+        for (const item of [...(Array.isArray(fGen) ? fGen : []), ...(Array.isArray(fCrypto) ? fCrypto : []), ...(Array.isArray(fForex) ? fForex : [])]) {
+          if (item.headline && !seen.has(item.headline)) {
+            seen.add(item.headline);
+            finnhub.push(item);
+          }
+        }
 
         return new Response(JSON.stringify({ finnhub, marketaux }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
