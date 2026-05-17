@@ -357,17 +357,22 @@
       })
       .then(function (data) {
         hideThinking();
-        var reply = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
-                  ? data.choices[0].message.content
-                  : ‘Sorry, I didn\’t get a response. Please try again.’;
-        messages.push({ role: 'assistant', content: reply });
-        appendMessage('assistant', reply);
+        var reply;
+        if (data && data.error) {
+          reply = ‘OpenAI error: ‘ + (data.error.message || JSON.stringify(data.error)) + ‘\n\nIf this says "insufficient_quota" — add billing credits at platform.openai.com.’;
+        } else {
+          reply = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
+                ? data.choices[0].message.content
+                : ‘No response received. Check the Worker is deployed and secrets are set.’;
+        }
+        messages.push({ role: ‘assistant’, content: reply });
+        appendMessage(‘assistant’, reply);
       })
       .catch(function (err) {
         hideThinking();
-        var errMsg = 'Something went wrong. Please try again in a moment.';
-        messages.push({ role: 'assistant', content: errMsg });
-        appendMessage('assistant', errMsg);
+        var errMsg = ‘Could not reach the API (‘ + err.message + ‘). Check the Worker URL is correct and deployed.’;
+        messages.push({ role: ‘assistant’, content: errMsg });
+        appendMessage(‘assistant’, errMsg);
       })
       .finally(function () {
         isLoading = false;

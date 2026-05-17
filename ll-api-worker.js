@@ -34,10 +34,10 @@ export default {
         const data = await res.json();
 
         // Filter to major events only
-        const events = (data.economicCalendar || []).filter(e => {
-          const name = (e.event || '').toLowerCase();
-          return MAJOR_EVENTS.some(k => name.includes(k));
-        });
+        const events = (data.economicCalendar || [])
+          .filter(e => (e.country || '').toUpperCase() === 'US')
+          .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+          .slice(0, 10);
 
         return new Response(JSON.stringify({ events }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
