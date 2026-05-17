@@ -357,10 +357,9 @@
       })
       .then(function (data) {
         hideThinking();
-        var reply = (data && data.content) ? data.content
-                  : (data && data.message) ? data.message
-                  : (data && data.response) ? data.response
-                  : 'Sorry, I didn’t get a response. Please try again.';
+        var reply = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
+                  ? data.choices[0].message.content
+                  : ‘Sorry, I didn\’t get a response. Please try again.’;
         messages.push({ role: 'assistant', content: reply });
         appendMessage('assistant', reply);
       })

@@ -1550,18 +1550,16 @@
 (function() {
   var API = 'https://ll-api.cylejames-dj.workers.dev';
 
-  function timeAgo(dateStr) {
-    var diff = Date.now() - new Date(dateStr).getTime();
-    var mins = Math.floor(diff / 60000);
-    var hrs  = Math.floor(mins / 60);
-    var days = Math.floor(hrs / 24);
-    if (mins < 60)  return mins + 'm';
-    if (hrs  < 24)  return hrs  + 'h';
-    return days + 'd';
+  function parseEventDate(e) {
+    // Finnhub returns time as "2024-05-15 08:30:00" — replace space with T for ISO parsing
+    var raw = e.time || e.date || '';
+    return raw.replace(' ', 'T');
   }
 
-  function countdown(dateStr) {
-    var diff = new Date(dateStr).getTime() - Date.now();
+  function countdown(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    var diff = d.getTime() - Date.now();
     if (diff <= 0) return 'Today';
     var days = Math.floor(diff / 86400000);
     var hrs  = Math.floor((diff % 86400000) / 3600000);
@@ -1569,8 +1567,10 @@
     return 'in ' + hrs + 'h';
   }
 
-  function fmtEventDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+  function fmtEventDate(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso ? iso.substring(0, 10) : '';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
   }
 
   async function loadCalendarBanner() {
@@ -1582,14 +1582,14 @@
       var events = (data.events || []).slice(0, 3);
       if (!events.length) { banner.style.display = 'none'; return; }
       banner.innerHTML = events.map(function(e) {
-        var dateStr = e.time ? e.date + 'T' + e.time : e.date;
-        var prompt  = 'Explain what ' + e.event + ' is, why markets care about it, and what a surprise in either direction typically means for risk assets.';
+        var iso    = parseEventDate(e);
+        var prompt = 'Explain what ' + e.event + ' is, why markets care about it, and what a surprise in either direction typically means for risk assets.';
         return '<div class="eco-event">' +
           '<div class="eco-event-info">' +
             '<div class="eco-event-name">' + e.event + '</div>' +
-            '<div class="eco-event-date">' + fmtEventDate(e.date) + '</div>' +
+            '<div class="eco-event-date">' + fmtEventDate(iso) + '</div>' +
           '</div>' +
-          '<span class="eco-event-countdown">' + countdown(dateStr) + '</span>' +
+          '<span class="eco-event-countdown">' + countdown(iso) + '</span>' +
           '<button class="eco-zeus-btn" title="Ask Zeus" onclick="window.Zeus&&window.Zeus.ask(\'' + prompt.replace(/'/g, "\\'") + '\')">⚡</button>' +
         '</div>';
       }).join('');
