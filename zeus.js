@@ -9,7 +9,7 @@
   var BORDER  = 'rgba(255,255,255,0.08)';
   var TEXT    = '#F0EDE6';
   var MUTED   = '#8A8780';
-  var WELCOME = "Hello, I'm Zeus — your macro AI analyst. Ask me about any economic indicator, market event, or breaking news.";
+  var WELCOME = "Hello, I'm Zeus — your macro intelligence expert. Ask me about any economic indicator, market event, or breaking news.";
 
   var history   = [];
   var panelOpen = false;
