@@ -125,6 +125,7 @@
     .role-badge.super_admin { color: var(--gold); border-color: var(--gold-border); background: var(--gold-dim); }
     .role-badge.admin       { color: #A0C4FF;     border-color: rgba(160,196,255,0.3); background: rgba(160,196,255,0.08); }
 
+    .actions-cell { display: flex; gap: 8px; align-items: center; }
     .btn-role {
       padding: 6px 14px; font-size: 12px; font-weight: 600;
       border: 1px solid var(--border); background: none; color: var(--muted);
@@ -133,6 +134,12 @@
     .btn-role:hover { border-color: var(--gold-border); color: var(--gold); }
     .btn-role:disabled { opacity: 0.35; cursor: default; }
     .btn-role.hidden { visibility: hidden; }
+    .btn-remove {
+      padding: 6px 14px; font-size: 12px; font-weight: 600;
+      border: 1px solid rgba(226,83,74,0.25); background: none; color: var(--red);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-remove:hover { background: rgba(226,83,74,0.08); border-color: rgba(226,83,74,0.5); }
 
     .empty-state { text-align: center; padding: 64px 20px; color: var(--muted); }
     .empty-state-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.3; }
@@ -363,14 +370,20 @@
       var rows = list.map(function(s) {
         var ini  = initials(s.first_name, s.last_name);
         var name = ((s.first_name || '') + ' ' + (s.last_name || '')).trim() || 'Unknown';
-        var canEdit = isSuperAdmin && s.role !== 'super_admin';
+        var canAct = isSuperAdmin && s.role !== 'super_admin';
+        var actions = canAct
+          ? '<div class="actions-cell">' +
+              '<button class="btn-role" onclick="openRoleModal(\'' + s.id + '\',\'' + esc(name) + '\',\'' + esc(s.email||'') + '\',\'' + (s.role||'user') + '\')">Change Role</button>' +
+              '<button class="btn-remove" onclick="removeUser(\'' + s.id + '\',\'' + esc(name) + '\')">Remove</button>' +
+            '</div>'
+          : '<span class="btn-role hidden">—</span>';
         return '<tr>' +
           '<td><div class="user-cell"><div class="avatar">' + ini + '</div><div><div class="user-name">' + esc(name) + '</div><div class="user-email">' + esc(s.email || '') + '</div></div></div></td>' +
           '<td>' + roleBadge(s.role || 'user') + '</td>' +
           '<td>' + statusBadge(s.sub_status) + '</td>' +
           '<td style="color:var(--muted);font-size:13px;">' + fmtDate(s.current_period_end) + '</td>' +
           '<td style="color:var(--muted);font-size:13px;">' + fmtDate(s.created_at) + '</td>' +
-          '<td>' + (canEdit ? '<button class="btn-role" onclick="openRoleModal(\'' + s.id + '\',\'' + esc(name) + '\',\'' + esc(s.email||'') + '\',\'' + (s.role||'user') + '\')">Change Role</button>' : '<span class="btn-role hidden">—</span>') + '</td>' +
+          '<td>' + actions + '</td>' +
         '</tr>';
       }).join('');
 
@@ -429,6 +442,19 @@
       modalUserId = null; selectedRole = null;
     }
 
+    async function removeUser(userId, name) {
+      if (!confirm('Remove ' + name + '? This permanently deletes their account and cannot be undone.')) return;
+      try {
+        var { error } = await getSB().rpc('admin_delete_user', { target_id: userId });
+        if (error) throw error;
+        allSubscribers = allSubscribers.filter(function(s) { return s.id !== userId; });
+        renderStats();
+        renderTable(filteredList());
+      } catch (e) {
+        alert('Failed to remove user: ' + e.message);
+      }
+    }
+
     document.getElementById('modal-close-btn').addEventListener('click', closeRoleModal);
     document.getElementById('role-modal').addEventListener('click', function(e) {
       if (e.target.id === 'role-modal') closeRoleModal();
@@ -438,12 +464,15 @@
     document.getElementById('filter-status').addEventListener('change', function() { renderTable(filteredList()); });
     document.getElementById('filter-role').addEventListener('change', function() { renderTable(filteredList()); });
 
-    // Wait for auth.js to finish, then check role + load data
+    // Wait for auth.js to fully load the user AND their role before rendering
     var initInterval = setInterval(function() {
       if (window.Auth && window.Auth.getUser()) {
         clearInterval(initInterval);
-        isSuperAdmin = window.Auth.isSuperAdmin();
-        loadSubscribers();
+        // Small delay so loadUserRole() inside auth.js has time to complete
+        setTimeout(function() {
+          isSuperAdmin = window.Auth.isSuperAdmin();
+          loadSubscribers();
+        }, 400);
       }
     }, 100);
   </script>
