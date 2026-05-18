@@ -274,6 +274,43 @@
     });
   }
 
+  async function checkSubscription(user) {
+    var created = new Date(user.created_at);
+    var daysSince = (Date.now() - created.getTime()) / 86400000;
+
+    if (daysSince < 7) {
+      injectTrialBanner(Math.ceil(7 - daysSince));
+      return true;
+    }
+
+    var fromPayment = window.location.search.includes('subscribed=1');
+    var maxAttempts = fromPayment ? 4 : 1;
+
+    for (var i = 0; i < maxAttempts; i++) {
+      if (i > 0) await new Promise(function (r) { setTimeout(r, 2500); });
+      try {
+        var result = await getClient()
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (result.data && result.data.status === 'active') return true;
+      } catch (e) {}
+    }
+
+    window.location.href = 'subscribe.html';
+    return false;
+  }
+
+  function injectTrialBanner(daysLeft) {
+    if (document.getElementById('ll-trial-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'll-trial-banner';
+    b.style.cssText = 'background:rgba(201,168,76,0.08);border-bottom:1px solid rgba(201,168,76,0.18);padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:16px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:#C9A84C;flex-wrap:wrap;position:relative;z-index:100;';
+    b.innerHTML = '<span>⏳ Free trial — <strong>' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining</strong>. Subscribe to keep access after your trial ends.</span><a href="subscribe.html" style="background:#C9A84C;color:#0A0A0A;font-weight:700;font-size:11px;letter-spacing:0.8px;padding:5px 14px;text-decoration:none;text-transform:uppercase;flex-shrink:0;">Subscribe</a>';
+    document.body.insertAdjacentElement('afterbegin', b);
+  }
+
   async function init() {
     document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
 
@@ -298,6 +335,11 @@
     }
 
     updateNav(session ? session.user : null);
+
+    if (requiresAuth && session) {
+      var allowed = await checkSubscription(session.user);
+      if (!allowed) return;
+    }
 
     getClient().auth.onAuthStateChange(async function(_event, sess) {
       if ((requiresAuth || requiresAdmin) && !sess) {
