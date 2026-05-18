@@ -80,7 +80,7 @@
     titleEl.textContent = '⚡ Zeus';
     var subEl = document.createElement('div');
     subEl.id = 'zeus-subtitle';
-    subEl.textContent = 'Macro AI Analyst';
+    subEl.textContent = 'Macro Analyst';
     titleWrap.appendChild(titleEl);
     titleWrap.appendChild(subEl);
 
