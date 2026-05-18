@@ -72,15 +72,16 @@ export default {
 
       // ── News Feed ──────────────────────────────────────────────────
       if (url.pathname === '/news') {
-        const [fGenRes, fCryptoRes, fForexRes, mRes] = await Promise.all([
+        const [fGenRes, fCryptoRes, fForexRes, mRes, polyRes] = await Promise.all([
           fetch(`https://finnhub.io/api/v1/news?category=general&minId=0&token=${env.FINNHUB_KEY}`),
           fetch(`https://finnhub.io/api/v1/news?category=crypto&minId=0&token=${env.FINNHUB_KEY}`),
           fetch(`https://finnhub.io/api/v1/news?category=forex&minId=0&token=${env.FINNHUB_KEY}`),
           fetch(`https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&limit=100&api_token=${env.MARKETAUX_KEY}`),
+          fetch(`https://api.polygon.io/v2/reference/news?limit=50&sort=published_utc&order=desc&apiKey=${env.POLYGON_KEY}`),
         ]);
 
-        const [fGen, fCrypto, fForex, marketaux] = await Promise.all([
-          fGenRes.json(), fCryptoRes.json(), fForexRes.json(), mRes.json()
+        const [fGen, fCrypto, fForex, marketaux, polygon] = await Promise.all([
+          fGenRes.json(), fCryptoRes.json(), fForexRes.json(), mRes.json(), polyRes.json()
         ]);
 
         // Merge and deduplicate Finnhub by headline
@@ -93,7 +94,7 @@ export default {
           }
         }
 
-        return new Response(JSON.stringify({ finnhub, marketaux }), {
+        return new Response(JSON.stringify({ finnhub, marketaux, polygon }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }

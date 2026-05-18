@@ -789,6 +789,26 @@
             });
           });
 
+          /* Polygon.io items */
+          var polyArr = (data.polygon && Array.isArray(data.polygon.results))
+                      ? data.polygon.results : [];
+          polyArr.forEach(function (a) {
+            if (!a.title) return;
+            var score = null;
+            if (a.insights && a.insights.length > 0) {
+              var s = a.insights[0].sentiment;
+              score = s === 'positive' ? 0.5 : s === 'negative' ? -0.5 : 0;
+            }
+            items.push({
+              headline:  a.title                                  || '',
+              summary:   a.description                            || '',
+              source:    (a.publisher && a.publisher.name)        || 'Polygon',
+              date:      new Date(a.published_utc                 || 0),
+              url:       a.article_url                            || '#',
+              sentiment: score,
+            });
+          });
+
           /* Sort newest first, drop items with no valid date */
           items = items.filter(function (a) { return a.date && a.date.getTime() > 0; });
           items.sort(function (a, b) { return b.date - a.date; });
