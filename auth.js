@@ -12,9 +12,10 @@
   let _currentUser = null;
 
   window.Auth = {
-    isAdmin:   function () { return _role === 'admin'; },
-    getUser:   function () { return _currentUser; },
-    getClient: function () { return getClient(); }
+    isSuperAdmin: function () { return _role === 'super_admin'; },
+    isAdmin:      function () { return _role === 'admin' || _role === 'super_admin'; },
+    getUser:      function () { return _currentUser; },
+    getClient:    function () { return getClient(); }
   };
 
   async function loadUserRole(userId) {
@@ -165,7 +166,7 @@
 
       var navRight = document.querySelector('.nav-right');
       if (navRight && !avatarEl) {
-        var adminLink = _role === 'admin'
+        var adminLink = (_role === 'super_admin' || _role === 'admin')
           ? '<a href="/admin/index.html" style="font-family:\'DM Sans\',sans-serif;font-size:13px;color:#C9A84C;text-decoration:none;border:1px solid rgba(201,168,76,0.4);padding:5px 12px;">Admin</a>'
           : '';
         navRight.insertAdjacentHTML('beforeend',
@@ -332,6 +333,8 @@
   }
 
   async function checkSubscription(user) {
+    if (_role === 'super_admin' || _role === 'admin') return true;
+
     var created = new Date(user.created_at);
     var daysSince = (Date.now() - created.getTime()) / 86400000;
 
@@ -372,12 +375,13 @@
     document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
     document.body.insertAdjacentHTML('beforeend', SUB_MODAL_HTML);
 
-    const requiresAuth  = document.body.dataset.requireAuth  === 'true';
-    const requiresAdmin = document.body.dataset.requireAdmin === 'true';
+    const requiresAuth       = document.body.dataset.requireAuth       === 'true';
+    const requiresAdmin      = document.body.dataset.requireAdmin      === 'true';
+    const requiresSuperAdmin = document.body.dataset.requireSuperAdmin === 'true';
 
     const { data: { session } } = await getClient().auth.getSession();
 
-    if ((requiresAuth || requiresAdmin) && !session) {
+    if ((requiresAuth || requiresAdmin || requiresSuperAdmin) && !session) {
       window.location.href = 'index.html?login=required';
       return;
     }
@@ -387,7 +391,12 @@
       await loadUserRole(session.user.id);
     }
 
-    if (requiresAdmin && _role !== 'admin') {
+    if (requiresSuperAdmin && _role !== 'super_admin') {
+      window.location.href = 'admin/index.html';
+      return;
+    }
+
+    if (requiresAdmin && _role !== 'super_admin' && _role !== 'admin') {
       window.location.href = 'index.html';
       return;
     }
@@ -400,7 +409,7 @@
     }
 
     getClient().auth.onAuthStateChange(async function(_event, sess) {
-      if ((requiresAuth || requiresAdmin) && !sess) {
+      if ((requiresAuth || requiresAdmin || requiresSuperAdmin) && !sess) {
         window.location.href = 'index.html?login=required';
         return;
       }
@@ -415,7 +424,11 @@
         _currentUser = null;
         _role = null;
       }
-      if (requiresAdmin && _role !== 'admin') {
+      if (requiresSuperAdmin && _role !== 'super_admin') {
+        window.location.href = 'admin/index.html';
+        return;
+      }
+      if (requiresAdmin && _role !== 'super_admin' && _role !== 'admin') {
         window.location.href = 'index.html';
         return;
       }

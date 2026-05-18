@@ -103,11 +103,11 @@
 
       <div class="admin-grid">
 
-        <div class="admin-card" onclick="window.location.href='article-editor.html'">
+        <div class="admin-card" id="card-editor" onclick="openEditor()">
           <div class="admin-card-icon">✍️</div>
           <div class="admin-card-title">Article Editor</div>
           <div class="admin-card-desc">Write, edit, and publish newsletters and research reports.</div>
-          <span class="admin-card-badge">Active</span>
+          <span class="admin-card-badge" id="editor-badge">Active</span>
         </div>
 
         <div class="admin-card">
@@ -144,6 +144,27 @@
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg'
       );
       sb.auth.signOut().then(() => { window.location.href = '../index.html'; });
+    }
+
+    function openEditor() {
+      if (window.Auth && window.Auth.isSuperAdmin()) {
+        window.location.href = 'article-editor.html';
+      } else {
+        var badge = document.getElementById('editor-badge');
+        var card  = document.getElementById('card-editor');
+        badge.textContent = 'Super Admin Only';
+        badge.style.color = '#E2534A';
+        badge.style.borderColor = 'rgba(226,83,74,0.4)';
+        badge.style.background = 'rgba(226,83,74,0.08)';
+        card.style.borderColor = 'rgba(226,83,74,0.25)';
+        setTimeout(function() {
+          badge.textContent = 'Active';
+          badge.style.color = '';
+          badge.style.borderColor = '';
+          badge.style.background = '';
+          card.style.borderColor = '';
+        }, 2500);
+      }
     }
   </script>
 </body>
