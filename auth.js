@@ -477,6 +477,9 @@
     document.querySelectorAll('.btn-manage').forEach(function (b) {
       b.addEventListener('click', openSubModal);
     });
+    document.querySelectorAll('.sidebar-signout').forEach(function(b) {
+      b.addEventListener('click', signOut);
+    });
     document.getElementById('auth-overlay').addEventListener('click', function(e) {
       if (e.target.id === 'auth-overlay') closeModal();
     });
