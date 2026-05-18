@@ -370,7 +370,7 @@
       b.addEventListener('click', function() { openModal('login'); });
     });
     document.querySelectorAll('.btn-subscribe').forEach(function(b) {
-      b.addEventListener('click', function() { openModal('signup'); });
+      b.addEventListener('click', function() { window.location.href = 'subscribe.html'; });
     });
 
     document.getElementById('auth-close').addEventListener('click', closeModal);
