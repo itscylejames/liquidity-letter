@@ -319,19 +319,54 @@
         </div>
       </div>
 
-      <!-- Bitcoin ETF Flows (Farside) -->
-      <div class="etf-section" id="flows-section">
+      <!-- Standard ETFs -->
+      <div class="etf-section">
         <div class="section-header">
-          <span class="section-icon">₿</span>
-          <span class="section-title">Bitcoin ETF Daily Flows</span>
-          <span class="section-count" id="flows-status" style="color:var(--text-muted);font-size:11px;"></span>
+          <span class="section-icon">📈</span>
+          <span class="section-title">Broad Market & Equity</span>
+          <span class="section-count" id="count-equity"></span>
         </div>
-        <div id="flows-container" style="overflow-x:auto;">
-          <div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Loading flow data…</div>
+        <table class="etf-table">
+          <thead>
+            <tr>
+              <th>ETF</th>
+              <th class="right">Price</th>
+              <th class="right">Change</th>
+              <th class="right">% Change</th>
+              <th class="right">High</th>
+              <th class="right">Low</th>
+              <th class="right">Prev Close</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-equity">
+            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Fixed Income & Commodities -->
+      <div class="etf-section">
+        <div class="section-header">
+          <span class="section-icon">🏦</span>
+          <span class="section-title">Fixed Income & Commodities</span>
+          <span class="section-count" id="count-fi"></span>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
-          Flow data sourced from <a href="https://farside.co.uk/bitcoin-etf-flow-all-data/" target="_blank" style="color:var(--text-muted);text-decoration:underline;">Farside Investors</a>. Values in $M USD.
-        </div>
+        <table class="etf-table">
+          <thead>
+            <tr>
+              <th>ETF</th>
+              <th class="right">Price</th>
+              <th class="right">Change</th>
+              <th class="right">% Change</th>
+              <th class="right">High</th>
+              <th class="right">Low</th>
+              <th class="right">Prev Close</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-fi">
+            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Bitcoin ETFs -->
@@ -404,56 +439,6 @@
             </tr>
           </thead>
           <tbody id="tbody-sol">
-            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Broad Market & Equity -->
-      <div class="etf-section">
-        <div class="section-header">
-          <span class="section-icon">📈</span>
-          <span class="section-title">Broad Market & Equity</span>
-          <span class="section-count" id="count-equity"></span>
-        </div>
-        <table class="etf-table">
-          <thead>
-            <tr>
-              <th>ETF</th>
-              <th class="right">Price</th>
-              <th class="right">Change</th>
-              <th class="right">% Change</th>
-              <th class="right">High</th>
-              <th class="right">Low</th>
-              <th class="right">Prev Close</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-equity">
-            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Fixed Income & Commodities -->
-      <div class="etf-section">
-        <div class="section-header">
-          <span class="section-icon">🏦</span>
-          <span class="section-title">Fixed Income & Commodities</span>
-          <span class="section-count" id="count-fi"></span>
-        </div>
-        <table class="etf-table">
-          <thead>
-            <tr>
-              <th>ETF</th>
-              <th class="right">Price</th>
-              <th class="right">Change</th>
-              <th class="right">% Change</th>
-              <th class="right">High</th>
-              <th class="right">Low</th>
-              <th class="right">Prev Close</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-fi">
             <tr class="loading-row"><td colspan="7">Loading…</td></tr>
           </tbody>
         </table>
