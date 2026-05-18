@@ -314,11 +314,11 @@
       _toastTmr = setTimeout(function() { el.className = 'toast'; }, 3000);
     }
 
-    // Load history once auth is ready
+    // Load history once auth is ready — delay 400ms so loadUserRole() finishes first
     var _init = setInterval(function() {
       if (window.Auth && window.Auth.getUser()) {
         clearInterval(_init);
-        loadHistory();
+        setTimeout(loadHistory, 400);
       }
     }, 100);
   </script>
