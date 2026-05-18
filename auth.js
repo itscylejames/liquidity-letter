@@ -274,6 +274,63 @@
     });
   }
 
+  const SUB_MODAL_HTML = `
+<div id="sub-mgmt-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div style="background:#111111;border:1px solid rgba(201,168,76,0.25);width:100%;max-width:380px;padding:36px 32px 28px;position:relative;margin:20px;font-family:'DM Sans',sans-serif;">
+    <button id="sub-mgmt-close" style="position:absolute;top:14px;right:18px;background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;">×</button>
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8A8780;margin-bottom:20px;">Your Subscription</div>
+    <div id="sub-mgmt-content" style="color:#8A8780;font-size:13px;">Loading…</div>
+  </div>
+</div>`;
+
+  async function openSubModal() {
+    document.getElementById('sub-mgmt-overlay').style.display = 'flex';
+    var content = document.getElementById('sub-mgmt-content');
+    content.innerHTML = '<div style="color:#8A8780;font-size:13px;">Loading…</div>';
+
+    var user = _currentUser;
+    if (!user) { content.innerHTML = 'Not logged in.'; return; }
+
+    var created   = new Date(user.created_at);
+    var daysSince = (Date.now() - created.getTime()) / 86400000;
+    var inTrial   = daysSince < 7;
+    var trialEnd  = new Date(created.getTime() + 7 * 86400000);
+    var daysLeft  = Math.ceil(7 - daysSince);
+
+    var sub = null;
+    try {
+      var r = await getClient().from('subscriptions').select('*').eq('user_id', user.id).maybeSingle();
+      sub = r.data;
+    } catch(e) {}
+
+    var fmt = function(d) { return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
+    var html = '';
+
+    if (inTrial) {
+      html += '<div style="display:inline-block;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;margin-bottom:18px;">Free Trial</div>';
+      html += '<div style="font-size:26px;font-weight:700;color:#F0EDE6;margin-bottom:4px;">' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining</div>';
+      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:4px;">Trial ends ' + fmt(trialEnd) + '</div>';
+      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:24px;">After your trial: $29.99 / month</div>';
+      html += '<a href="subscribe.html" style="display:block;background:#C9A84C;color:#0A0A0A;font-size:14px;font-weight:700;padding:13px;text-align:center;text-decoration:none;letter-spacing:0.5px;">Subscribe Now</a>';
+    } else if (sub && sub.status === 'active') {
+      var subDate    = new Date(sub.created_at);
+      var nextDate   = sub.current_period_end ? new Date(sub.current_period_end) : null;
+      html += '<div style="display:inline-block;background:rgba(46,204,138,0.1);border:1px solid rgba(46,204,138,0.25);color:#2ECC8A;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;margin-bottom:18px;">Active</div>';
+      html += '<div style="font-size:17px;font-weight:600;color:#F0EDE6;margin-bottom:16px;">The Liquidity Letter</div>';
+      html += '<div style="border:1px solid rgba(255,255,255,0.07);padding:14px;margin-bottom:20px;">';
+      html += '<div style="display:flex;justify-content:space-between;font-size:13px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#8A8780;">Subscribed</span><span style="color:#F0EDE6;">' + fmt(subDate) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#8A8780;">Next billing</span><span style="color:#C9A84C;">' + (nextDate ? fmt(nextDate) + ' — $29.99' : 'See billing portal') + '</span></div>';
+      html += '</div>';
+      html += '<div style="text-align:center;margin-top:6px;"><a href="https://app.lemonsqueezy.com/my-orders" target="_blank" style="font-size:12px;color:#8A8780;text-decoration:underline;">Cancel subscription</a></div>';
+    } else {
+      html += '<div style="font-size:16px;font-weight:600;color:#F0EDE6;margin-bottom:8px;">No active subscription</div>';
+      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:22px;">Subscribe to keep full access.</div>';
+      html += '<a href="subscribe.html" style="display:block;background:#C9A84C;color:#0A0A0A;font-size:14px;font-weight:700;padding:13px;text-align:center;text-decoration:none;letter-spacing:0.5px;">Subscribe Now</a>';
+    }
+
+    content.innerHTML = html;
+  }
+
   async function checkSubscription(user) {
     var created = new Date(user.created_at);
     var daysSince = (Date.now() - created.getTime()) / 86400000;
@@ -313,6 +370,7 @@
 
   async function init() {
     document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
+    document.body.insertAdjacentHTML('beforeend', SUB_MODAL_HTML);
 
     const requiresAuth  = document.body.dataset.requireAuth  === 'true';
     const requiresAdmin = document.body.dataset.requireAdmin === 'true';
@@ -374,6 +432,16 @@
     });
 
     document.getElementById('auth-close').addEventListener('click', closeModal);
+
+    document.getElementById('sub-mgmt-close').addEventListener('click', function () {
+      document.getElementById('sub-mgmt-overlay').style.display = 'none';
+    });
+    document.getElementById('sub-mgmt-overlay').addEventListener('click', function (e) {
+      if (e.target.id === 'sub-mgmt-overlay') document.getElementById('sub-mgmt-overlay').style.display = 'none';
+    });
+    document.querySelectorAll('.btn-manage').forEach(function (b) {
+      b.addEventListener('click', openSubModal);
+    });
     document.getElementById('auth-overlay').addEventListener('click', function(e) {
       if (e.target.id === 'auth-overlay') closeModal();
     });

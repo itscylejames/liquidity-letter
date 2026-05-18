@@ -3,6 +3,10 @@
    Desktop/tablet layout is completely unaffected.
 ───────────────────────────────────────────────────────────── */
 
+/* ── Always hide nav welcome text & caret on inner pages ──── */
+.nav-user-name  { display: none !important; }
+.nav-user-caret { display: none !important; }
+
 /* ── Hamburger button (hidden on desktop) ─────────────────── */
 .mob-ham {
   display: none;

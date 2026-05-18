@@ -71,6 +71,11 @@
     .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.06); }
     .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
     .sidebar-item.active svg { opacity: 1; }
+    .sidebar-premium { margin: 12px 14px; padding: 14px; border: 1px solid rgba(201,168,76,0.25); background: rgba(201,168,76,0.04); }
+    .sidebar-premium-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #C9A84C; margin-bottom: 6px; }
+    .sidebar-premium-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .btn-manage { width: 100%; height: 30px; border: 1px solid rgba(201,168,76,0.35); background: none; color: #C9A84C; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: background 0.2s; }
+    .btn-manage:hover { background: rgba(201,168,76,0.08); }
     .sidebar-signout { display: flex; align-items: center; gap: 8px; padding: 14px 20px; color: var(--text-muted); font-size: 13px; cursor: pointer; border-top: 1px solid var(--border); transition: color 0.15s; }
     .sidebar-signout:hover { color: var(--text-primary); }
 
@@ -274,6 +279,15 @@
       </a>
 
     </nav>
+
+    <div class="sidebar-premium">
+      <div class="sidebar-premium-head">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#C9A84C"><path d="M2 20h20L12 4z"/></svg>
+        Premium Subscriber
+      </div>
+      <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+      <button class="btn-manage">Manage Subscription</button>
+    </div>
 
     <div class="sidebar-signout" id="sidebar-logout">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
