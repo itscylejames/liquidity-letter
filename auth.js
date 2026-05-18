@@ -179,6 +179,23 @@
         document.getElementById('btn-signout').addEventListener('click', signOut);
       }
 
+      // Inner pages have .nav-avatar hardcoded — inject admin link to the left of the bell
+      if (navRight && avatarEl && (_role === 'super_admin' || _role === 'admin')) {
+        if (!document.getElementById('nav-admin-link')) {
+          var bell = document.getElementById('notif-bell');
+          var adminEl = document.createElement('a');
+          adminEl.id = 'nav-admin-link';
+          adminEl.href = '/admin/index.html';
+          adminEl.textContent = 'Admin';
+          adminEl.style.cssText = "font-family:'DM Sans',sans-serif;font-size:13px;color:#C9A84C;text-decoration:none;border:1px solid rgba(201,168,76,0.4);padding:5px 12px;white-space:nowrap;";
+          if (bell) {
+            navRight.insertBefore(adminEl, bell);
+          } else {
+            navRight.insertAdjacentElement('afterbegin', adminEl);
+          }
+        }
+      }
+
       var avatarUrl = user.user_metadata && user.user_metadata.avatar_url;
       if (avatarEl) {
         if (avatarUrl) {
