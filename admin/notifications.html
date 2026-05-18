@@ -105,6 +105,12 @@
     .history-badge.alert      { color: #E2534A; border-color: rgba(226,83,74,0.3); }
     .history-badge.general    { color: var(--muted); }
     .history-empty { font-size: 13px; color: var(--muted); padding: 20px 0; text-align: center; }
+    .btn-delete-notif {
+      background: none; border: none; color: rgba(226,83,74,0.45);
+      font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1;
+      transition: color 0.15s; flex-shrink: 0; align-self: flex-start; margin-top: 1px;
+    }
+    .btn-delete-notif:hover { color: #E2534A; }
 
     .toast {
       position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
@@ -263,9 +269,13 @@
         return;
       }
 
+      var isSA = window.Auth && window.Auth.isSuperAdmin();
       list.innerHTML = data.map(function(n) {
         var time = new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        return '<div class="history-item">' +
+        var deleteBtn = isSA
+          ? '<button class="btn-delete-notif" onclick="deleteNotif(\'' + n.id + '\')" title="Delete">×</button>'
+          : '';
+        return '<div class="history-item" id="notif-row-' + n.id + '">' +
           '<div class="history-dot"></div>' +
           '<div class="history-info">' +
             '<div class="history-name">' + esc(n.title) + '</div>' +
@@ -273,9 +283,23 @@
             '<div class="history-meta">' + time + '</div>' +
           '</div>' +
           '<span class="history-badge ' + (n.type||'general') + '">' + (n.type||'general') + '</span>' +
+          deleteBtn +
         '</div>';
       }).join('');
     }
+
+    window.deleteNotif = async function(id) {
+      if (!confirm('Delete this notification? Subscribers will no longer see it.')) return;
+      var { error } = await getSB().from('notifications').delete().eq('id', id);
+      if (error) { toast('Failed: ' + error.message, 'err'); return; }
+      var row = document.getElementById('notif-row-' + id);
+      if (row) row.remove();
+      var list = document.getElementById('history-list');
+      if (!list.querySelector('.history-item')) {
+        list.innerHTML = '<div class="history-empty">No notifications sent yet.</div>';
+      }
+      toast('Notification removed.', 'ok');
+    };
 
     function esc(s) {
       return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
