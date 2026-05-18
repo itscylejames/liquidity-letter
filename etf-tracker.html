@@ -319,54 +319,19 @@
         </div>
       </div>
 
-      <!-- Standard ETFs -->
-      <div class="etf-section">
+      <!-- Bitcoin ETF Flows (Farside) -->
+      <div class="etf-section" id="flows-section">
         <div class="section-header">
-          <span class="section-icon">📈</span>
-          <span class="section-title">Broad Market & Equity</span>
-          <span class="section-count" id="count-equity"></span>
+          <span class="section-icon">₿</span>
+          <span class="section-title">Bitcoin ETF Daily Flows</span>
+          <span class="section-count" id="flows-status" style="color:var(--text-muted);font-size:11px;"></span>
         </div>
-        <table class="etf-table">
-          <thead>
-            <tr>
-              <th>ETF</th>
-              <th class="right">Price</th>
-              <th class="right">Change</th>
-              <th class="right">% Change</th>
-              <th class="right">High</th>
-              <th class="right">Low</th>
-              <th class="right">Prev Close</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-equity">
-            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Fixed Income & Commodities -->
-      <div class="etf-section">
-        <div class="section-header">
-          <span class="section-icon">🏦</span>
-          <span class="section-title">Fixed Income & Commodities</span>
-          <span class="section-count" id="count-fi"></span>
+        <div id="flows-container" style="overflow-x:auto;">
+          <div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Loading flow data…</div>
         </div>
-        <table class="etf-table">
-          <thead>
-            <tr>
-              <th>ETF</th>
-              <th class="right">Price</th>
-              <th class="right">Change</th>
-              <th class="right">% Change</th>
-              <th class="right">High</th>
-              <th class="right">Low</th>
-              <th class="right">Prev Close</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-fi">
-            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
-          </tbody>
-        </table>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+          Flow data sourced from <a href="https://farside.co.uk/bitcoin-etf-flow-all-data/" target="_blank" style="color:var(--text-muted);text-decoration:underline;">Farside Investors</a>. Values in $M USD.
+        </div>
       </div>
 
       <!-- Bitcoin ETFs -->
@@ -444,6 +409,56 @@
         </table>
       </div>
 
+      <!-- Broad Market & Equity -->
+      <div class="etf-section">
+        <div class="section-header">
+          <span class="section-icon">📈</span>
+          <span class="section-title">Broad Market & Equity</span>
+          <span class="section-count" id="count-equity"></span>
+        </div>
+        <table class="etf-table">
+          <thead>
+            <tr>
+              <th>ETF</th>
+              <th class="right">Price</th>
+              <th class="right">Change</th>
+              <th class="right">% Change</th>
+              <th class="right">High</th>
+              <th class="right">Low</th>
+              <th class="right">Prev Close</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-equity">
+            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Fixed Income & Commodities -->
+      <div class="etf-section">
+        <div class="section-header">
+          <span class="section-icon">🏦</span>
+          <span class="section-title">Fixed Income & Commodities</span>
+          <span class="section-count" id="count-fi"></span>
+        </div>
+        <table class="etf-table">
+          <thead>
+            <tr>
+              <th>ETF</th>
+              <th class="right">Price</th>
+              <th class="right">Change</th>
+              <th class="right">% Change</th>
+              <th class="right">High</th>
+              <th class="right">Low</th>
+              <th class="right">Prev Close</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-fi">
+            <tr class="loading-row"><td colspan="7">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="page-footer">
         Prices sourced from Finnhub. Data may be delayed 15–20 minutes. Not financial advice.
       </div>
@@ -451,6 +466,65 @@
   </div>
 
   <script>
+    // ── Bitcoin ETF Flows (Farside via Worker) ─────────────────────
+    (function () {
+      var WORKER = 'https://ll-api.cylejames-dj.workers.dev';
+
+      function flowCell(val) {
+        var n = parseFloat(val);
+        if (isNaN(n) || val === '' || val === '-') return '<td style="text-align:right;color:#555;font-size:12px;">—</td>';
+        var color = n > 0 ? '#2ECC8A' : n < 0 ? '#E2534A' : '#8A8780';
+        return '<td style="text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:' + color + ';">' + (n > 0 ? '+' : '') + n.toFixed(1) + '</td>';
+      }
+
+      fetch(WORKER + '/btc-flows')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var container = document.getElementById('flows-container');
+          var status    = document.getElementById('flows-status');
+
+          if (data.error || !data.headers || data.headers.length === 0) {
+            container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">Flow data unavailable — Farside may be blocking automated requests.</div>';
+            return;
+          }
+
+          status.textContent = 'Last ' + data.rows.length + ' trading days';
+
+          var html = '<table style="width:100%;border-collapse:collapse;font-family:\'DM Sans\',sans-serif;">';
+          html += '<thead><tr>';
+          data.headers.forEach(function (h, i) {
+            var align = i === 0 ? 'left' : 'right';
+            var bold  = h === 'Total' ? 'font-weight:700;color:#C9A84C;' : '';
+            html += '<th style="text-align:' + align + ';font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#8A8780;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.07);' + bold + '">' + h + '</th>';
+          });
+          html += '</tr></thead><tbody>';
+
+          data.rows.forEach(function (row) {
+            html += '<tr>';
+            row.forEach(function (cell, i) {
+              if (i === 0) {
+                html += '<td style="font-size:12px;color:#F0EDE6;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.04);white-space:nowrap;">' + cell + '</td>';
+              } else {
+                var n    = parseFloat(cell);
+                var isTotal = data.headers[i] === 'Total';
+                var color = isNaN(n) || cell === '-' || cell === '' ? '#555' : n > 0 ? '#2ECC8A' : n < 0 ? '#E2534A' : '#8A8780';
+                var fw    = isTotal ? 'font-weight:700;' : '';
+                var disp  = (isNaN(n) || cell === '-' || cell === '') ? '—' : (n > 0 ? '+' : '') + n.toFixed(1);
+                html += '<td style="text-align:right;font-size:12px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.04);font-variant-numeric:tabular-nums;color:' + color + ';' + fw + '">' + disp + '</td>';
+              }
+            });
+            html += '</tr>';
+          });
+
+          html += '</tbody></table>';
+          container.innerHTML = html;
+        })
+        .catch(function () {
+          document.getElementById('flows-container').innerHTML =
+            '<div style="font-size:13px;color:var(--text-muted);padding:8px 0;">Could not load flow data.</div>';
+        });
+    })();
+
     const FINNHUB_KEY = 'd82qj01r01qvkevnhh90d82qj01r01qvkevnhh9g';
 
     const ETF_GROUPS = {

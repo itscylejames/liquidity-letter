@@ -99,6 +99,51 @@ export default {
         });
       }
 
+      // ── Bitcoin ETF Flows (Farside scrape) ────────────────────────
+      if (url.pathname === '/btc-flows') {
+        const fsRes = await fetch('https://farside.co.uk/bitcoin-etf-flow-all-data/', {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+            'Referer': 'https://www.google.com/',
+          }
+        });
+
+        if (!fsRes.ok) {
+          return new Response(JSON.stringify({ error: `Farside returned ${fsRes.status}` }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const html = await fsRes.text();
+        const headers = [];
+        const rows = [];
+
+        const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+        if (tableMatch) {
+          const tableHtml = tableMatch[1];
+          const trMatches = [...tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+
+          trMatches.forEach((tr, i) => {
+            if (i === 0) {
+              const ths = [...tr[1].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/gi)];
+              ths.forEach(th => headers.push(th[1].replace(/<[^>]*>/g, '').trim()));
+            } else {
+              const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)];
+              if (tds.length > 0) {
+                rows.push(tds.map(td => td[1].replace(/<[^>]*>/g, '').trim()));
+              }
+            }
+          });
+        }
+
+        return new Response(JSON.stringify({ headers, rows: rows.slice(-10) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // ── Zeus AI ────────────────────────────────────────────────────
       if (url.pathname === '/zeus' && request.method === 'POST') {
         const { messages } = await request.json();
