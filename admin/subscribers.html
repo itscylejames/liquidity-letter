@@ -422,8 +422,7 @@
       btn.disabled = true; btn.textContent = 'Saving…';
       try {
         var { error } = await getSB()
-          .from('profiles')
-          .upsert({ id: modalUserId, role: selectedRole }, { onConflict: 'id' });
+          .rpc('admin_set_role', { target_id: modalUserId, new_role: selectedRole });
         if (error) throw error;
         var sub = allSubscribers.find(function(s) { return s.id === modalUserId; });
         if (sub) sub.role = selectedRole;
