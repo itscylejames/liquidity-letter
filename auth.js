@@ -10,6 +10,7 @@
 
   let _role = null;
   let _currentUser = null;
+  let _trialUsed = false;
 
   window.Auth = {
     isSuperAdmin: function () { return _role === 'super_admin'; },
@@ -22,11 +23,12 @@
     try {
       const { data } = await getClient()
         .from('profiles')
-        .select('role')
+        .select('role, trial_used')
         .eq('id', userId)
         .single();
       _role = (data && data.role) || 'user';
-    } catch { _role = 'user'; }
+      _trialUsed = !!(data && data.trial_used);
+    } catch { _role = 'user'; _trialUsed = false; }
   }
 
   const MODAL_HTML = `
@@ -325,7 +327,7 @@
       sub = r.data;
     } catch(e) {}
 
-    var cancelLink = '<div style="text-align:center;margin-top:18px;"><a href="https://app.lemonsqueezy.com/my-orders" target="_blank" style="font-size:11px;color:#555;text-decoration:underline;letter-spacing:0.02em;">Cancel subscription</a></div>';
+    var cancelLink = '<div style="text-align:center;margin-top:18px;"><button onclick="window.__llCancelSub()" style="background:none;border:none;padding:0;font-family:\'DM Sans\',sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.02em;cursor:pointer;">Cancel subscription</button></div>';
     var fmt = function(d) { return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
     var html = '';
 
@@ -354,13 +356,45 @@
     content.innerHTML = html;
   }
 
+  window.__llCancelSub = async function() {
+    var confirmed = confirm(
+      'Are you sure you want to cancel your subscription?\n\n' +
+      'You will keep full access until the end of your current billing period.'
+    );
+    if (!confirmed) return;
+
+    var content = document.getElementById('sub-mgmt-content');
+    if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;">Opening billing portal…</div>';
+
+    try {
+      var sess = await getClient().auth.getSession();
+      var token = sess.data && sess.data.session && sess.data.session.access_token;
+      if (!token) throw new Error('Not logged in');
+
+      var res = await fetch('https://liquidity-letter.cylejames-dj.workers.dev/portal', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+      });
+      var data = await res.json();
+      if (data.url) {
+        window.open(data.url, '_blank');
+        if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;text-align:center;padding:12px 0;">Billing portal opened in a new tab.<br><span style="font-size:11px;color:#4a4a4a;">You can cancel from there.</span></div>';
+      } else {
+        throw new Error(data.error || 'Could not get portal URL');
+      }
+    } catch(e) {
+      if (content) content.innerHTML = '<div style="color:#E2534A;font-size:13px;">Error: ' + e.message + '</div>';
+    }
+  };
+
   async function checkSubscription(user) {
     if (_role === 'super_admin' || _role === 'admin') return true;
 
     var created = new Date(user.created_at);
     var daysSince = (Date.now() - created.getTime()) / 86400000;
 
-    if (daysSince < 7) {
+    // Only allow trial if within 7 days AND they haven't used a trial before
+    if (daysSince < 7 && !_trialUsed) {
       injectTrialBanner(Math.ceil(7 - daysSince));
       return true;
     }

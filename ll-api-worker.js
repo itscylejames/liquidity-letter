@@ -168,6 +168,45 @@ export default {
         });
       }
 
+      // ── Lemon Squeezy Customer Portal ─────────────────────────────
+      if (url.pathname === '/portal' && request.method === 'POST') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace('Bearer ', '').trim();
+        if (!token) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+
+        // Verify JWT and get user ID
+        const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'apikey': env.SUPABASE_SERVICE_KEY }
+        });
+        if (!userRes.ok) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        const userData = await userRes.json();
+        const userId = userData.id;
+
+        // Get lemon_customer_id from subscriptions
+        const subRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}&select=lemon_customer_id`, {
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+        });
+        const subs = await subRes.json();
+        const customerId = subs[0]?.lemon_customer_id;
+        if (!customerId) return new Response(JSON.stringify({ error: 'No subscription found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+
+        // Get customer portal URL from Lemon Squeezy
+        const lsRes = await fetch(`https://api.lemonsqueezy.com/v1/customers/${customerId}`, {
+          headers: { 'Authorization': `Bearer ${env.LEMON_API_KEY}`, 'Accept': 'application/vnd.api+json' }
+        });
+        const lsData = await lsRes.json();
+        const portalUrl = lsData.data?.attributes?.urls?.customer_portal;
+        if (!portalUrl) return new Response(JSON.stringify({ error: 'Could not get portal URL from Lemon Squeezy' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+
+        return new Response(JSON.stringify({ url: portalUrl }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // ── Lemon Squeezy Webhook ──────────────────────────────────────
       if (url.pathname === '/lemon-webhook' && request.method === 'POST') {
         const rawBody = await request.text();
@@ -192,6 +231,19 @@ export default {
             current_period_end: attrs.renews_at || attrs.ends_at || null,
             updated_at: new Date().toISOString(),
           });
+
+          // Mark trial as used on first subscription so they can't re-trial after cancelling
+          if (eventName === 'subscription_created') {
+            await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+              method: 'PATCH',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ trial_used: true }),
+            });
+          }
         }
 
         return new Response('OK', { headers: corsHeaders });
