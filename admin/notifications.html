@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #C9A84C;
+      --gold-dim:    rgba(201,168,76,0.12);
+      --gold-border: rgba(201,168,76,0.35);
+      --bg:          #0A0A0A;
+      --bg-card:     #111111;
+      --border:      rgba(255,255,255,0.08);
+      --text:        #F0EDE6;
+      --muted:       #8A8780;
+      --green:       #2ECC8A;
+      --nav-h:       60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+    a { color: inherit; text-decoration: none; }
+
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h); background: rgba(10,10,10,0.94);
+      backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .nav-logo  { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--gold); }
+    .nav-sep   { color: rgba(255,255,255,0.15); }
+    .nav-label { font-size: 13px; color: var(--muted); }
+    .nav-back  { font-size: 13px; color: var(--muted); transition: color 0.15s; }
+    .nav-back:hover { color: var(--text); }
+
+    .page { padding-top: var(--nav-h); min-height: 100vh; }
+    .container { max-width: 860px; margin: 0 auto; padding: 44px 32px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+
+    .panel { background: var(--bg-card); border: 1px solid var(--border); padding: 28px; }
+    .panel-title { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 4px; }
+    .panel-sub   { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%; background: #1C1C1C; border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+      padding: 11px 14px; outline: none; transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--gold-border); }
+    .field input::placeholder, .field textarea::placeholder { color: rgba(255,255,255,0.2); }
+    .field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+    .field select { appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238A8780' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+    }
+
+    .char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 5px; }
+
+    .btn-send {
+      width: 100%; padding: 13px; background: var(--gold); border: none;
+      color: #0A0A0A; font-size: 14px; font-weight: 700; cursor: pointer;
+      letter-spacing: 0.5px; transition: opacity 0.15s; margin-top: 4px;
+    }
+    .btn-send:hover { opacity: 0.88; }
+    .btn-send:disabled { opacity: 0.4; cursor: default; }
+
+    .preview-box {
+      background: #0D0D0D; border: 1px solid var(--border); padding: 18px;
+      margin-bottom: 24px; min-height: 80px;
+    }
+    .preview-icon { font-size: 18px; margin-bottom: 8px; }
+    .preview-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .preview-body  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .preview-time  { font-size: 11px; color: rgba(138,135,128,0.5); margin-top: 8px; }
+    .preview-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+    /* History panel */
+    .history-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 28px; }
+    .history-title { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; }
+    .history-list  { display: flex; flex-direction: column; gap: 1px; }
+    .history-item  {
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 5px; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-body { font-size: 12px; color: var(--muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-meta { font-size: 11px; color: rgba(138,135,128,0.5); }
+    .history-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      padding: 2px 7px; border: 1px solid var(--border); color: var(--muted); flex-shrink: 0;
+    }
+    .history-badge.article    { color: #A0C4FF; border-color: rgba(160,196,255,0.3); }
+    .history-badge.newsletter { color: var(--gold); border-color: var(--gold-border); }
+    .history-badge.alert      { color: #E2534A; border-color: rgba(226,83,74,0.3); }
+    .history-badge.general    { color: var(--muted); }
+    .history-empty { font-size: 13px; color: var(--muted); padding: 20px 0; text-align: center; }
+
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: #1C1C1C; border: 1px solid var(--border); color: var(--text);
+      font-size: 13px; padding: 10px 22px; z-index: 400;
+      opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .toast.ok  { border-color: rgba(46,204,138,0.4); color: var(--green); }
+    .toast.err { border-color: rgba(226,83,74,0.4);  color: #E2534A; }
+
+    @media (max-width: 680px) {
+      .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-require-admin="true">
+
+  <nav class="top-nav">
+    <div class="nav-left">
+      <span class="nav-logo">The Liquidity Letter</span>
+      <span class="nav-sep">/</span>
+      <a href="index.html" class="nav-back">Admin</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-label">Notifications</span>
+    </div>
+    <div class="nav-right">
+      <a href="../dashboard.html" class="nav-back">← Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+
+      <!-- Compose panel -->
+      <div class="panel">
+        <div class="panel-title">Send Notification</div>
+        <div class="panel-sub">Sent instantly to all subscribers.</div>
+
+        <div class="field">
+          <label>Type</label>
+          <select id="notif-type">
+            <option value="general">General</option>
+            <option value="alert">Alert</option>
+            <option value="newsletter">Newsletter</option>
+            <option value="article">Article</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Title</label>
+          <input type="text" id="notif-title" placeholder="e.g. CPI data drops tomorrow" maxlength="80">
+          <div class="char-count"><span id="title-count">0</span>/80</div>
+        </div>
+
+        <div class="field">
+          <label>Message</label>
+          <textarea id="notif-body" placeholder="Keep it short and punchy — subscribers see this in their bell dropdown." maxlength="200"></textarea>
+          <div class="char-count"><span id="body-count">0</span>/200</div>
+        </div>
+
+        <div class="preview-label">Preview</div>
+        <div class="preview-box">
+          <div class="preview-icon" id="prev-icon">🔔</div>
+          <div class="preview-title" id="prev-title" style="color:var(--muted);">Your title will appear here</div>
+          <div class="preview-body"  id="prev-body"  style="color:rgba(138,135,128,0.5);">Your message will appear here</div>
+          <div class="preview-time">Just now</div>
+        </div>
+
+        <button class="btn-send" id="btn-send">Send to All Subscribers</button>
+      </div>
+
+      <!-- History panel -->
+      <div class="history-panel">
+        <div class="history-title">Sent Notifications</div>
+        <div class="history-list" id="history-list">
+          <div class="history-empty">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../auth.js"></script>
+  <script>
+    var typeIcons = { general: '🔔', alert: '⚠️', newsletter: '📬', article: '📄' };
+    function getSB() { return window.Auth.getClient(); }
+
+    // Live preview
+    function updatePreview() {
+      var type  = document.getElementById('notif-type').value;
+      var title = document.getElementById('notif-title').value.trim();
+      var body  = document.getElementById('notif-body').value.trim();
+      document.getElementById('prev-icon').textContent  = typeIcons[type] || '🔔';
+      document.getElementById('prev-title').textContent = title || 'Your title will appear here';
+      document.getElementById('prev-title').style.color = title ? 'var(--text)' : 'var(--muted)';
+      document.getElementById('prev-body').textContent  = body  || 'Your message will appear here';
+      document.getElementById('prev-body').style.color  = body  ? 'var(--muted)' : 'rgba(138,135,128,0.5)';
+    }
+
+    document.getElementById('notif-type').addEventListener('change', updatePreview);
+
+    document.getElementById('notif-title').addEventListener('input', function() {
+      document.getElementById('title-count').textContent = this.value.length;
+      updatePreview();
+    });
+
+    document.getElementById('notif-body').addEventListener('input', function() {
+      document.getElementById('body-count').textContent = this.value.length;
+      updatePreview();
+    });
+
+    // Send
+    document.getElementById('btn-send').addEventListener('click', async function() {
+      var title = document.getElementById('notif-title').value.trim();
+      var body  = document.getElementById('notif-body').value.trim();
+      var type  = document.getElementById('notif-type').value;
+
+      if (!title) { toast('Add a title before sending.', 'err'); return; }
+      if (!body)  { toast('Add a message before sending.', 'err'); return; }
+
+      this.disabled = true; this.textContent = 'Sending…';
+
+      var user = window.Auth.getUser();
+      var { error } = await getSB().from('notifications').insert({
+        title, body, type, created_by: user ? user.id : null
+      });
+
+      this.disabled = false; this.textContent = 'Send to All Subscribers';
+
+      if (error) { toast('Failed: ' + error.message, 'err'); return; }
+
+      toast('Notification sent ✓', 'ok');
+      document.getElementById('notif-title').value = '';
+      document.getElementById('notif-body').value  = '';
+      document.getElementById('title-count').textContent = '0';
+      document.getElementById('body-count').textContent  = '0';
+      updatePreview();
+      loadHistory();
+    });
+
+    // History
+    async function loadHistory() {
+      var { data } = await getSB()
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      var list = document.getElementById('history-list');
+      if (!data || !data.length) {
+        list.innerHTML = '<div class="history-empty">No notifications sent yet.</div>';
+        return;
+      }
+
+      list.innerHTML = data.map(function(n) {
+        var time = new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        return '<div class="history-item">' +
+          '<div class="history-dot"></div>' +
+          '<div class="history-info">' +
+            '<div class="history-name">' + esc(n.title) + '</div>' +
+            '<div class="history-body">' + esc(n.body)  + '</div>' +
+            '<div class="history-meta">' + time + '</div>' +
+          '</div>' +
+          '<span class="history-badge ' + (n.type||'general') + '">' + (n.type||'general') + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    function esc(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    var _toastTmr;
+    function toast(msg, type) {
+      var el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (type ? ' ' + type : '');
+      clearTimeout(_toastTmr);
+      _toastTmr = setTimeout(function() { el.className = 'toast'; }, 3000);
+    }
+
+    // Load history once auth is ready
+    var _init = setInterval(function() {
+      if (window.Auth && window.Auth.getUser()) {
+        clearInterval(_init);
+        loadHistory();
+      }
+    }, 100);
+  </script>
+</body>
+</html>

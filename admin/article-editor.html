@@ -618,6 +618,15 @@
 
         if (err) { toast('Publish failed: ' + err.message, 'err'); return; }
 
+        // Auto-send notification to all subscribers
+        const typeLabel = activeType === 'newsletter' ? 'Newsletter' : 'Research Report';
+        await getSB().from('notifications').insert({
+          title: typeLabel + ': ' + title,
+          body:  excerpt || 'A new ' + typeLabel.toLowerCase() + ' has just been published.',
+          type:  activeType,
+          created_by: user ? user.id : null,
+        });
+
         closeModal();
         setBadge('Published ✓', true);
         toast(`Published as ${activeType === 'newsletter' ? 'Newsletter' : 'Research'} ✓`, 'ok');
