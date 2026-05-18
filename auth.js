@@ -289,7 +289,11 @@
     var content = document.getElementById('sub-mgmt-content');
     content.innerHTML = '<div style="color:#8A8780;font-size:13px;">Loading…</div>';
 
+    // Fall back to a direct Supabase auth call if _currentUser hasn't been set yet
     var user = _currentUser;
+    if (!user) {
+      try { var { data } = await getClient().auth.getUser(); user = data && data.user; } catch(e) {}
+    }
     if (!user) { content.innerHTML = 'Not logged in.'; return; }
 
     var created   = new Date(user.created_at);
@@ -304,25 +308,26 @@
       sub = r.data;
     } catch(e) {}
 
+    var cancelLink = '<div style="text-align:center;margin-top:18px;"><a href="https://app.lemonsqueezy.com/my-orders" target="_blank" style="font-size:11px;color:#555;text-decoration:underline;letter-spacing:0.02em;">Cancel subscription</a></div>';
     var fmt = function(d) { return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
     var html = '';
 
-    if (inTrial) {
-      html += '<div style="display:inline-block;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;margin-bottom:18px;">Free Trial</div>';
-      html += '<div style="font-size:26px;font-weight:700;color:#F0EDE6;margin-bottom:4px;">' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining</div>';
-      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:4px;">Trial ends ' + fmt(trialEnd) + '</div>';
-      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:24px;">After your trial: $29.99 / month</div>';
-      html += '<a href="subscribe.html" style="display:block;background:#C9A84C;color:#0A0A0A;font-size:14px;font-weight:700;padding:13px;text-align:center;text-decoration:none;letter-spacing:0.5px;">Subscribe Now</a>';
-    } else if (sub && sub.status === 'active') {
-      var subDate    = new Date(sub.created_at);
-      var nextDate   = sub.current_period_end ? new Date(sub.current_period_end) : null;
+    if (sub && sub.status === 'active') {
+      var subDate  = new Date(sub.created_at);
+      var nextDate = sub.current_period_end ? new Date(sub.current_period_end) : null;
       html += '<div style="display:inline-block;background:rgba(46,204,138,0.1);border:1px solid rgba(46,204,138,0.25);color:#2ECC8A;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;margin-bottom:18px;">Active</div>';
       html += '<div style="font-size:17px;font-weight:600;color:#F0EDE6;margin-bottom:16px;">The Liquidity Letter</div>';
-      html += '<div style="border:1px solid rgba(255,255,255,0.07);padding:14px;margin-bottom:20px;">';
+      html += '<div style="border:1px solid rgba(255,255,255,0.07);padding:14px;margin-bottom:4px;">';
       html += '<div style="display:flex;justify-content:space-between;font-size:13px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#8A8780;">Subscribed</span><span style="color:#F0EDE6;">' + fmt(subDate) + '</span></div>';
       html += '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#8A8780;">Next billing</span><span style="color:#C9A84C;">' + (nextDate ? fmt(nextDate) + ' — $29.99' : 'See billing portal') + '</span></div>';
       html += '</div>';
-      html += '<div style="text-align:center;margin-top:6px;"><a href="https://app.lemonsqueezy.com/my-orders" target="_blank" style="font-size:12px;color:#8A8780;text-decoration:underline;">Cancel subscription</a></div>';
+      html += cancelLink;
+    } else if (inTrial) {
+      html += '<div style="display:inline-block;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;margin-bottom:18px;">Free Trial</div>';
+      html += '<div style="font-size:26px;font-weight:700;color:#F0EDE6;margin-bottom:4px;">' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining</div>';
+      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:4px;">Trial ends ' + fmt(trialEnd) + '</div>';
+      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:4px;">After your trial: $29.99 / month</div>';
+      html += cancelLink;
     } else {
       html += '<div style="font-size:16px;font-weight:600;color:#F0EDE6;margin-bottom:8px;">No active subscription</div>';
       html += '<div style="font-size:13px;color:#8A8780;margin-bottom:22px;">Subscribe to keep full access.</div>';
