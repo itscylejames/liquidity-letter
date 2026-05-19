@@ -371,7 +371,7 @@
         window.open(data.url, '_blank');
         if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;text-align:center;padding:12px 0;">Billing portal opened in a new tab.<br><span style="font-size:11px;color:#4a4a4a;">You can cancel from there.</span></div>';
       } else {
-        throw new Error(data.error || 'Could not get portal URL');
+        throw new Error(JSON.stringify(data));
       }
     } catch(e) {
       if (content) content.innerHTML = '<div style="color:#E2534A;font-size:13px;">Error: ' + e.message + '</div>';

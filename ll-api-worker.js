@@ -198,7 +198,7 @@ export default {
         });
         const lsData = await lsRes.json();
         const portalUrl = lsData.data?.attributes?.urls?.customer_portal;
-        if (!portalUrl) return new Response(JSON.stringify({ error: 'Could not get portal URL from Lemon Squeezy' }), {
+        if (!portalUrl) return new Response(JSON.stringify({ error: 'Could not get portal URL from Lemon Squeezy', debug: { status: lsRes.status, urls: lsData.data?.attributes?.urls, customerId } }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
