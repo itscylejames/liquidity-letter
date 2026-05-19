@@ -321,7 +321,7 @@
       sub = r.data;
     } catch(e) {}
 
-    var cancelLink = '<div style="text-align:center;margin-top:18px;"><button onclick="window.__llCancelSub()" style="background:none;border:none;padding:0;font-family:\'DM Sans\',sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.02em;cursor:pointer;">Cancel subscription</button></div>';
+    var cancelLink = '<div style="text-align:center;margin-top:18px;"><a href="https://app.lemonsqueezy.com/my-orders" target="_blank" style="font-family:\'DM Sans\',sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.02em;">Cancel subscription</a></div>';
     var fmt = function(d) { return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
     var html = '';
 
@@ -371,7 +371,7 @@
         window.open(data.url, '_blank');
         if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;text-align:center;padding:12px 0;">Billing portal opened in a new tab.<br><span style="font-size:11px;color:#4a4a4a;">You can cancel from there.</span></div>';
       } else {
-        throw new Error(JSON.stringify(data));
+        throw new Error(data.error || 'Could not get portal URL');
       }
     } catch(e) {
       if (content) content.innerHTML = '<div style="color:#E2534A;font-size:13px;">Error: ' + e.message + '</div>';
