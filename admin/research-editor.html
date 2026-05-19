@@ -519,11 +519,31 @@
     function closePublishModal() { document.getElementById('publish-modal').classList.remove('open'); }
     document.getElementById('publish-modal').addEventListener('click', e => { if (e.target.id === 'publish-modal') closePublishModal(); });
 
-    function withTimeout(promise, ms, label) {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timed out after ' + ms/1000 + 's')), ms))
-      ]);
+    const SB_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+
+    async function sbWrite(method, id, row) {
+      const sess = await getSB().auth.getSession();
+      const token = (sess.data?.session?.access_token) || SB_KEY;
+      let url = SB_URL + '/rest/v1/articles';
+      if (method === 'PATCH') url += '?id=eq.' + id;
+      const resp = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + token,
+          'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+        },
+        body: JSON.stringify(row)
+      });
+      const text = await resp.text();
+      if (!resp.ok) throw new Error('HTTP ' + resp.status + ': ' + text.slice(0, 300));
+      if (method === 'POST') {
+        const arr = JSON.parse(text);
+        return (Array.isArray(arr) ? arr[0] : arr) || null;
+      }
+      return null;
     }
 
     async function doPublish() {
@@ -531,7 +551,7 @@
       btn.disabled = true;
       try {
         btn.textContent = 'Reading editor…';
-        const body = await withTimeout(getEditorContent(), 10000, 'Editor');
+        const body = await getEditorContent();
 
         btn.textContent = 'Saving…';
         const title = document.getElementById('article-title').innerText.trim();
@@ -545,17 +565,14 @@
           category: document.getElementById('cat-select').value,
           author_id: user ? user.id : null
         };
-        const db = getSB(); let err;
-        if (articleId) {
-          const res = await withTimeout(db.from('articles').update(row).eq('id', articleId), 15000, 'Database');
-          err = res.error;
-        } else {
-          const res = await withTimeout(db.from('articles').insert(row).select('id').single(), 15000, 'Database');
-          err = res.error; if (res.data) articleId = res.data.id;
-        }
-        if (err) throw new Error(err.message);
 
-        // fire-and-forget — don't block publish on notification insert
+        if (articleId) {
+          await sbWrite('PATCH', articleId, row);
+        } else {
+          const created = await sbWrite('POST', null, row);
+          if (created?.id) articleId = created.id;
+        }
+
         getSB().from('notifications').insert({
           title: 'Research: ' + title,
           body: excerpt || 'New research published.',
