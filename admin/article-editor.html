@@ -363,20 +363,19 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="../auth.js"></script>
 
-  <!-- Editor.js core + tools -->
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/image@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@latest"></script>
+  <!-- Editor.js core + tools (pinned versions) -->
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.28.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@2.8.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/nested-list@1.4.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@2.6.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@1.4.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@1.5.0"></script>
 
   <script>
-    // Use the client auth.js already created — avoids multiple GoTrueClient conflict
     const getSB = () => window.Auth.getClient();
 
     let editor       = null;
+    let editorReady  = false;
     let articleId    = null;
     let activeType   = 'newsletter';
     let coverUrl     = null;
@@ -384,55 +383,38 @@
 
     /* ── Editor init ── */
     function initEditor() {
-      editor = new EditorJS({
-        holder: 'editorjs',
-        placeholder: 'Tell your story…',
-        tools: {
-          header: {
-            class: Header,
-            config: { levels: [1, 2, 3], defaultLevel: 2 }
+      try {
+        editor = new EditorJS({
+          holder: 'editorjs',
+          placeholder: 'Tell your story…',
+          tools: {
+            header: {
+              class: Header,
+              config: { levels: [1, 2, 3], defaultLevel: 2 }
+            },
+            list: {
+              class: NestedList,
+              inlineToolbar: true
+            },
+            quote: {
+              class: Quote,
+              inlineToolbar: true,
+              config: { quotePlaceholder: 'Enter a quote…', captionPlaceholder: '— Source' }
+            },
+            delimiter: Delimiter,
+            inlineCode: { class: InlineCode }
           },
-          list: {
-            class: List,
-            inlineToolbar: true
-          },
-          quote: {
-            class: Quote,
-            inlineToolbar: true,
-            config: {
-              quotePlaceholder: 'Enter a quote…',
-              captionPlaceholder: '— Source'
-            }
-          },
-          delimiter: Delimiter,
-          image: {
-            class: ImageTool,
-            config: {
-              uploader: {
-                uploadByFile: uploadFile,
-                uploadByUrl:  async url => ({ success: 1, file: { url } })
-              }
-            }
-          },
-          inlineCode: { class: InlineCode }
-        },
-        onChange: markUnsaved
-      });
+          onReady: () => { editorReady = true; },
+          onChange: markUnsaved
+        });
+      } catch(e) {
+        console.error('EditorJS init failed:', e);
+      }
     }
 
-    /* ── Image upload to Supabase Storage ── */
-    async function uploadFile(file) {
-      try {
-        const ext  = file.name.split('.').pop();
-        const path = `articles/${Date.now()}.${ext}`;
-        const { error } = await getSB().storage.from('media').upload(path, file);
-        if (error) throw error;
-        const { data: { publicUrl } } = getSB().storage.from('media').getPublicUrl(path);
-        return { success: 1, file: { url: publicUrl } };
-      } catch (e) {
-        toast('Image upload failed — make sure the "media" storage bucket exists in Supabase.', 'err');
-        return { success: 0 };
-      }
+    async function getEditorContent() {
+      if (!editor || !editorReady) return { blocks: [] };
+      try { return await editor.save(); } catch(e) { return { blocks: [] }; }
     }
 
     /* ── Cover image ── */
@@ -523,8 +505,7 @@
       }
       if (!silent) setBadge('Saving…');
 
-      let body = { blocks: [] };
-      try { body = await editor.save(); } catch {}
+      const body = await getEditorContent();
 
       const row = {
         title,
@@ -582,13 +563,7 @@
       btn.disabled = true; btn.textContent = 'Publishing…';
 
       try {
-        let body = { blocks: [] };
-        try {
-          body = await Promise.race([
-            editor.save(),
-            new Promise(resolve => setTimeout(() => resolve({ blocks: [] }), 3000))
-          ]);
-        } catch (e) { body = { blocks: [] }; }
+        const body = await getEditorContent();
 
         const title   = document.getElementById('article-title').innerText.trim();
         const excerpt = document.getElementById('modal-excerpt').value.trim();
