@@ -288,7 +288,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/nested-list@1.4.2"></script>
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@2.6.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@1.4.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/image@2.9.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@1.5.0"></script>
 
   <script>
@@ -363,7 +362,6 @@
           list: { class: NestedList, inlineToolbar: true },
           quote: { class: Quote, inlineToolbar: true, config: { quotePlaceholder: 'Quote…', captionPlaceholder: '— Source' } },
           delimiter: Delimiter,
-          image: { class: ImageTool, config: { uploader: { uploadByFile: uploadFile, uploadByUrl: async url => ({ success: 1, file: { url } }) } } },
           inlineCode: { class: InlineCode }
         },
         onReady: () => { editorReady = true; },
