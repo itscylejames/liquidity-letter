@@ -375,7 +375,10 @@
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
       });
-      var data = await res.json();
+      var text = await res.text();
+      if (!text) throw new Error('Empty response (status ' + res.status + ')');
+      var data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Status ' + res.status + ': ' + text.slice(0, 120)); }
       if (data.url) {
         window.open(data.url, '_blank');
         if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;text-align:center;padding:12px 0;">Billing portal opened in a new tab.<br><span style="font-size:11px;color:#4a4a4a;">You can cancel from there.</span></div>';
