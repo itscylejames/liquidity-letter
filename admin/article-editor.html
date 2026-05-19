@@ -584,10 +584,10 @@
       try {
         let body = { blocks: [] };
         try {
-          body = await Promise.race([
-            editor ? editor.save() : Promise.resolve({ blocks: [] }),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
-          ]);
+          if (editor) {
+            await editor.isReady;
+            body = await editor.save();
+          }
         } catch (e) {}
 
         const title   = document.getElementById('article-title').innerText.trim();
@@ -608,7 +608,7 @@
 
         const db = getSB();
         let err;
-        if (articleId && typeof articleId !== 'string') {
+        if (articleId) {
           ({ error: err } = await db.from('articles').update(row).eq('id', articleId));
         } else {
           const { data, error } = await db.from('articles').insert(row).select('id').single();
@@ -616,7 +616,7 @@
           if (data) articleId = data.id;
         }
 
-        if (err) { toast('Publish failed: ' + err.message, 'err'); return; }
+        if (err) { toast('Publish failed: ' + err.message + ' | code: ' + err.code, 'err'); btn.disabled = false; btn.textContent = 'Publish Now'; return; }
 
         // Auto-send notification to all subscribers
         const typeLabel = activeType === 'newsletter' ? 'Newsletter' : 'Research Report';
