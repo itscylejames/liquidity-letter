@@ -269,7 +269,7 @@
       await loadUserRole(data.user.id);
       updateNav(data.user);
       closeModal();
-      if (isHomePage()) { window.location.href = 'dashboard.html'; return; }
+      window.location.href = 'subscribe.html';
     }
   }
 
@@ -315,12 +315,6 @@
     }
     if (!user) { content.innerHTML = 'Not logged in.'; return; }
 
-    var created   = new Date(user.created_at);
-    var daysSince = (Date.now() - created.getTime()) / 86400000;
-    var inTrial   = daysSince < 7;
-    var trialEnd  = new Date(created.getTime() + 7 * 86400000);
-    var daysLeft  = Math.ceil(7 - daysSince);
-
     var sub = null;
     try {
       var r = await getClient().from('subscriptions').select('*').eq('user_id', user.id).maybeSingle();
@@ -340,12 +334,6 @@
       html += '<div style="display:flex;justify-content:space-between;font-size:13px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#8A8780;">Subscribed</span><span style="color:#F0EDE6;">' + fmt(subDate) + '</span></div>';
       html += '<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#8A8780;">Next billing</span><span style="color:#C9A84C;">' + (nextDate ? fmt(nextDate) + ' — $29.99' : 'See billing portal') + '</span></div>';
       html += '</div>';
-      html += cancelLink;
-    } else if (inTrial) {
-      html += '<div style="display:inline-block;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 12px;margin-bottom:18px;">Free Trial</div>';
-      html += '<div style="font-size:26px;font-weight:700;color:#F0EDE6;margin-bottom:4px;">' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining</div>';
-      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:4px;">Trial ends ' + fmt(trialEnd) + '</div>';
-      html += '<div style="font-size:13px;color:#8A8780;margin-bottom:4px;">After your trial: $29.99 / month</div>';
       html += cancelLink;
     } else {
       html += '<div style="font-size:16px;font-weight:600;color:#F0EDE6;margin-bottom:8px;">No active subscription</div>';
@@ -392,15 +380,6 @@
 
   async function checkSubscription(user) {
     if (_role === 'super_admin' || _role === 'admin') return true;
-
-    var created = new Date(user.created_at);
-    var daysSince = (Date.now() - created.getTime()) / 86400000;
-
-    // Only allow trial if within 7 days AND they haven't used a trial before
-    if (daysSince < 7 && !_trialUsed) {
-      injectTrialBanner(Math.ceil(7 - daysSince));
-      return true;
-    }
 
     var fromPayment = window.location.search.includes('subscribed=1');
     var maxAttempts = fromPayment ? 4 : 1;
