@@ -584,11 +584,11 @@
       try {
         let body = { blocks: [] };
         try {
-          if (editor) {
-            await editor.isReady;
-            body = await editor.save();
-          }
-        } catch (e) {}
+          body = await Promise.race([
+            editor.save(),
+            new Promise(resolve => setTimeout(() => resolve({ blocks: [] }), 3000))
+          ]);
+        } catch (e) { body = { blocks: [] }; }
 
         const title   = document.getElementById('article-title').innerText.trim();
         const excerpt = document.getElementById('modal-excerpt').value.trim();
