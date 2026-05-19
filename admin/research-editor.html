@@ -300,7 +300,10 @@
 
     async function getEditorContent() {
       if (!editor || !editorReady) return { blocks: [] };
-      try { return await editor.save(); } catch { return { blocks: [] }; }
+      return Promise.race([
+        editor.save(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Editor timed out — please try again')), 12000))
+      ]);
     }
 
     /* ── Image upload ── */
