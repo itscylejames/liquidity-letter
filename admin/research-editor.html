@@ -523,20 +523,24 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
 
     async function sbWrite(method, id, row) {
-      const sess = await getSB().auth.getSession();
-      const token = (sess.data?.session?.access_token) || SB_KEY;
       let url = SB_URL + '/rest/v1/articles';
       if (method === 'PATCH') url += '?id=eq.' + id;
-      const resp = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SB_KEY,
-          'Authorization': 'Bearer ' + token,
-          'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
-        },
-        body: JSON.stringify(row)
-      });
+      const ctrl = new AbortController();
+      const abort = setTimeout(() => ctrl.abort(), 20000);
+      let resp;
+      try {
+        resp = await fetch(url, {
+          method,
+          signal: ctrl.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SB_KEY,
+            'Authorization': 'Bearer ' + SB_KEY,
+            'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+          },
+          body: JSON.stringify(row)
+        });
+      } finally { clearTimeout(abort); }
       const text = await resp.text();
       if (!resp.ok) throw new Error('HTTP ' + resp.status + ': ' + text.slice(0, 300));
       if (method === 'POST') {
