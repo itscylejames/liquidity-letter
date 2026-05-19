@@ -423,11 +423,21 @@
     function closePublishModal() { document.getElementById('publish-modal').classList.remove('open'); }
     document.getElementById('publish-modal').addEventListener('click', e => { if (e.target.id === 'publish-modal') closePublishModal(); });
 
+    function withTimeout(promise, ms, label) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timed out after ' + ms/1000 + 's')), ms))
+      ]);
+    }
+
     async function doPublish() {
       const btn = document.getElementById('btn-confirm');
-      btn.disabled = true; btn.textContent = 'Publishing…';
+      btn.disabled = true;
       try {
-        const body = await getEditorContent();
+        btn.textContent = 'Reading editor…';
+        const body = await withTimeout(getEditorContent(), 10000, 'Editor');
+
+        btn.textContent = 'Saving…';
         const title = document.getElementById('article-title').innerText.trim();
         const excerpt = document.getElementById('modal-excerpt').value.trim();
         const user = window.Auth ? window.Auth.getUser() : null;
@@ -441,17 +451,20 @@
         };
         const db = getSB(); let err;
         if (articleId) {
-          ({ error: err } = await db.from('articles').update(row).eq('id', articleId));
+          const res = await withTimeout(db.from('articles').update(row).eq('id', articleId), 15000, 'Database');
+          err = res.error;
         } else {
-          const { data, error } = await db.from('articles').insert(row).select('id').single();
-          err = error; if (data) articleId = data.id;
+          const res = await withTimeout(db.from('articles').insert(row).select('id').single(), 15000, 'Database');
+          err = res.error; if (res.data) articleId = res.data.id;
         }
         if (err) throw new Error(err.message);
-        await getSB().from('notifications').insert({
+
+        getSB().from('notifications').insert({
           title: 'Newsletter: ' + title,
           body: excerpt || 'New newsletter published.',
           type: 'newsletter', created_by: user ? user.id : null
-        });
+        }).then(() => {}).catch(() => {});
+
         closePublishModal(); setBadge('Published ✓', true); toast('Published ✓', 'ok'); loadList();
       } catch (e) {
         toast('Error: ' + e.message, 'err');
