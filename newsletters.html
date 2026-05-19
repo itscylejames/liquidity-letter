@@ -209,6 +209,10 @@
       display: flex; align-items: center; justify-content: center;
       height: 100%; gap: 10px; color: var(--text-muted); font-size: 13px;
     }
+    .page-btn { min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;padding:0 8px;transition:all 0.15s;user-select:none; }
+    .page-btn:hover:not(.ellipsis):not(.disabled) { border-color:rgba(255,255,255,0.2);color:var(--text); }
+    .page-btn.active { border-color:var(--gold);color:var(--gold); }
+    .page-btn.ellipsis,.page-btn.disabled { cursor:default;opacity:0.4; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="mobile.css">
@@ -376,6 +380,8 @@
           <div class="loading-spinner">Loading newsletters…</div>
         </div>
 
+        <div id="pagination-bar" style="display:flex;gap:6px;padding:12px 16px;flex-wrap:wrap;"></div>
+
         <div class="page-footer">
           Published exclusively for Liquidity Letter subscribers.
         </div>
@@ -417,6 +423,8 @@
     let allIssues = [];
     let activeCategory = 'all';
     let activeId = null;
+    let currentPage = 1;
+    const PAGE_SIZE = 7;
 
     const issueListEl   = document.getElementById('issue-list');
     const readerEl      = document.getElementById('newsletter-reader');
@@ -442,10 +450,11 @@
       document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       activeCategory = tab.dataset.cat;
+      currentPage = 1;
       renderList();
     });
 
-    searchInput.addEventListener('input', () => renderList());
+    searchInput.addEventListener('input', () => { currentPage = 1; renderList(); });
 
     function filteredIssues() {
       let list = activeCategory === 'all' ? allIssues : allIssues.filter(a => a.category === activeCategory);
@@ -464,18 +473,47 @@
       return '#' + String(n).padStart(3, '0');
     }
 
+    function renderPagination(total) {
+      const el = document.getElementById('pagination-bar');
+      if (!el) return;
+      const totalPages = Math.ceil(total / PAGE_SIZE);
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      let html = `<div class="page-btn${currentPage===1?' disabled':''}" data-page="${currentPage-1}">←</div>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && i > 2 && i < totalPages-1 && Math.abs(i-currentPage) > 1) {
+          if (i === 3 || i === totalPages-2) html += `<div class="page-btn ellipsis">…</div>`;
+          continue;
+        }
+        html += `<div class="page-btn${i===currentPage?' active':''}" data-page="${i}">${i}</div>`;
+      }
+      html += `<div class="page-btn${currentPage===totalPages?' disabled':''}" data-page="${currentPage+1}">→</div>`;
+      el.innerHTML = html;
+      el.querySelectorAll('.page-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = parseInt(btn.dataset.page);
+          const max = Math.ceil(total / PAGE_SIZE);
+          if (p < 1 || p > max) return;
+          currentPage = p; renderList();
+        });
+      });
+    }
+
     function renderList() {
       const issues = filteredIssues();
       countEl.textContent = issues.length + ' issue' + (issues.length !== 1 ? 's' : '');
 
       if (!issues.length) {
         issueListEl.innerHTML = '<div class="no-results">No newsletters found.</div>';
+        renderPagination(0);
         return;
       }
 
-      issueListEl.innerHTML = issues.map((a, i) => `
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const page  = issues.slice(start, start + PAGE_SIZE);
+
+      issueListEl.innerHTML = page.map((a, i) => `
         <div class="issue-row ${a.id === activeId ? 'active' : ''}" data-id="${a.id}">
-          <div class="issue-badge">${issueNumber(i)}</div>
+          <div class="issue-badge">${issueNumber(start + i)}</div>
           <div class="issue-meta">
             <div class="issue-top-row">
               <span class="issue-cat">${a.category || 'Newsletter'}</span>
@@ -494,11 +532,33 @@
           const issue = allIssues.find(a => a.id === id);
           if (!issue) return;
           activeId = id;
-          document.querySelectorAll('.issue-row').forEach(r => r.classList.remove('active'));
-          row.classList.add('active');
+          renderList();
           renderReader(issue);
         });
       });
+
+      renderPagination(issues.length);
+    }
+
+    function renderBlocks(content) {
+      if (!content) return '<p style="color:var(--text-muted)">Content coming soon.</p>';
+      const blocks = (typeof content === 'string' ? JSON.parse(content) : content).blocks || [];
+      return blocks.map(b => {
+        switch (b.type) {
+          case 'paragraph': return `<p>${b.data.text || ''}</p>`;
+          case 'header':    return `<h${b.data.level}>${b.data.text || ''}</h${b.data.level}>`;
+          case 'list':      {
+            const tag = b.data.style === 'ordered' ? 'ol' : 'ul';
+            const items = (b.data.items || []).map(i => `<li>${typeof i === 'string' ? i : i.content || ''}</li>`).join('');
+            return `<${tag}>${items}</${tag}>`;
+          }
+          case 'quote':     return `<blockquote>${b.data.text || ''}${b.data.caption ? `<cite>${b.data.caption}</cite>` : ''}</blockquote>`;
+          case 'delimiter': return `<hr class="content-delimiter">`;
+          case 'image':     return `<figure><img src="${b.data.file?.url || b.data.url || ''}" alt="${b.data.caption || ''}"><figcaption>${b.data.caption || ''}</figcaption></figure>`;
+          case 'inlineCode':return `<code>${b.data.text || ''}</code>`;
+          default:          return '';
+        }
+      }).join('');
     }
 
     function renderReader(issue) {
@@ -516,7 +576,7 @@
               <span class="newsletter-readtime-meta">${issue.read_time || '5 min read'}</span>
             </div>
           </div>
-          <div class="newsletter-body">${issue.content || '<p style="color:var(--text-muted)">Content coming soon.</p>'}</div>
+          <div class="newsletter-body">${renderBlocks(issue.content)}</div>
         </div>
       `;
     }

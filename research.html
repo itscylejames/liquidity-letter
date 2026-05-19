@@ -602,15 +602,7 @@
         </div>
 
         <!-- Pagination -->
-        <div class="pagination">
-          <div class="page-btn">←</div>
-          <div class="page-btn active">1</div>
-          <div class="page-btn">2</div>
-          <div class="page-btn">3</div>
-          <div class="page-btn ellipsis">…</div>
-          <div class="page-btn">24</div>
-          <div class="page-btn">→</div>
-        </div>
+        <div class="pagination" id="pagination-bar"></div>
 
         <div class="page-footer">
           All data is delayed unless otherwise stated. Sources: TradingView, FactSet, ETF.com
@@ -643,6 +635,8 @@
     let allArticles = [];
     let activeCategory = 'all';
     let activeArticleId = null;
+    let currentPage = 1;
+    const PAGE_SIZE = 7;
 
     // ── DOM refs ───────────────────────────────────────────────
     const articleListEl   = document.getElementById('article-list');
@@ -677,82 +671,124 @@
       document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       activeCategory = tab.dataset.cat;
+      currentPage = 1;
       renderList();
     });
 
+    searchInput.addEventListener('input', () => { currentPage = 1; renderList(); });
+
     // ── Helpers ────────────────────────────────────────────────
     function filteredArticles() {
-      if (activeCategory === 'all') return allArticles;
-      return allArticles.filter(a => a.category.toLowerCase() === activeCategory.toLowerCase());
+      const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+      return allArticles.filter(a => {
+        const matchCat = activeCategory === 'all' || (a.category || '').toLowerCase() === activeCategory.toLowerCase();
+        const matchQ   = !q || a.title.toLowerCase().includes(q) || (a.excerpt || '').toLowerCase().includes(q);
+        return matchCat && matchQ;
+      });
+    }
+
+    function renderPagination(total) {
+      const totalPages = Math.ceil(total / PAGE_SIZE);
+      const paginationEl = document.getElementById('pagination-bar');
+      if (!paginationEl) return;
+      if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
+
+      let html = `<div class="page-btn${currentPage === 1 ? ' disabled' : ''}" data-page="${currentPage - 1}">←</div>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+          if (i === 3 || i === totalPages - 2) html += `<div class="page-btn ellipsis">…</div>`;
+          continue;
+        }
+        html += `<div class="page-btn${i === currentPage ? ' active' : ''}" data-page="${i}">${i}</div>`;
+      }
+      html += `<div class="page-btn${currentPage === totalPages ? ' disabled' : ''}" data-page="${currentPage + 1}">→</div>`;
+      paginationEl.innerHTML = html;
+
+      paginationEl.querySelectorAll('.page-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = parseInt(btn.dataset.page);
+          if (p < 1 || p > totalPages) return;
+          currentPage = p;
+          renderList();
+        });
+      });
     }
 
     // ── Render Article List ────────────────────────────────────
     function renderList() {
       const articles = filteredArticles();
       if (!articles.length) {
-        articleListEl.innerHTML = '<div class="no-results">No articles found for this category.</div>';
+        articleListEl.innerHTML = '<div class="no-results">No articles found.</div>';
+        renderPagination(0);
         return;
       }
-      articleListEl.innerHTML = articles.map(a => `
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const page  = articles.slice(start, start + PAGE_SIZE);
+
+      articleListEl.innerHTML = page.map(a => `
         <div class="article-row ${a.id === activeArticleId ? 'active' : ''}" data-id="${a.id}">
-          <div class="article-thumb" style="background:${a.thumbnail};"></div>
+          <div class="article-thumb" style="${a.coverImage ? `background:url('${a.coverImage}') center/cover;` : 'background:#1a1a1a;'}"></div>
           <div class="article-meta">
             <div class="article-top-row">
-              <span class="article-cat">${a.category}</span>
+              <span class="article-cat">${a.category || 'Research'}</span>
               <span class="article-date">${a.date}</span>
             </div>
             <div class="article-title">${a.title}</div>
             <div class="article-bottom-row">
-              <div class="article-excerpt">${a.excerpt}</div>
-              <div class="article-right-meta">
-                <span class="article-readtime">${a.readTime}</span>
-                <button class="bookmark-btn" title="Bookmark" onclick="event.stopPropagation()">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </button>
-              </div>
+              <div class="article-excerpt">${a.excerpt || ''}</div>
             </div>
           </div>
         </div>
       `).join('');
 
-      // Attach click listeners
       articleListEl.querySelectorAll('.article-row').forEach(row => {
         row.addEventListener('click', () => {
           const id = row.dataset.id;
           const article = allArticles.find(a => a.id === id);
           if (!article) return;
           activeArticleId = id;
-          document.querySelectorAll('.article-row').forEach(r => r.classList.remove('active'));
-          row.classList.add('active');
+          renderList();
           renderReader(article);
         });
       });
+
+      renderPagination(articles.length);
     }
 
     // ── Render Article Reader ──────────────────────────────────
+    function renderBlocks(content) {
+      if (!content) return '<p style="color:var(--text-muted)">Content coming soon.</p>';
+      const blocks = (typeof content === 'string' ? JSON.parse(content) : content).blocks || [];
+      return blocks.map(b => {
+        switch (b.type) {
+          case 'paragraph': return `<p>${b.data.text || ''}</p>`;
+          case 'header':    return `<h${b.data.level}>${b.data.text || ''}</h${b.data.level}>`;
+          case 'list':      {
+            const tag = b.data.style === 'ordered' ? 'ol' : 'ul';
+            const items = (b.data.items || []).map(i => `<li>${typeof i === 'string' ? i : i.content || ''}</li>`).join('');
+            return `<${tag}>${items}</${tag}>`;
+          }
+          case 'quote':     return `<blockquote>${b.data.text || ''}${b.data.caption ? `<cite>${b.data.caption}</cite>` : ''}</blockquote>`;
+          case 'delimiter': return `<hr class="content-delimiter">`;
+          case 'image':     return `<figure><img src="${b.data.file?.url || b.data.url || ''}" alt="${b.data.caption || ''}"><figcaption>${b.data.caption || ''}</figcaption></figure>`;
+          default:          return '';
+        }
+      }).join('');
+    }
+
     function renderReader(article) {
       if (article.pdf) {
-        articleReaderEl.innerHTML = `
-          <iframe
-            class="reader-pdf-frame"
-            src="articles/${article.pdf}"
-            title="${article.title}"
-          ></iframe>
-        `;
+        articleReaderEl.innerHTML = `<iframe class="reader-pdf-frame" src="articles/${article.pdf}" title="${article.title}"></iframe>`;
       } else {
         articleReaderEl.innerHTML = `
-          <div class="reader-empty">
-            <div class="reader-empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
+          <div style="max-width:720px;margin:0 auto;padding:40px 28px 80px;">
+            ${article.cover_image ? `<img src="${article.cover_image}" style="width:100%;max-height:360px;object-fit:cover;margin-bottom:32px;">` : ''}
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Research</div>
+            <h1 style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text-primary);margin-bottom:16px;line-height:1.2;">${article.title}</h1>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border);">
+              By The Liquidity Letter &nbsp;·&nbsp; ${article.published_at ? new Date(article.published_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : ''}
             </div>
-            <div class="reader-empty-text">PDF coming soon.<br><span style="font-size:12px;color:var(--text-muted);">${article.title}</span></div>
+            <div class="article-body">${renderBlocks(article.content)}</div>
           </div>
         `;
       }
@@ -764,7 +800,7 @@
         const sb = window.Auth.getClient();
         const { data, error } = await sb
           .from('articles')
-          .select('id, title, excerpt, type, published_at, cover_image, slug')
+          .select('id, title, excerpt, type, published_at, cover_image, slug, content')
           .eq('type', 'research')
           .eq('published', true)
           .order('published_at', { ascending: false });
@@ -775,12 +811,12 @@
           id: a.id,
           title: a.title || 'Untitled',
           excerpt: a.excerpt || '',
-          category: 'Research',
+          category: a.category || 'Research',
           date: a.published_at ? new Date(a.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-          readTime: '',
           slug: a.slug || '',
           coverImage: a.cover_image || '',
-          body: a.body || null
+          content: a.content || null,
+          published_at: a.published_at || null
         }));
 
         if (allArticles.length === 0) {

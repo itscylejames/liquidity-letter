@@ -103,11 +103,18 @@
 
       <div class="admin-grid">
 
-        <div class="admin-card" id="card-editor" onclick="openEditor()">
+        <div class="admin-card" id="card-research" onclick="openResearchEditor()">
+          <div class="admin-card-icon">🔬</div>
+          <div class="admin-card-title">Research Editor</div>
+          <div class="admin-card-desc">Write, edit, and publish research reports and market analysis.</div>
+          <span class="admin-card-badge" id="research-badge">Active</span>
+        </div>
+
+        <div class="admin-card" id="card-newsletter" onclick="openNewsletterEditor()">
           <div class="admin-card-icon">✍️</div>
-          <div class="admin-card-title">Article Editor</div>
-          <div class="admin-card-desc">Write, edit, and publish newsletters and research reports.</div>
-          <span class="admin-card-badge" id="editor-badge">Active</span>
+          <div class="admin-card-title">Newsletter Editor</div>
+          <div class="admin-card-desc">Write, edit, and publish weekly digests and newsletter issues.</div>
+          <span class="admin-card-badge" id="newsletter-badge">Active</span>
         </div>
 
         <div class="admin-card" onclick="window.location.href='subscribers.html'">
@@ -146,25 +153,37 @@
       sb.auth.signOut().then(() => { window.location.href = '../index.html'; });
     }
 
-    function openEditor() {
+    function openResearchEditor() {
       if (window.Auth && window.Auth.isSuperAdmin()) {
-        window.location.href = 'article-editor.html';
+        window.location.href = 'research-editor.html';
       } else {
-        var badge = document.getElementById('editor-badge');
-        var card  = document.getElementById('card-editor');
-        badge.textContent = 'Super Admin Only';
-        badge.style.color = '#E2534A';
-        badge.style.borderColor = 'rgba(226,83,74,0.4)';
-        badge.style.background = 'rgba(226,83,74,0.08)';
-        card.style.borderColor = 'rgba(226,83,74,0.25)';
-        setTimeout(function() {
-          badge.textContent = 'Active';
-          badge.style.color = '';
-          badge.style.borderColor = '';
-          badge.style.background = '';
-          card.style.borderColor = '';
-        }, 2500);
+        flashDenied('research-badge', 'card-research');
       }
+    }
+
+    function openNewsletterEditor() {
+      if (window.Auth && window.Auth.isSuperAdmin()) {
+        window.location.href = 'newsletter-editor.html';
+      } else {
+        flashDenied('newsletter-badge', 'card-newsletter');
+      }
+    }
+
+    function flashDenied(badgeId, cardId) {
+      var badge = document.getElementById(badgeId);
+      var card  = document.getElementById(cardId);
+      badge.textContent = 'Super Admin Only';
+      badge.style.color = '#E2534A';
+      badge.style.borderColor = 'rgba(226,83,74,0.4)';
+      badge.style.background = 'rgba(226,83,74,0.08)';
+      card.style.borderColor = 'rgba(226,83,74,0.25)';
+      setTimeout(function() {
+        badge.textContent = 'Active';
+        badge.style.color = '';
+        badge.style.borderColor = '';
+        badge.style.background = '';
+        card.style.borderColor = '';
+      }, 2500);
     }
   </script>
 </body>

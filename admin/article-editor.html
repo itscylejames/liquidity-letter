@@ -563,11 +563,10 @@
       btn.disabled = true; btn.textContent = 'Publishing…';
 
       try {
-        const body = await getEditorContent();
-
+        const body    = await getEditorContent();
         const title   = document.getElementById('article-title').innerText.trim();
         const excerpt = document.getElementById('modal-excerpt').value.trim();
-        const user    = window.Auth.getUser();
+        const user    = window.Auth ? window.Auth.getUser() : null;
 
         const row = {
           title,
@@ -591,9 +590,8 @@
           if (data) articleId = data.id;
         }
 
-        if (err) { toast('Publish failed: ' + err.message + ' | code: ' + err.code, 'err'); btn.disabled = false; btn.textContent = 'Publish Now'; return; }
+        if (err) throw new Error('DB error: ' + err.message + ' (code ' + err.code + ')');
 
-        // Auto-send notification to all subscribers
         const typeLabel = activeType === 'newsletter' ? 'Newsletter' : 'Research Report';
         await getSB().from('notifications').insert({
           title: typeLabel + ': ' + title,
@@ -604,7 +602,7 @@
 
         closeModal();
         setBadge('Published ✓', true);
-        toast(`Published as ${activeType === 'newsletter' ? 'Newsletter' : 'Research'} ✓`, 'ok');
+        toast('Published as ' + (activeType === 'newsletter' ? 'Newsletter' : 'Research') + ' ✓', 'ok');
 
       } catch (e) {
         toast('Error: ' + e.message, 'err');
