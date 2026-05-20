@@ -24,6 +24,80 @@ async function upsertSubscription(env, userId, data) {
   return res.ok;
 }
 
+async function runBilling(env) {
+  const now = new Date();
+
+  // Fetch live USD/ZAR rate
+  let zarRate = 18.7;
+  try {
+    const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
+    const rateData = await rateRes.json();
+    zarRate = rateData.rates?.ZAR || 18.7;
+  } catch(e) {}
+  const zarAmount = Math.ceil(29.99 * zarRate) * 100; // kobo/cents
+
+  // 1. Charge active subscriptions that are due
+  const dueRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/subscriptions?status=eq.active&current_period_end=lte.${now.toISOString()}&paystack_auth_code=not.is.null`,
+    { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+  );
+  const dueSubs = await dueRes.json();
+
+  for (const sub of (Array.isArray(dueSubs) ? dueSubs : [])) {
+    try {
+      const chargeRes = await fetch('https://api.paystack.co/transaction/charge_authorization', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${env.PAYSTACK_SECRET_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          authorization_code: sub.paystack_auth_code,
+          email: sub.paystack_email,
+          amount: zarAmount,
+          currency: 'ZAR',
+          metadata: { custom_fields: [
+            { display_name: 'User ID', variable_name: 'user_id', value: sub.user_id },
+            { display_name: 'Type',    variable_name: 'type',    value: 'recurring' },
+            { display_name: 'USD Amount', variable_name: 'usd_amount', value: '29.99' },
+            { display_name: 'Exchange Rate', variable_name: 'exchange_rate', value: zarRate.toFixed(2) },
+          ]}
+        })
+      });
+      const chargeData = await chargeRes.json();
+
+      if (chargeData.data?.status === 'success') {
+        const newEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${sub.user_id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ status: 'active', current_period_end: newEnd, updated_at: now.toISOString() })
+        });
+      } else {
+        // Charge failed — 48hr grace period
+        const graceEnd = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+        await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${sub.user_id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ status: 'past_due', current_period_end: graceEnd, updated_at: now.toISOString() })
+        });
+      }
+    } catch(e) {}
+  }
+
+  // 2. Suspend past_due subscriptions where grace period has expired
+  const expiredRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/subscriptions?status=eq.past_due&current_period_end=lte.${now.toISOString()}`,
+    { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+  );
+  const expiredSubs = await expiredRes.json();
+
+  for (const sub of (Array.isArray(expiredSubs) ? expiredSubs : [])) {
+    await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${sub.user_id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ status: 'suspended', updated_at: now.toISOString() })
+    });
+  }
+}
+
 const ZEUS_SYSTEM = `You are Zeus, an expert macro financial analyst for The Liquidity Letter. You provide concise, authoritative analysis on global liquidity conditions, central bank policy, macroeconomic indicators (CPI, PPI, NFP, FOMC, GDP, PCE, retail sales, unemployment), capital flows, and crypto/traditional market correlations.
 
 When analyzing news headlines, always lead with: BULLISH, BEARISH, or NEUTRAL — then explain your reasoning in 2-3 sentences.
@@ -35,6 +109,10 @@ Keep all responses under 180 words unless the user asks for deeper analysis. Spe
 const MAJOR_EVENTS = ['cpi','ppi','nfp','non-farm','fomc','fed ','federal reserve','gdp','pce','unemployment','retail sales','interest rate','inflation','payroll','jobs report'];
 
 export default {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runBilling(env));
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
 
@@ -319,6 +397,8 @@ export default {
         }
 
         const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const authCode = psData.data?.authorization?.authorization_code || null;
+        const custEmail = psData.data?.customer?.email || null;
         await upsertSubscription(env, user_id, {
           status: 'active',
           plan: 'monthly',
@@ -326,6 +406,8 @@ export default {
           lemon_customer_id: String(psData.data?.customer?.id || ''),
           current_period_end: periodEnd,
           updated_at: new Date().toISOString(),
+          ...(authCode  && { paystack_auth_code: authCode }),
+          ...(custEmail && { paystack_email: custEmail }),
         });
 
         await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${user_id}`, {
@@ -362,20 +444,34 @@ export default {
         }
 
         const payload = JSON.parse(rawBody);
-        if (payload.event === 'charge.success') {
-          const data = payload.data || {};
-          const user_id = data.metadata?.user_id;
-          if (user_id) {
-            const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-            await upsertSubscription(env, user_id, {
-              status: 'active',
-              plan: 'monthly',
-              lemon_subscription_id: data.reference || '',
-              lemon_customer_id: String(data.customer?.id || ''),
-              current_period_end: periodEnd,
-              updated_at: new Date().toISOString(),
-            });
-          }
+        const evData = payload.data || {};
+        const fields = evData.metadata?.custom_fields || [];
+        const getMeta = (key) => fields.find(f => f.variable_name === key)?.value;
+        const user_id = getMeta('user_id') || evData.metadata?.user_id;
+
+        if (payload.event === 'charge.success' && user_id) {
+          const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          const authCode = evData.authorization?.authorization_code || null;
+          const custEmail = evData.customer?.email || null;
+          await upsertSubscription(env, user_id, {
+            status: 'active',
+            plan: 'monthly',
+            lemon_subscription_id: evData.reference || '',
+            lemon_customer_id: String(evData.customer?.id || ''),
+            current_period_end: periodEnd,
+            updated_at: new Date().toISOString(),
+            ...(authCode  && { paystack_auth_code: authCode }),
+            ...(custEmail && { paystack_email: custEmail }),
+          });
+        }
+
+        if (payload.event === 'charge.failed' && user_id) {
+          const graceEnd = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+          await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${user_id}`, {
+            method: 'PATCH',
+            headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ status: 'past_due', current_period_end: graceEnd, updated_at: new Date().toISOString() })
+          });
         }
 
         return new Response(JSON.stringify({ received: true }), {

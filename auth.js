@@ -414,6 +414,14 @@
             return true;
           }
         }
+
+        // Past due — allow for 48hr grace, show warning banner
+        if (sub.status === 'past_due' && sub.current_period_end) {
+          if (new Date(sub.current_period_end) > new Date()) {
+            injectPastDueBanner(new Date(sub.current_period_end));
+            return true;
+          }
+        }
       } catch (e) {}
     }
 
@@ -427,6 +435,16 @@
     b.id = 'll-trial-banner';
     b.style.cssText = 'background:rgba(201,168,76,0.08);border-bottom:1px solid rgba(201,168,76,0.18);padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:16px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:#C9A84C;flex-wrap:wrap;position:relative;z-index:100;';
     b.innerHTML = '<span>⏳ Free trial — <strong>' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining</strong>. Subscribe to keep access after your trial ends.</span><a href="subscribe.html" style="background:#C9A84C;color:#0A0A0A;font-weight:700;font-size:11px;letter-spacing:0.8px;padding:5px 14px;text-decoration:none;text-transform:uppercase;flex-shrink:0;">Subscribe</a>';
+    document.body.insertAdjacentElement('afterbegin', b);
+  }
+
+  function injectPastDueBanner(graceEnd) {
+    if (document.getElementById('ll-pastdue-banner')) return;
+    var hoursLeft = Math.max(1, Math.ceil((graceEnd - Date.now()) / 3600000));
+    var b = document.createElement('div');
+    b.id = 'll-pastdue-banner';
+    b.style.cssText = 'background:rgba(239,83,80,0.1);border-bottom:1px solid rgba(239,83,80,0.3);padding:9px 20px;display:flex;align-items:center;justify-content:center;gap:16px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:#EF5350;flex-wrap:wrap;position:relative;z-index:100;';
+    b.innerHTML = '<span>⚠️ Your payment failed — <strong>' + hoursLeft + ' hour' + (hoursLeft !== 1 ? 's' : '') + ' remaining</strong> before your account is suspended. Please update your payment details.</span><a href="subscribe.html" style="background:#EF5350;color:#fff;font-weight:700;font-size:11px;letter-spacing:0.8px;padding:5px 14px;text-decoration:none;text-transform:uppercase;flex-shrink:0;">Update Payment</a>';
     document.body.insertAdjacentElement('afterbegin', b);
   }
 

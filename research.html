@@ -782,8 +782,8 @@
       } else {
         articleReaderEl.innerHTML = `
           <div style="max-width:720px;margin:0 auto;padding:40px 28px 80px;">
-            ${article.cover_image ? `<img src="${article.cover_image}" style="width:100%;max-height:360px;object-fit:cover;margin-bottom:32px;">` : ''}
-            <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Research</div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;">Research</div>
+            ${article.cover_image ? `<img src="${article.cover_image}" style="width:100%;max-height:400px;object-fit:cover;margin-bottom:28px;display:block;">` : ''}
             <h1 style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text-primary);margin-bottom:16px;line-height:1.2;">${article.title}</h1>
             <div style="font-size:13px;color:var(--text-muted);margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border);">
               By The Liquidity Letter &nbsp;·&nbsp; ${article.published_at ? new Date(article.published_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : ''}
