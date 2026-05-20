@@ -269,44 +269,57 @@
       if (!zarAmount) { showError('Exchange rate not loaded yet — please wait a moment.', 'pay-err-msg'); return; }
 
       var btn = this;
+
+      if (typeof PaystackPop === 'undefined') {
+        showError('Paystack failed to load. Please disable any ad blockers and refresh the page.', 'pay-err-msg');
+        return;
+      }
+
       btn.disabled = true; btn.textContent = 'Opening payment…';
 
-      var handler = PaystackPop.setup({
-        key:      PAYSTACK_KEY,
-        email:    currentUser.email,
-        amount:   zarAmount * 100, // Paystack expects cents
-        currency: 'ZAR',
-        ref:      'TLL_' + Date.now(),
-        metadata: {
-          user_id:       currentUser.id,
-          usd_amount:    '29.99',
-          exchange_rate: (usdRate || 0).toFixed(2)
-        },
-        callback: async function (response) {
-          btn.textContent = 'Verifying…';
-          try {
-            var res  = await fetch(WORKER_URL + '/paystack-verify', {
-              method:  'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body:    JSON.stringify({ reference: response.reference, user_id: currentUser.id })
-            });
-            var data = await res.json();
-            if (data.success) {
-              window.location.href = 'dashboard.html?subscribed=1';
-            } else {
-              throw new Error(data.error || 'Verification failed');
+      try {
+        var handler = PaystackPop.setup({
+          key:      PAYSTACK_KEY,
+          email:    currentUser.email,
+          amount:   zarAmount * 100,
+          currency: 'ZAR',
+          ref:      'TLL_' + Date.now(),
+          metadata: {
+            custom_fields: [
+              { display_name: 'User ID',       variable_name: 'user_id',       value: currentUser.id },
+              { display_name: 'USD Amount',    variable_name: 'usd_amount',    value: '29.99' },
+              { display_name: 'Exchange Rate', variable_name: 'exchange_rate', value: (usdRate || 0).toFixed(2) }
+            ]
+          },
+          callback: async function (response) {
+            btn.textContent = 'Verifying…';
+            try {
+              var res  = await fetch(WORKER_URL + '/paystack-verify', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ reference: response.reference, user_id: currentUser.id })
+              });
+              var data = await res.json();
+              if (data.success) {
+                window.location.href = 'dashboard.html?subscribed=1';
+              } else {
+                throw new Error(data.error || 'Verification failed');
+              }
+            } catch (e) {
+              showError('Payment verification failed: ' + e.message, 'pay-err-msg');
+              btn.disabled = false; btn.textContent = 'Try Again →';
             }
-          } catch (e) {
-            showError('Payment verification failed: ' + e.message, 'pay-err-msg');
-            btn.disabled = false; btn.textContent = 'Try Again →';
+          },
+          onClose: function () {
+            btn.disabled = false; btn.textContent = 'Subscribe Now →';
           }
-        },
-        onClose: function () {
-          btn.disabled = false; btn.textContent = 'Subscribe Now →';
-        }
-      });
+        });
 
-      handler.openIframe();
+        handler.openIframe();
+      } catch (e) {
+        showError('Could not open payment: ' + e.message, 'pay-err-msg');
+        btn.disabled = false; btn.textContent = 'Subscribe Now →';
+      }
     });
 
     // ── Check if already logged in ───────────────────────────────────
