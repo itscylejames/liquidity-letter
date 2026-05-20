@@ -256,6 +256,91 @@ export default {
         return new Response('OK', { headers: corsHeaders });
       }
 
+      // ── Paystack Verify ───────────────────────────────────────────
+      if (url.pathname === '/paystack-verify' && request.method === 'POST') {
+        const { reference, user_id } = await request.json();
+        if (!reference || !user_id) {
+          return new Response(JSON.stringify({ error: 'Missing reference or user_id' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const psRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+          headers: { 'Authorization': `Bearer ${env.PAYSTACK_SECRET_KEY}` }
+        });
+        const psData = await psRes.json();
+
+        if (!psRes.ok || psData.data?.status !== 'success') {
+          return new Response(JSON.stringify({ error: 'Payment not verified', details: psData.message }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await upsertSubscription(env, user_id, {
+          status: 'active',
+          plan: 'monthly',
+          lemon_subscription_id: reference,
+          lemon_customer_id: String(psData.data?.customer?.id || ''),
+          current_period_end: periodEnd,
+          updated_at: new Date().toISOString(),
+        });
+
+        await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${user_id}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ trial_used: true }),
+        });
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ── Paystack Webhook ──────────────────────────────────────────
+      if (url.pathname === '/paystack-webhook' && request.method === 'POST') {
+        const rawBody = await request.text();
+        const signature = request.headers.get('x-paystack-signature') || '';
+
+        // Verify HMAC SHA-512
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          'raw', encoder.encode(env.PAYSTACK_SECRET_KEY),
+          { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']
+        );
+        const sigBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody));
+        const expectedSig = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (signature !== expectedSig) {
+          return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        }
+
+        const payload = JSON.parse(rawBody);
+        if (payload.event === 'charge.success') {
+          const data = payload.data || {};
+          const user_id = data.metadata?.user_id;
+          if (user_id) {
+            const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+            await upsertSubscription(env, user_id, {
+              status: 'active',
+              plan: 'monthly',
+              lemon_subscription_id: data.reference || '',
+              lemon_customer_id: String(data.customer?.id || ''),
+              current_period_end: periodEnd,
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       return new Response('Not found', { status: 404, headers: corsHeaders });
 
     } catch (err) {
