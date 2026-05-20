@@ -59,11 +59,9 @@ export default {
         const res  = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${env.FINNHUB_KEY}`);
         const data = await res.json();
 
-        // Filter to major events only
         const events = (data.economicCalendar || [])
-          .filter(e => (e.country || '').toUpperCase() === 'US')
-          .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-          .slice(0, 10);
+          .filter(e => (e.country || '').toUpperCase() === 'US' && (e.impact || '').toLowerCase() === 'high')
+          .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
         return new Response(JSON.stringify({ events }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
