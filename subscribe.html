@@ -291,24 +291,25 @@
               { display_name: 'Exchange Rate', variable_name: 'exchange_rate', value: (usdRate || 0).toFixed(2) }
             ]
           },
-          callback: async function (response) {
+          callback: function (response) {
             btn.textContent = 'Verifying…';
-            try {
-              var res  = await fetch(WORKER_URL + '/paystack-verify', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ reference: response.reference, user_id: currentUser.id })
-              });
-              var data = await res.json();
+            fetch(WORKER_URL + '/paystack-verify', {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ reference: response.reference, user_id: currentUser.id })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
               if (data.success) {
                 window.location.href = 'dashboard.html?subscribed=1';
               } else {
                 throw new Error(data.error || 'Verification failed');
               }
-            } catch (e) {
+            })
+            .catch(function (e) {
               showError('Payment verification failed: ' + e.message, 'pay-err-msg');
               btn.disabled = false; btn.textContent = 'Try Again →';
-            }
+            });
           },
           onClose: function () {
             btn.disabled = false; btn.textContent = 'Subscribe Now →';
