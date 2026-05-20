@@ -1363,8 +1363,15 @@
     try {
       var res  = await fetch(API + '/calendar');
       var data = await res.json();
-      var HIGH_KW = ['cpi','ppi','nfp','non-farm','fomc','federal reserve','fed funds','gdp','pce','unemployment','retail sales','interest rate','inflation','payroll','jobs report','adp'];
+      var HIGH_KW = [
+        'consumer price','producer price','nonfarm','payroll',
+        'fomc','federal reserve','fed funds','rate decision',
+        'gross domestic product','gdp','personal consumption','pce',
+        'unemployment','retail sales','inflation','adp','jobs'
+      ];
+      var now = new Date().toISOString().replace('T',' ').substring(0,16);
       var events = (data.events || []).filter(function(e) {
+        if ((e.time || '') < now) return false;
         var impact = (e.impact || '').toLowerCase();
         var name   = (e.event  || '').toLowerCase();
         return impact === 'high' || HIGH_KW.some(function(k){ return name.includes(k); });

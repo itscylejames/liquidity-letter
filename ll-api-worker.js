@@ -59,10 +59,17 @@ export default {
         const res  = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${env.FINNHUB_KEY}`);
         const data = await res.json();
 
-        const HIGH_KEYWORDS = ['cpi','ppi','nfp','non-farm','fomc','federal reserve','fed funds','gdp','pce','unemployment','retail sales','interest rate','inflation','payroll','jobs report','adp','core inflation','balance of trade'];
+        const HIGH_KEYWORDS = [
+          'consumer price','producer price','nonfarm','payroll',
+          'fomc','federal reserve','fed funds','rate decision',
+          'gross domestic product','gdp','personal consumption','pce',
+          'unemployment','retail sales','inflation','adp','jobs'
+        ];
+        const now = new Date().toISOString().replace('T',' ').substring(0,16);
         const events = (data.economicCalendar || [])
           .filter(e => {
             if ((e.country || '').toUpperCase() !== 'US') return false;
+            if ((e.time || '') < now) return false;
             const impact = (e.impact || '').toLowerCase();
             const name   = (e.event  || '').toLowerCase();
             return impact === 'high' || HIGH_KEYWORDS.some(k => name.includes(k));
