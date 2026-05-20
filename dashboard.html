@@ -1363,7 +1363,12 @@
     try {
       var res  = await fetch(API + '/calendar');
       var data = await res.json();
-      var events = (data.events || []).slice(0, 3);
+      var HIGH_KW = ['cpi','ppi','nfp','non-farm','fomc','federal reserve','fed funds','gdp','pce','unemployment','retail sales','interest rate','inflation','payroll','jobs report','adp'];
+      var events = (data.events || []).filter(function(e) {
+        var impact = (e.impact || '').toLowerCase();
+        var name   = (e.event  || '').toLowerCase();
+        return impact === 'high' || HIGH_KW.some(function(k){ return name.includes(k); });
+      }).slice(0, 3);
       if (!events.length) { banner.style.display = 'none'; return; }
       banner.innerHTML = events.map(function(e) {
         var iso    = parseEventDate(e);
