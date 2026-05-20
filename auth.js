@@ -321,7 +321,7 @@
       sub = r.data;
     } catch(e) {}
 
-    var cancelLink = '<div style="text-align:center;margin-top:18px;"><a href="https://app.lemonsqueezy.com/my-orders" target="_blank" style="font-family:\'DM Sans\',sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.02em;">Cancel subscription</a></div>';
+    var cancelLink = '<div style="text-align:center;margin-top:18px;"><button onclick="window.__llCancelSub()" style="background:none;border:none;font-family:\'DM Sans\',sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.02em;cursor:pointer;padding:0;">Cancel subscription</button></div>';
     var fmt = function(d) { return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
     var html = '';
 
@@ -352,26 +352,29 @@
     if (!confirmed) return;
 
     var content = document.getElementById('sub-mgmt-content');
-    if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;">Opening billing portal…</div>';
+    if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;">Cancelling…</div>';
 
     try {
       var sess = await getClient().auth.getSession();
       var token = sess.data && sess.data.session && sess.data.session.access_token;
       if (!token) throw new Error('Not logged in');
 
-      var res = await fetch('https://ll-api.cylejames-dj.workers.dev/portal', {
+      var res = await fetch('https://ll-api.cylejames-dj.workers.dev/cancel-subscription', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
       });
-      var text = await res.text();
-      if (!text) throw new Error('Empty response (status ' + res.status + ')');
-      var data;
-      try { data = JSON.parse(text); } catch(e) { throw new Error('Status ' + res.status + ': ' + text.slice(0, 120)); }
-      if (data.url) {
-        window.open(data.url, '_blank');
-        if (content) content.innerHTML = '<div style="color:#8A8780;font-size:13px;text-align:center;padding:12px 0;">Billing portal opened in a new tab.<br><span style="font-size:11px;color:#4a4a4a;">You can cancel from there.</span></div>';
+      var data = await res.json();
+      if (data.success) {
+        var until = data.access_until
+          ? new Date(data.access_until).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+          : 'the end of your billing period';
+        if (content) content.innerHTML =
+          '<div style="text-align:center;padding:8px 0;">' +
+          '<div style="font-size:14px;color:#F0EDE6;margin-bottom:8px;">Subscription cancelled</div>' +
+          '<div style="font-size:13px;color:#8A8780;line-height:1.5;">You\'ll keep full access until <strong style="color:#F0EDE6;">' + until + '</strong>.</div>' +
+          '</div>';
       } else {
-        throw new Error(data.error || 'Could not get portal URL');
+        throw new Error(data.error || 'Could not cancel subscription');
       }
     } catch(e) {
       if (content) content.innerHTML = '<div style="color:#E2534A;font-size:13px;">Error: ' + e.message + '</div>';
@@ -389,10 +392,28 @@
       try {
         var result = await getClient()
           .from('subscriptions')
-          .select('status')
+          .select('status, current_period_end')
           .eq('user_id', user.id)
           .maybeSingle();
-        if (result.data && result.data.status === 'active') return true;
+        var sub = result.data;
+        if (!sub) continue;
+
+        if (sub.status === 'active') return true;
+
+        // Cancelled but still within billing period
+        if (sub.status === 'cancelled' && sub.current_period_end) {
+          if (new Date(sub.current_period_end) > new Date()) return true;
+        }
+
+        // Trial — allow if not expired
+        if (sub.status === 'trial' && sub.current_period_end) {
+          var trialEnd = new Date(sub.current_period_end);
+          if (trialEnd > new Date()) {
+            var daysLeft = Math.max(1, Math.ceil((trialEnd - Date.now()) / 86400000));
+            injectTrialBanner(daysLeft);
+            return true;
+          }
+        }
       } catch (e) {}
     }
 

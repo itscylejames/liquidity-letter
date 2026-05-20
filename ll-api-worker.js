@@ -256,6 +256,48 @@ export default {
         return new Response('OK', { headers: corsHeaders });
       }
 
+      // ── Cancel Subscription ───────────────────────────────────────
+      if (url.pathname === '/cancel-subscription' && request.method === 'POST') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace('Bearer ', '').trim();
+        if (!token) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+
+        const userRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'apikey': env.SUPABASE_SERVICE_KEY }
+        });
+        if (!userRes.ok) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        const { id: userId } = await userRes.json();
+
+        // Get current period end before cancelling
+        const subRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}&select=current_period_end`, {
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+        });
+        const subs = await subRes.json();
+        const accessUntil = subs[0]?.current_period_end || null;
+
+        const patchRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ status: 'cancelled', updated_at: new Date().toISOString() })
+        });
+
+        if (!patchRes.ok) {
+          const txt = await patchRes.text();
+          return new Response(JSON.stringify({ error: 'Failed to cancel: ' + txt.slice(0, 200) }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true, access_until: accessUntil }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       // ── Paystack Verify ───────────────────────────────────────────
       if (url.pathname === '/paystack-verify' && request.method === 'POST') {
         const { reference, user_id } = await request.json();
