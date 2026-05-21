@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mag 7 — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --gold:         #C9A84C;
+      --gold-dim:     rgba(201,168,76,0.15);
+      --gold-border:  rgba(201,168,76,0.35);
+      --bg:           #0A0A0A;
+      --bg-card:      #111111;
+      --bg-hover:     #181818;
+      --border:       rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.14);
+      --text-primary: #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:   #555555;
+      --green:        #4CAF50;
+      --green-dim:    rgba(76,175,80,0.12);
+      --red:          #EF5350;
+      --red-dim:      rgba(239,83,80,0.12);
+      --nav-h:        60px;
+      --sidebar-w:    210px;
+      --font-display: 'Playfair Display', serif;
+      --font-body:    'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text { font-weight: 700; font-size: 13px; letter-spacing: 0.18em; color: var(--text-primary); line-height: 1; }
+    .nav-logo-sub { font-size: 9px; letter-spacing: 0.22em; color: var(--gold); margin-top: 2px; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#C9A84C 0%,#7a6030 100%); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #000; }
+    .nav-user { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; padding-top: var(--nav-h); height: 100vh; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar-w); flex-shrink: 0; height: 100%; overflow-y: auto; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); padding: 8px 20px 6px; text-transform: uppercase; }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.06); }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-premium { margin: 12px 14px; padding: 14px; border: 1px solid var(--gold-border); border-radius: 10px; background: rgba(201,168,76,0.04); }
+    .sidebar-premium-head { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+    .sidebar-premium-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .btn-manage { width: 100%; height: 30px; border: 1px solid var(--gold-border); border-radius: 6px; color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; transition: background 0.2s; }
+    .btn-manage:hover { background: var(--gold-dim); }
+    .sidebar-signout { display: flex; align-items: center; gap: 8px; padding: 14px 20px; color: var(--text-muted); font-size: 13px; cursor: pointer; border-top: 1px solid var(--border); transition: color 0.15s; }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ── MAIN ── */
+    .main-content { flex: 1; min-width: 0; height: 100%; overflow-y: auto; padding: 28px 28px 60px; }
+
+    /* Page header */
+    .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Stock tabs */
+    .stock-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 24px 0 0; }
+    .stock-tab {
+      padding: 7px 16px; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .stock-tab:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); background: rgba(255,255,255,0.04); }
+    .stock-tab.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+    .stock-tab-name { font-size: 9px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; }
+    .stock-tab.active .stock-tab-name { color: rgba(201,168,76,0.7); }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 20px 0 24px; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .stat-pos { color: var(--green); }
+    .stat-neg { color: var(--red); }
+
+    /* Charts */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .chart-card-wide { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .chart-title { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px; }
+    .chart-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap-tall { position: relative; height: 240px; }
+
+    /* Next earnings badge */
+    .earnings-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 20px;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid var(--gold-border);
+      font-size: 11px; font-weight: 600; color: var(--gold);
+    }
+
+    /* Loading / error */
+    .loading-state { text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: 13px; }
+    .loading-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 960px) { .charts-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .sidebar { display: none; } .stats-row { grid-template-columns: repeat(2,1fr); } }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-require-auth="true">
+
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo">
+      <img src="logo.png" alt="LL">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+        <div class="nav-logo-sub">MAG 7</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <a href="profile.html" class="nav-user">
+        <div class="nav-avatar" id="nav-initials">LL</div>
+        <span class="nav-user-name" id="nav-name">Account</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="layout">
+
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+
+        <a href="dashboard.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+        <a href="newsfeed.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10l6 6v8a2 2 0 0 1-2 2z"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Newsfeed
+        </a>
+        <a href="research.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Research
+        </a>
+        <a href="newsletters.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </a>
+        <a href="etf-tracker.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </a>
+        <a href="mag7.html" class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Mag 7
+        </a>
+        <a href="macro-calendar.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Macro Calendar
+        </a>
+        <a href="alerts.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </a>
+      </nav>
+
+      <div class="sidebar-premium">
+        <div class="sidebar-premium-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none"><path d="M2 20h20L12 4z"/></svg>
+          Premium Subscriber
+        </div>
+        <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+        <button class="btn-manage">Manage Subscription</button>
+      </div>
+
+      <div class="sidebar-signout" id="signout-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="page-title">Mag 7 Earnings Watch</div>
+          <div class="page-sub">Earnings performance, EPS history & financials for the Magnificent Seven</div>
+        </div>
+      </div>
+
+      <!-- Stock Tabs -->
+      <div class="stock-tabs" id="stock-tabs">
+        <button class="stock-tab active" data-sym="NVDA" onclick="selectStock('NVDA',this)">
+          NVDA<span class="stock-tab-name">Nvidia</span>
+        </button>
+        <button class="stock-tab" data-sym="AAPL" onclick="selectStock('AAPL',this)">
+          AAPL<span class="stock-tab-name">Apple</span>
+        </button>
+        <button class="stock-tab" data-sym="MSFT" onclick="selectStock('MSFT',this)">
+          MSFT<span class="stock-tab-name">Microsoft</span>
+        </button>
+        <button class="stock-tab" data-sym="GOOGL" onclick="selectStock('GOOGL',this)">
+          GOOGL<span class="stock-tab-name">Alphabet</span>
+        </button>
+        <button class="stock-tab" data-sym="AMZN" onclick="selectStock('AMZN',this)">
+          AMZN<span class="stock-tab-name">Amazon</span>
+        </button>
+        <button class="stock-tab" data-sym="META" onclick="selectStock('META',this)">
+          META<span class="stock-tab-name">Meta</span>
+        </button>
+        <button class="stock-tab" data-sym="TSLA" onclick="selectStock('TSLA',this)">
+          TSLA<span class="stock-tab-name">Tesla</span>
+        </button>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loading-state" class="loading-state">
+        <div class="loading-spinner"></div>
+        Loading earnings data…
+      </div>
+
+      <!-- Content (hidden until loaded) -->
+      <div id="mag7-content" style="display:none;">
+
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Current Price</div>
+            <div class="stat-value" id="stat-price">—</div>
+            <div class="stat-sub" id="stat-change">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Day Range</div>
+            <div class="stat-value" id="stat-dayrange" style="font-size:16px;margin-top:4px;">—</div>
+            <div class="stat-sub" id="stat-open">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Last EPS Surprise</div>
+            <div class="stat-value" id="stat-surprise">—</div>
+            <div class="stat-sub" id="stat-surprise-detail">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Next Earnings</div>
+            <div class="stat-value" id="stat-next-earnings" style="font-size:16px;margin-top:4px;">—</div>
+            <div class="stat-sub" id="stat-next-earnings-sub">—</div>
+          </div>
+        </div>
+
+        <!-- Charts row 1 -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">EPS — Estimated vs Actual</div>
+            <div class="chart-sub" id="eps-chart-sub">Last 8 quarters</div>
+            <div class="chart-wrap">
+              <canvas id="eps-chart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Earnings Day Price Move</div>
+            <div class="chart-sub">% change from prev close → next day open/close</div>
+            <div class="chart-wrap">
+              <canvas id="move-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financials chart -->
+        <div class="chart-card-wide">
+          <div class="chart-title">Quarterly Revenue & Net Income</div>
+          <div class="chart-sub" id="fin-chart-sub">Last 8 quarters — USD (billions)</div>
+          <div class="chart-wrap-tall">
+            <canvas id="fin-chart"></canvas>
+          </div>
+        </div>
+
+      </div><!-- /mag7-content -->
+
+      <div id="error-state" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted);font-size:13px;">
+        Could not load data. Please try again.
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    var API = 'https://ll-api.cylejames-dj.workers.dev';
+    var currentSymbol = 'NVDA';
+    var charts = { eps: null, move: null, fin: null };
+
+    Chart.defaults.color = '#777';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.font.size = 11;
+
+    function fmtPrice(n) {
+      if (!n && n !== 0) return '—';
+      return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtB(n) {
+      if (!n && n !== 0) return null;
+      return parseFloat((n / 1e9).toFixed(2));
+    }
+
+    function shortDate(period) {
+      if (!period) return '';
+      var parts = period.split('-');
+      var year = parts[0];
+      var month = parseInt(parts[1], 10);
+      var q = month <= 3 ? 'Q1' : month <= 6 ? 'Q2' : month <= 9 ? 'Q3' : 'Q4';
+      return q + ' ' + year.slice(2);
+    }
+
+    function daysUntil(dateStr) {
+      var d = new Date(dateStr);
+      var diff = d.getTime() - Date.now();
+      if (diff < 0) return null;
+      var days = Math.ceil(diff / 86400000);
+      return days === 0 ? 'Today' : 'in ' + days + 'd';
+    }
+
+    function destroyCharts() {
+      ['eps','move','fin'].forEach(function(k) {
+        if (charts[k]) { charts[k].destroy(); charts[k] = null; }
+      });
+    }
+
+    function renderStats(data) {
+      var q = data.quote || {};
+
+      // Price
+      document.getElementById('stat-price').textContent = fmtPrice(q.c);
+      var chg = q.d || 0, pct = q.dp || 0;
+      var chgEl = document.getElementById('stat-change');
+      var sign = chg >= 0 ? '+' : '';
+      chgEl.textContent = sign + chg.toFixed(2) + ' (' + sign + pct.toFixed(2) + '%)';
+      chgEl.className = 'stat-sub ' + (chg >= 0 ? 'stat-pos' : 'stat-neg');
+
+      // Day range
+      document.getElementById('stat-dayrange').textContent = fmtPrice(q.l) + ' – ' + fmtPrice(q.h);
+      document.getElementById('stat-open').textContent = 'Open: ' + fmtPrice(q.o);
+
+      // Last EPS surprise
+      var eps = Array.isArray(data.eps) ? data.eps : [];
+      var last = eps[0];
+      if (last && last.actual !== null && last.actual !== undefined) {
+        var surprisePct = last.surprisePercent || 0;
+        var spSign = surprisePct >= 0 ? '+' : '';
+        var surpriseEl = document.getElementById('stat-surprise');
+        surpriseEl.textContent = spSign + surprisePct.toFixed(1) + '%';
+        surpriseEl.className = 'stat-value ' + (surprisePct >= 0 ? 'stat-pos' : 'stat-neg');
+        document.getElementById('stat-surprise-detail').textContent =
+          'Act: $' + (last.actual || 0).toFixed(2) + '  Est: $' + (last.estimate || 0).toFixed(2);
+      }
+
+      // Next earnings
+      var nextArr = (data.nextEarnings && data.nextEarnings.earningsCalendar) || [];
+      var next = nextArr[0];
+      if (next && next.date) {
+        var when = daysUntil(next.date);
+        document.getElementById('stat-next-earnings').textContent = new Date(next.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        var subEl = document.getElementById('stat-next-earnings-sub');
+        subEl.textContent = when ? when : 'Passed';
+        if (when) { subEl.className = 'stat-sub stat-pos'; }
+        else { subEl.className = 'stat-sub'; }
+      } else {
+        document.getElementById('stat-next-earnings').textContent = 'TBA';
+        document.getElementById('stat-next-earnings-sub').textContent = '—';
+      }
+    }
+
+    function renderEpsChart(eps) {
+      var quarters = eps.slice(0, 8).reverse();
+      var labels   = quarters.map(function(q) { return shortDate(q.period); });
+      var actuals  = quarters.map(function(q) { return q.actual  !== null ? q.actual  : null; });
+      var ests     = quarters.map(function(q) { return q.estimate !== null ? q.estimate : null; });
+
+      var barColors = quarters.map(function(q) {
+        if (q.actual === null || q.estimate === null) return 'rgba(201,168,76,0.5)';
+        return q.actual >= q.estimate ? 'rgba(76,175,80,0.8)' : 'rgba(239,83,80,0.8)';
+      });
+
+      var ctx = document.getElementById('eps-chart').getContext('2d');
+      charts.eps = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Estimate',
+              data: ests,
+              backgroundColor: 'rgba(255,255,255,0.06)',
+              borderColor: 'rgba(255,255,255,0.2)',
+              borderWidth: 1,
+              borderRadius: 3,
+            },
+            {
+              label: 'Actual',
+              data: actuals,
+              backgroundColor: barColors,
+              borderColor: 'transparent',
+              borderRadius: 3,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var v = ctx.raw;
+                  return ctx.dataset.label + ': $' + (v !== null ? v.toFixed(2) : 'N/A');
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { font: { size: 10 }, callback: function(v) { return '$' + v.toFixed(2); } }
+            }
+          }
+        }
+      });
+    }
+
+    function renderMoveChart(earningsMoves) {
+      var moves = earningsMoves.slice(0, 8).reverse();
+      var labels = moves.map(function(m) { return shortDate(m.period); });
+      var values = moves.map(function(m) { return m.move; });
+      var colors = values.map(function(v) {
+        if (v === null) return 'rgba(255,255,255,0.1)';
+        return v >= 0 ? 'rgba(76,175,80,0.75)' : 'rgba(239,83,80,0.75)';
+      });
+
+      var ctx = document.getElementById('move-chart').getContext('2d');
+      charts.move = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Move %',
+            data: values,
+            backgroundColor: colors,
+            borderRadius: 3,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var v = ctx.raw;
+                  if (v === null) return 'N/A';
+                  return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: {
+                font: { size: 10 },
+                callback: function(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderFinChart(financials) {
+      var data = (financials && financials.data) || [];
+      if (!data.length) return;
+
+      var rows = [];
+      data.slice(0, 8).forEach(function(d) {
+        var ic = (d.report && d.report.ic) || [];
+        var revConcepts = ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax','TotalRevenues'];
+        var incConcepts = ['NetIncomeLoss','ProfitLoss','NetIncome','NetIncomeLossAttributableToParent'];
+
+        function findVal(concepts) {
+          for (var i = 0; i < concepts.length; i++) {
+            var item = ic.find(function(x) { return x.concept === concepts[i]; });
+            if (item && item.value) return item.value;
+          }
+          return null;
+        }
+
+        var rev = findVal(revConcepts);
+        var inc = findVal(incConcepts);
+        var label = 'Q' + d.quarter + ' ' + String(d.year).slice(2);
+        rows.push({ label: label, rev: fmtB(rev), inc: fmtB(inc) });
+      });
+
+      rows.reverse();
+
+      var ctx = document.getElementById('fin-chart').getContext('2d');
+      charts.fin = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: rows.map(function(r) { return r.label; }),
+          datasets: [
+            {
+              label: 'Revenue',
+              data: rows.map(function(r) { return r.rev; }),
+              backgroundColor: 'rgba(100,130,200,0.7)',
+              borderRadius: 3,
+            },
+            {
+              label: 'Net Income',
+              data: rows.map(function(r) { return r.inc; }),
+              backgroundColor: 'rgba(76,175,80,0.65)',
+              borderRadius: 3,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top', labels: { boxWidth: 10, padding: 14, font: { size: 10 } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var v = ctx.raw;
+                  return ctx.dataset.label + ': ' + (v !== null ? '$' + v + 'B' : 'N/A');
+                }
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              ticks: { font: { size: 10 }, callback: function(v) { return '$' + v + 'B'; } }
+            }
+          }
+        }
+      });
+    }
+
+    function selectStock(sym, el) {
+      if (sym === currentSymbol) return;
+      currentSymbol = sym;
+      document.querySelectorAll('.stock-tab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      loadData(sym);
+    }
+
+    function loadData(sym) {
+      destroyCharts();
+      document.getElementById('loading-state').style.display = 'block';
+      document.getElementById('mag7-content').style.display = 'none';
+      document.getElementById('error-state').style.display = 'none';
+
+      fetch(API + '/mag7/data?symbol=' + sym)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) throw new Error(data.error);
+
+          document.getElementById('loading-state').style.display = 'none';
+          document.getElementById('mag7-content').style.display = 'block';
+
+          renderStats(data);
+
+          var eps = Array.isArray(data.eps) ? data.eps : [];
+          if (eps.length) renderEpsChart(eps);
+
+          var moves = Array.isArray(data.earningsMoves) ? data.earningsMoves : [];
+          if (moves.length) renderMoveChart(moves);
+
+          if (data.financials) renderFinChart(data.financials);
+        })
+        .catch(function() {
+          document.getElementById('loading-state').style.display = 'none';
+          document.getElementById('error-state').style.display = 'block';
+        });
+    }
+
+    loadData('NVDA');
+  </script>
+
+  <script src="auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var tries = 0;
+      var iv = setInterval(function() {
+        if (window.Auth && window.Auth.getClient) {
+          clearInterval(iv);
+          window.Auth.getClient().auth.getUser().then(function(res) {
+            var u = res.data && res.data.user;
+            if (!u) return;
+            var name = (u.user_metadata && u.user_metadata.full_name) || u.email || '';
+            var first = name.split(' ')[0] || name;
+            var initials = name.split(' ').map(function(w) { return w[0]; }).slice(0,2).join('').toUpperCase() || 'LL';
+            document.getElementById('nav-name').textContent = 'Welcome back, ' + first;
+            document.getElementById('nav-initials').textContent = initials;
+          });
+        } else if (++tries > 30) clearInterval(iv);
+      }, 100);
+
+      document.getElementById('signout-btn').addEventListener('click', function() {
+        if (window.Auth) window.Auth.signOut();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -479,6 +479,65 @@ export default {
         });
       }
 
+      // ── Mag 7 Earnings Data ─────────────────────────────────────────
+      if (url.pathname === '/mag7/data') {
+        const sym = (url.searchParams.get('symbol') || 'NVDA').toUpperCase();
+        const VALID = ['AAPL','MSFT','GOOGL','AMZN','META','TSLA','NVDA'];
+        if (!VALID.includes(sym)) {
+          return new Response(JSON.stringify({ error: 'Invalid symbol' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const nowTs = Math.floor(Date.now() / 1000);
+        const twoYearsAgo = nowTs - 2 * 365 * 24 * 3600;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const in90 = new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString().split('T')[0];
+
+        const [epsRes, finRes, quoteRes, candleRes, nextRes] = await Promise.all([
+          fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&limit=9&token=${env.FINNHUB_KEY}`),
+          fetch(`https://finnhub.io/api/v1/stock/financials-reported?symbol=${sym}&freq=quarterly&token=${env.FINNHUB_KEY}`),
+          fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${env.FINNHUB_KEY}`),
+          fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=D&from=${twoYearsAgo}&to=${nowTs}&token=${env.FINNHUB_KEY}`),
+          fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${todayStr}&to=${in90}&symbol=${sym}&token=${env.FINNHUB_KEY}`),
+        ]);
+
+        const [eps, fin, quote, candles, nextEarnings] = await Promise.all([
+          epsRes.json(), finRes.json(), quoteRes.json(), candleRes.json(), nextRes.json()
+        ]);
+
+        // Compute earnings-day price moves from daily candles
+        const earningsMoves = [];
+        if (Array.isArray(eps) && candles.s === 'ok') {
+          const priceMap = {};
+          (candles.t || []).forEach((ts, i) => {
+            priceMap[new Date(ts * 1000).toISOString().split('T')[0]] = (candles.c || [])[i];
+          });
+          const tradingDays = Object.keys(priceMap).sort();
+
+          for (const q of eps.slice(0, 8)) {
+            if (!q.period) { earningsMoves.push({ period: q.period, move: null }); continue; }
+            const earningsMs = new Date(q.period).getTime();
+            const prev = [...tradingDays].reverse().find(d => new Date(d).getTime() < earningsMs);
+            const next = tradingDays.find(d => new Date(d).getTime() > earningsMs);
+            const prevClose = prev ? priceMap[prev] : null;
+            const nextClose = next ? priceMap[next] : null;
+            if (prevClose && nextClose) {
+              earningsMoves.push({
+                period: q.period,
+                move: parseFloat(((nextClose - prevClose) / prevClose * 100).toFixed(2))
+              });
+            } else {
+              earningsMoves.push({ period: q.period, move: null });
+            }
+          }
+        }
+
+        return new Response(JSON.stringify({ eps, financials: fin, quote, earningsMoves, nextEarnings }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' }
+        });
+      }
+
       return new Response('Not found', { status: 404, headers: corsHeaders });
 
     } catch (err) {
