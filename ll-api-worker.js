@@ -192,11 +192,22 @@ export default {
           return FIN_KEYWORDS.some(kw => h.includes(kw));
         }
 
+        // Reject headlines that are primarily non-Latin (Hebrew, Arabic, Chinese, etc.)
+        function isEnglish(text) {
+          if (!text) return false;
+          const nonAscii = (text.match(/[^\x00-\x7F]/g) || []).length;
+          return (nonAscii / text.length) < 0.2;
+        }
+
         // Merge and deduplicate Finnhub by headline; filter general feed to financial topics
         const seen = new Set();
         const finnhub = [];
-        const generalItems = Array.isArray(fGen) ? fGen.filter(item => isFinancialHeadline(item.headline)) : [];
-        for (const item of [...generalItems, ...(Array.isArray(fCrypto) ? fCrypto : []), ...(Array.isArray(fForex) ? fForex : [])]) {
+        const generalItems = Array.isArray(fGen)
+          ? fGen.filter(item => isEnglish(item.headline) && isFinancialHeadline(item.headline))
+          : [];
+        const cryptoItems  = Array.isArray(fCrypto) ? fCrypto.filter(item => isEnglish(item.headline)) : [];
+        const forexItems   = Array.isArray(fForex)  ? fForex.filter(item => isEnglish(item.headline))  : [];
+        for (const item of [...generalItems, ...cryptoItems, ...forexItems]) {
           if (item.headline && !seen.has(item.headline)) {
             seen.add(item.headline);
             finnhub.push(item);
