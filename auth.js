@@ -1,6 +1,6 @@
 (function () {
   // ── Set to false to re-enable the subscription paywall ───────────
-  const PAYWALL_BYPASS = true;
+  const PAYWALL_BYPASS = false;
   // ─────────────────────────────────────────────────────────────────
 
   const SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
