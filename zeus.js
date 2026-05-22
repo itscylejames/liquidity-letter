@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var API_URL = 'https://ll-api.cylejames-dj.workers.dev/zeus';
+  var API_URL = 'https://api.liquidityletter.com/zeus';
   var GOLD    = '#C9A84C';
   var BG      = '#0A0A0A';
   var CARD    = '#111111';
@@ -216,7 +216,7 @@
     })
     .catch(function (err) {
       hideThinking();
-      var msg = 'Could not reach Zeus (' + err.message + '). Check the Worker is live at ll-api.cylejames-dj.workers.dev.';
+      var msg = 'Could not reach Zeus (' + err.message + '). Check the Worker is live at api.liquidityletter.com.';
       history.push({ role: 'assistant', content: msg });
       addMessage('assistant', msg);
     })

@@ -279,7 +279,7 @@
     btn.textContent = 'Sending…'; btn.disabled = true;
     var email = document.getElementById('reset-email').value;
     var { error } = await getClient().auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://ll-api.cylejames-dj.workers.dev/reset-password.html'
+      redirectTo: 'https://liquidityletter.com/reset-password.html'
     });
     btn.textContent = 'Send Reset Link'; btn.disabled = false;
     if (error) { showError(error.message); return; }
@@ -359,7 +359,7 @@
       var token = sess.data && sess.data.session && sess.data.session.access_token;
       if (!token) throw new Error('Not logged in');
 
-      var res = await fetch('https://ll-api.cylejames-dj.workers.dev/cancel-subscription', {
+      var res = await fetch('https://api.liquidityletter.com/cancel-subscription', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
       });

@@ -341,7 +341,7 @@
   </div>
 
   <script>
-    var API = 'https://ll-api.cylejames-dj.workers.dev';
+    var API = 'https://api.liquidityletter.com';
     var currentSymbol = 'NVDA';
     var charts = { eps: null, move: null, fin: null };
 
@@ -538,30 +538,21 @@
     }
 
     function renderFinChart(financials) {
-      var data = (financials && financials.data) || [];
-      if (!data.length) return;
+      var results = (financials && financials.results) || [];
+      if (!results.length) {
+        var sub = document.querySelector('.chart-card-wide .chart-sub');
+        if (sub) sub.textContent = 'Quarterly data unavailable for this stock.';
+        return;
+      }
 
-      var rows = [];
-      data.slice(0, 8).forEach(function(d) {
-        var ic = (d.report && d.report.ic) || [];
-        var revConcepts = ['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax','TotalRevenues'];
-        var incConcepts = ['NetIncomeLoss','ProfitLoss','NetIncome','NetIncomeLossAttributableToParent'];
-
-        function findVal(concepts) {
-          for (var i = 0; i < concepts.length; i++) {
-            var item = ic.find(function(x) { return x.concept === concepts[i]; });
-            if (item && item.value) return item.value;
-          }
-          return null;
-        }
-
-        var rev = findVal(revConcepts);
-        var inc = findVal(incConcepts);
-        var label = 'Q' + d.quarter + ' ' + String(d.year).slice(2);
-        rows.push({ label: label, rev: fmtB(rev), inc: fmtB(inc) });
+      var rows = results.slice(0, 8).reverse().map(function(r) {
+        var inc = (r.financials && r.financials.income_statement) || {};
+        var rev = (inc.revenues && inc.revenues.value) || (inc.net_revenues && inc.net_revenues.value) || null;
+        var net = (inc.net_income_loss && inc.net_income_loss.value) ||
+                  (inc.net_income_loss_attributable_to_parent && inc.net_income_loss_attributable_to_parent.value) || null;
+        var label = (r.fiscal_period || '') + ' \'' + String(r.fiscal_year || '').slice(2);
+        return { label: label, rev: fmtB(rev), inc: fmtB(net) };
       });
-
-      rows.reverse();
 
       var ctx = document.getElementById('fin-chart').getContext('2d');
       charts.fin = new Chart(ctx, {

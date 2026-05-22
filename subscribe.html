@@ -209,7 +209,7 @@
     var SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
     var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
     var PAYSTACK_KEY = 'pk_test_abb3f5c7924f457b3b96ad2e24a045cf37fba1e7';
-    var WORKER_URL   = 'https://ll-api.cylejames-dj.workers.dev';
+    var WORKER_URL   = 'https://api.liquidityletter.com';
 
     var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     var currentUser = null;
@@ -389,7 +389,7 @@
 
     // ── Google sign in ───────────────────────────────────────────────
     document.getElementById('btn-google-sub').addEventListener('click', async function () {
-      var origin = window.location.origin || 'https://liquidity-letter.cylejames-dj.workers.dev';
+      var origin = window.location.origin || 'https://liquidityletter.com';
       await client.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: origin + '/subscribe.html' }

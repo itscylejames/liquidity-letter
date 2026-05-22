@@ -493,20 +493,25 @@ export default {
         const twoYearsAgo = nowTs - 2 * 365 * 24 * 3600;
         const todayStr = new Date().toISOString().split('T')[0];
         const in90 = new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString().split('T')[0];
+        const histFrom = new Date(Date.now() - 730 * 24 * 3600 * 1000).toISOString().split('T')[0];
 
-        const [epsRes, finRes, quoteRes, candleRes, nextRes] = await Promise.all([
+        const [epsRes, finRes, quoteRes, candleRes, nextRes, histCalRes] = await Promise.all([
           fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&limit=9&token=${env.FINNHUB_KEY}`),
-          fetch(`https://finnhub.io/api/v1/stock/financials-reported?symbol=${sym}&freq=quarterly&token=${env.FINNHUB_KEY}`),
+          fetch(`https://api.polygon.io/vX/reference/financials?ticker=${sym}&timeframe=quarterly&limit=8&order=desc&sort=period_of_report_date&apiKey=${env.POLYGON_KEY}`),
           fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${env.FINNHUB_KEY}`),
           fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=D&from=${twoYearsAgo}&to=${nowTs}&token=${env.FINNHUB_KEY}`),
           fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${todayStr}&to=${in90}&symbol=${sym}&token=${env.FINNHUB_KEY}`),
+          fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${histFrom}&to=${todayStr}&symbol=${sym}&token=${env.FINNHUB_KEY}`),
         ]);
 
-        const [eps, fin, quote, candles, nextEarnings] = await Promise.all([
-          epsRes.json(), finRes.json(), quoteRes.json(), candleRes.json(), nextRes.json()
+        const [eps, fin, quote, candles, nextEarnings, histCal] = await Promise.all([
+          epsRes.json(), finRes.json(), quoteRes.json(), candleRes.json(), nextRes.json(), histCalRes.json()
         ]);
 
-        // Compute earnings-day price moves from daily candles
+        // Build actual announcement dates from historical earnings calendar
+        const annDates = (histCal.earningsCalendar || []).map(e => e.date).sort();
+
+        // Compute earnings-day price moves using actual announcement dates
         const earningsMoves = [];
         if (Array.isArray(eps) && candles.s === 'ok') {
           const priceMap = {};
@@ -517,18 +522,29 @@ export default {
 
           for (const q of eps.slice(0, 8)) {
             if (!q.period) { earningsMoves.push({ period: q.period, move: null }); continue; }
-            const earningsMs = new Date(q.period).getTime();
-            const prev = [...tradingDays].reverse().find(d => new Date(d).getTime() < earningsMs);
-            const next = tradingDays.find(d => new Date(d).getTime() > earningsMs);
+            const periodMs = new Date(q.period).getTime();
+
+            // Find actual announcement date: calendar entry within 90 days after fiscal period end
+            const annoDate = annDates.find(d => {
+              const dMs = new Date(d).getTime();
+              return dMs > periodMs && dMs < periodMs + 90 * 86400000;
+            });
+
+            const refDate = annoDate || q.period;
+            const refMs = new Date(refDate).getTime();
+
+            const prev = [...tradingDays].reverse().find(d => new Date(d).getTime() < refMs);
+            const next = tradingDays.find(d => new Date(d).getTime() > refMs);
             const prevClose = prev ? priceMap[prev] : null;
             const nextClose = next ? priceMap[next] : null;
+
             if (prevClose && nextClose) {
               earningsMoves.push({
-                period: q.period,
+                period: refDate,
                 move: parseFloat(((nextClose - prevClose) / prevClose * 100).toFixed(2))
               });
             } else {
-              earningsMoves.push({ period: q.period, move: null });
+              earningsMoves.push({ period: refDate, move: null });
             }
           }
         }

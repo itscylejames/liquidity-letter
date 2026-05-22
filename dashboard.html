@@ -1135,7 +1135,7 @@
         return '<span style="font-size:9px;font-weight:700;letter-spacing:0.06em;color:#8A8780;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1px 5px;border-radius:2px;margin-right:5px;">NEUTRAL</span>';
       }
 
-      fetch('https://ll-api.cylejames-dj.workers.dev/news')
+      fetch('https://api.liquidityletter.com/news')
         .then(function(r) { return r.json(); })
         .then(function(data) {
           var items = [];
@@ -1339,7 +1339,7 @@
 <script src="zeus.js"></script>
 <script>
 (function() {
-  var API = 'https://ll-api.cylejames-dj.workers.dev';
+  var API = 'https://api.liquidityletter.com';
 
   function parseEventDate(e) {
     // Finnhub returns time as "2024-05-15 08:30:00" — replace space with T for ISO parsing
