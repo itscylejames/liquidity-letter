@@ -121,11 +121,13 @@
       .order('created_at', { ascending: false })
       .limit(30);
     var unread = (data || []).filter(function (n) { return new Date(n.created_at) > lastRead; }).length;
-    if (unread > 0) {
-      var badge = document.getElementById('notif-badge');
-      if (badge) {
+    var badge = document.getElementById('notif-badge');
+    if (badge) {
+      if (unread > 0) {
         badge.textContent = unread > 9 ? '9+' : unread;
         badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
       }
     }
   }

@@ -135,6 +135,40 @@
 
     @media (max-width: 960px) { .charts-grid { grid-template-columns: 1fr; } }
     @media (max-width: 720px) { .sidebar { display: none; } .stats-row { grid-template-columns: repeat(2,1fr); } }
+    .nav-bell { position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color 0.2s; }
+    .nav-bell:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .nav-bell-badge { position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; background: var(--gold); border-radius: 50%; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: #000; }
+    .nav-bell-badge.hidden { display: none; }
+    .notif-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; background: #161616; border: 0.5px solid rgba(255,255,255,0.12); border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,0.8); z-index: 200; overflow: hidden; }
+    .notif-dropdown.open { display: block; }
+    .notif-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .notif-header-title { font-size: 13px; font-weight: 600; color: #F5F5F5; }
+    .notif-mark-read { background: none; border: none; font-size: 11px; color: #C9A84C; cursor: pointer; font-family: inherit; }
+    .notif-list { max-height: 340px; overflow-y: auto; }
+    .notif-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; }
+    .notif-item:hover { background: rgba(255,255,255,0.03); }
+    .notif-item.unread { background: rgba(201,168,76,0.04); }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: #C9A84C; flex-shrink: 0; margin-top: 5px; }
+    .notif-dot.read { background: transparent; border: 1px solid rgba(255,255,255,0.15); }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 13px; font-weight: 600; color: #F5F5F5; margin-bottom: 3px; }
+    .notif-meta { font-size: 12px; color: #999; line-height: 1.4; }
+    .notif-empty { padding: 32px 16px; text-align: center; color: #555; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 13px; }
+    .notif-footer { padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.07); text-align: center; font-size: 12px; }
+    .notif-footer a { color: #C9A84C; text-decoration: none; }
+    /* ── Site footer ─────────────────────────────────────────────── */
+    .site-footer { border-top: 1px solid var(--border); padding: 20px 24px; margin-top: auto; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; max-width: 1400px; }
+    .footer-left { display: flex; align-items: center; gap: 10px; }
+    .footer-brand { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); }
+    .footer-links { display: flex; align-items: center; gap: 16px; }
+    .footer-links a { font-size: 11px; color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text-secondary); }
+    .footer-right { display: flex; align-items: center; gap: 16px; }
+    .footer-x { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
+    .footer-x:hover { color: var(--text-primary); }
+    .footer-copy { font-size: 11px; color: var(--text-muted); }
+    @media (max-width: 720px) { .footer-inner { flex-direction: column; align-items: flex-start; gap: 10px; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -145,13 +179,34 @@
       <img src="logo.png" alt="LL">
       <div>
         <div class="nav-logo-text">LIQUIDITY LETTER</div>
-        <div class="nav-logo-sub">MAG 7</div>
+        <div class="nav-logo-sub">EARNINGS WATCH</div>
       </div>
     </a>
     <div class="nav-right">
+      <div class="nav-bell" id="notif-bell" onclick="toggleNotifDropdown()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary)">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="nav-bell-badge hidden" id="notif-badge">0</span>
+        <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
+          <div class="notif-header">
+            <span class="notif-header-title">Notifications</span>
+            <button class="notif-mark-read" id="notif-mark-all" onclick="markAllRead()" style="display:none;">Mark all read</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              No new notifications
+            </div>
+          </div>
+          <div class="notif-footer"><a href="alerts.html">View all notifications →</a></div>
+        </div>
+      </div>
       <a href="profile.html" class="nav-user">
-        <div class="nav-avatar" id="nav-initials">LL</div>
-        <span class="nav-user-name" id="nav-name">Account</span>
+        <div class="nav-avatar" id="nav-avatar-initials">LL</div>
+        <span class="nav-user-name" id="nav-user-name">Welcome back</span>
+        <span class="nav-user-caret">▾</span>
       </a>
     </div>
   </nav>
@@ -339,6 +394,40 @@
 
     </main>
   </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <img src="logo.png" alt="LL" style="width:24px;height:24px;object-fit:contain;opacity:0.6;">
+        <span class="footer-brand">THE LIQUIDITY LETTER</span>
+      </div>
+      <div class="footer-links">
+        <a href="terms.html">Terms of Service</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refund.html">Refund Policy</a>
+      </div>
+      <div class="footer-right">
+        <a href="https://x.com/liquidityletter" target="_blank" rel="noopener" class="footer-x">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Follow on X
+        </a>
+        <span class="footer-copy">© 2026 The Liquidity Letter</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleNotifDropdown() {
+      document.getElementById('notif-dropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var bell = document.getElementById('notif-bell');
+      if (bell && !bell.contains(e.target)) {
+        var dd = document.getElementById('notif-dropdown');
+        if (dd) dd.classList.remove('open');
+      }
+    });
+  </script>
 
   <script>
     var API = 'https://api.liquidityletter.com';
@@ -653,8 +742,8 @@
             var name = (u.user_metadata && u.user_metadata.full_name) || u.email || '';
             var first = name.split(' ')[0] || name;
             var initials = name.split(' ').map(function(w) { return w[0]; }).slice(0,2).join('').toUpperCase() || 'LL';
-            document.getElementById('nav-name').textContent = 'Welcome back, ' + first;
-            document.getElementById('nav-initials').textContent = initials;
+            document.getElementById('nav-user-name').textContent = 'Welcome back, ' + first;
+            document.getElementById('nav-avatar-initials').textContent = initials;
           });
         } else if (++tries > 30) clearInterval(iv);
       }, 100);
