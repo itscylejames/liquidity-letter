@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://js.paystack.co/v1/inline.js"></script>
   <link rel="stylesheet" href="mobile.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -180,7 +179,7 @@
         <!-- Step 2: Payment -->
         <div id="step-checkout">
           <div class="step-title">Complete Payment</div>
-          <div class="step-sub">Step 2 of 2 — Secure card payment via Paystack.</div>
+          <div class="step-sub">Step 2 of 2 — Secure checkout via PayFast.</div>
           <div class="msg-error" id="pay-err-msg"></div>
           <div class="checkout-user">
             <div class="checkout-user-avatar" id="co-avatar">?</div>
@@ -196,7 +195,7 @@
           <div class="zar-note" id="zar-rate-note"></div>
           <br>
           <button class="btn-primary-full" id="btn-pay">Subscribe Now &rarr;</button>
-          <p class="fine-print">Secure checkout via Paystack &nbsp;·&nbsp; Billed in ZAR at live USD rate &nbsp;·&nbsp; Cancel anytime</p>
+          <p class="fine-print">Secure checkout via PayFast &nbsp;·&nbsp; Billed in ZAR at live USD rate &nbsp;·&nbsp; Cancel anytime</p>
         </div>
 
       </div>
@@ -211,30 +210,38 @@
   (function () {
     var SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
     var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
-    var PAYSTACK_KEY = 'pk_test_abb3f5c7924f457b3b96ad2e24a045cf37fba1e7';
-    var WORKER_URL   = 'https://api.liquidityletter.com';
+    var WORKER_URL = 'https://api.liquidityletter.com';
 
     var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     var currentUser = null;
-    var zarAmount = null;
-    var usdRate = null;
+    var pfParams    = null;
+    var pfAction    = null;
 
-    // ── Fetch live USD/ZAR rate ──────────────────────────────────────
-    async function fetchRate() {
+    // ── Pre-generate signed PayFast form params ──────────────────────
+    async function fetchPayFastParams() {
+      document.getElementById('zar-amount').textContent = 'Loading…';
+      document.getElementById('zar-rate-note').textContent = '';
       try {
-        var res  = await fetch('https://open.er-api.com/v6/latest/USD');
+        var meta = currentUser.user_metadata || {};
+        var res  = await fetch(WORKER_URL + '/payfast-initiate', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            user_id:    currentUser.id,
+            email:      currentUser.email,
+            first_name: meta.first_name || '',
+            last_name:  meta.last_name  || '',
+          })
+        });
         var data = await res.json();
-        var rate = data.rates && data.rates.ZAR;
-        if (!rate) throw new Error('no rate');
-        usdRate   = rate;
-        zarAmount = Math.ceil(29.99 * rate); // round up to nearest rand
-        document.getElementById('zar-amount').textContent = 'R' + zarAmount + '/mo';
-        document.getElementById('zar-rate-note').textContent = '1 USD = R' + rate.toFixed(2) + ' (live rate)';
-      } catch (e) {
-        usdRate   = 18.7;
-        zarAmount = 562;
-        document.getElementById('zar-amount').textContent = 'R' + zarAmount + '/mo';
-        document.getElementById('zar-rate-note').textContent = 'Rate unavailable — using estimated equivalent';
+        if (!data.params || !data.action) throw new Error(data.error || 'Init failed');
+        pfParams = data.params;
+        pfAction = data.action;
+        document.getElementById('zar-amount').textContent = 'R' + Math.round(parseFloat(data.zarAmount)) + '/mo';
+        document.getElementById('zar-rate-note').textContent = 'Billed in ZAR at the live USD exchange rate';
+      } catch(e) {
+        document.getElementById('zar-amount').textContent = '~R562/mo';
+        document.getElementById('zar-rate-note').textContent = 'Actual amount calculated at checkout';
       }
     }
 
@@ -263,67 +270,42 @@
       document.getElementById('co-avatar').textContent = firstName.charAt(0).toUpperCase();
       document.getElementById('co-email').textContent  = user.email;
 
-      fetchRate();
+      fetchPayFastParams();
     }
 
-    // ── Paystack popup ───────────────────────────────────────────────
-    document.getElementById('btn-pay').addEventListener('click', function () {
+    // ── PayFast redirect ─────────────────────────────────────────────
+    document.getElementById('btn-pay').addEventListener('click', async function () {
       if (!currentUser) return;
-      if (!zarAmount) { showError('Exchange rate not loaded yet — please wait a moment.', 'pay-err-msg'); return; }
 
       var btn = this;
 
-      if (typeof PaystackPop === 'undefined') {
-        showError('Paystack failed to load. Please disable any ad blockers and refresh the page.', 'pay-err-msg');
+      // If params aren't ready yet (still loading), try fetching now
+      if (!pfParams || !pfAction) {
+        btn.disabled = true; btn.textContent = 'Preparing checkout…';
+        await fetchPayFastParams();
+      }
+
+      if (!pfParams || !pfAction) {
+        showError('Could not prepare payment. Please refresh and try again.', 'pay-err-msg');
+        btn.disabled = false; btn.textContent = 'Subscribe Now →';
         return;
       }
 
-      btn.disabled = true; btn.textContent = 'Opening payment…';
+      btn.disabled = true; btn.textContent = 'Redirecting to PayFast…';
 
-      try {
-        var handler = PaystackPop.setup({
-          key:      PAYSTACK_KEY,
-          email:    currentUser.email,
-          amount:   zarAmount * 100,
-          currency: 'ZAR',
-          ref:      'TLL_' + Date.now(),
-          metadata: {
-            custom_fields: [
-              { display_name: 'User ID',       variable_name: 'user_id',       value: currentUser.id },
-              { display_name: 'USD Amount',    variable_name: 'usd_amount',    value: '29.99' },
-              { display_name: 'Exchange Rate', variable_name: 'exchange_rate', value: (usdRate || 0).toFixed(2) }
-            ]
-          },
-          callback: function (response) {
-            btn.textContent = 'Verifying…';
-            fetch(WORKER_URL + '/paystack-verify', {
-              method:  'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body:    JSON.stringify({ reference: response.reference, user_id: currentUser.id })
-            })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-              if (data.success) {
-                window.location.href = 'dashboard.html?subscribed=1';
-              } else {
-                throw new Error(data.error || 'Verification failed');
-              }
-            })
-            .catch(function (e) {
-              showError('Payment verification failed: ' + e.message, 'pay-err-msg');
-              btn.disabled = false; btn.textContent = 'Try Again →';
-            });
-          },
-          onClose: function () {
-            btn.disabled = false; btn.textContent = 'Subscribe Now →';
-          }
-        });
-
-        handler.openIframe();
-      } catch (e) {
-        showError('Could not open payment: ' + e.message, 'pay-err-msg');
-        btn.disabled = false; btn.textContent = 'Subscribe Now →';
-      }
+      // Build and auto-submit a hidden form to PayFast
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = pfAction;
+      Object.keys(pfParams).forEach(function (key) {
+        var input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = key;
+        input.value = pfParams[key];
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
     });
 
     // ── Check if already logged in ───────────────────────────────────

@@ -1,3 +1,53 @@
+// ── MD5 (needed for PayFast signatures) ──────────────────────────────────────
+function md5(str) {
+  function safeAdd(x,y){var lsw=(x&0xFFFF)+(y&0xFFFF);var msw=(x>>16)+(y>>16)+(lsw>>16);return(msw<<16)|(lsw&0xFFFF);}
+  function rol(n,c){return(n<<c)|(n>>>(32-c));}
+  function cmn(q,a,b,x,s,t){return safeAdd(rol(safeAdd(safeAdd(a,q),safeAdd(x,t)),s),b);}
+  function ff(a,b,c,d,x,s,t){return cmn((b&c)|(~b&d),a,b,x,s,t);}
+  function gg(a,b,c,d,x,s,t){return cmn((b&d)|(c&~d),a,b,x,s,t);}
+  function hh(a,b,c,d,x,s,t){return cmn(b^c^d,a,b,x,s,t);}
+  function ii(a,b,c,d,x,s,t){return cmn(c^(b|~d),a,b,x,s,t);}
+  var bs=[],bl=str.length*8;
+  for(var i=0;i<str.length;i++)bs[i>>2]|=str.charCodeAt(i)<<((i%4)*8);
+  bs[bl>>5]|=0x80<<(bl%32);bs[(((bl+64)>>>9)<<4)+14]=bl;
+  var a=1732584193,b=-271733879,c=-1732584194,d=271733878;
+  for(var i=0;i<bs.length;i+=16){
+    var oa=a,ob=b,oc=c,od=d;
+    a=ff(a,b,c,d,bs[i+0],7,-680876936);d=ff(d,a,b,c,bs[i+1],12,-389564586);c=ff(c,d,a,b,bs[i+2],17,606105819);b=ff(b,c,d,a,bs[i+3],22,-1044525330);
+    a=ff(a,b,c,d,bs[i+4],7,-176418897);d=ff(d,a,b,c,bs[i+5],12,1200080426);c=ff(c,d,a,b,bs[i+6],17,-1473231341);b=ff(b,c,d,a,bs[i+7],22,-45705983);
+    a=ff(a,b,c,d,bs[i+8],7,1770035416);d=ff(d,a,b,c,bs[i+9],12,-1958414417);c=ff(c,d,a,b,bs[i+10],17,-42063);b=ff(b,c,d,a,bs[i+11],22,-1990404162);
+    a=ff(a,b,c,d,bs[i+12],7,1804603682);d=ff(d,a,b,c,bs[i+13],12,-40341101);c=ff(c,d,a,b,bs[i+14],17,-1502002290);b=ff(b,c,d,a,bs[i+15],22,1236535329);
+    a=gg(a,b,c,d,bs[i+1],5,-165796510);d=gg(d,a,b,c,bs[i+6],9,-1069501632);c=gg(c,d,a,b,bs[i+11],14,643717713);b=gg(b,c,d,a,bs[i+0],20,-373897302);
+    a=gg(a,b,c,d,bs[i+5],5,-701558691);d=gg(d,a,b,c,bs[i+10],9,38016083);c=gg(c,d,a,b,bs[i+15],14,-660478335);b=gg(b,c,d,a,bs[i+4],20,-405537848);
+    a=gg(a,b,c,d,bs[i+9],5,568446438);d=gg(d,a,b,c,bs[i+14],9,-1019803690);c=gg(c,d,a,b,bs[i+3],14,-187363961);b=gg(b,c,d,a,bs[i+8],20,1163531501);
+    a=gg(a,b,c,d,bs[i+13],5,-1444681467);d=gg(d,a,b,c,bs[i+2],9,-51403784);c=gg(c,d,a,b,bs[i+7],14,1735328473);b=gg(b,c,d,a,bs[i+12],20,-1926607734);
+    a=hh(a,b,c,d,bs[i+5],4,-378558);d=hh(d,a,b,c,bs[i+8],11,-2022574463);c=hh(c,d,a,b,bs[i+11],16,1839030562);b=hh(b,c,d,a,bs[i+14],23,-35309556);
+    a=hh(a,b,c,d,bs[i+1],4,-1530992060);d=hh(d,a,b,c,bs[i+4],11,1272893353);c=hh(c,d,a,b,bs[i+7],16,-155497632);b=hh(b,c,d,a,bs[i+10],23,-1094730640);
+    a=hh(a,b,c,d,bs[i+13],4,681279174);d=hh(d,a,b,c,bs[i+0],11,-358537222);c=hh(c,d,a,b,bs[i+3],16,-722521979);b=hh(b,c,d,a,bs[i+6],23,76029189);
+    a=hh(a,b,c,d,bs[i+9],4,-640364487);d=hh(d,a,b,c,bs[i+12],11,-421815835);c=hh(c,d,a,b,bs[i+15],16,530742520);b=hh(b,c,d,a,bs[i+2],23,-995338651);
+    a=ii(a,b,c,d,bs[i+0],6,-198630844);d=ii(d,a,b,c,bs[i+7],10,1126891415);c=ii(c,d,a,b,bs[i+14],15,-1416354905);b=ii(b,c,d,a,bs[i+5],21,-57434055);
+    a=ii(a,b,c,d,bs[i+12],6,1700485571);d=ii(d,a,b,c,bs[i+3],10,-1894986606);c=ii(c,d,a,b,bs[i+10],15,-1051523);b=ii(b,c,d,a,bs[i+1],21,-2054922799);
+    a=ii(a,b,c,d,bs[i+8],6,1873313359);d=ii(d,a,b,c,bs[i+15],10,-30611744);c=ii(c,d,a,b,bs[i+6],15,-1560198380);b=ii(b,c,d,a,bs[i+13],21,1309151649);
+    a=ii(a,b,c,d,bs[i+4],6,-145523070);d=ii(d,a,b,c,bs[i+11],10,-1120210379);c=ii(c,d,a,b,bs[i+2],15,718787259);b=ii(b,c,d,a,bs[i+9],21,-343485551);
+    a=safeAdd(a,oa);b=safeAdd(b,ob);c=safeAdd(c,oc);d=safeAdd(d,od);
+  }
+  var r='',arr=[a,b,c,d];
+  for(var i=0;i<4;i++)for(var j=0;j<4;j++)r+=('0'+(((arr[i])>>(j*8))&0xff).toString(16)).slice(-2);
+  return r;
+}
+
+// Builds the sorted param string PayFast expects for signature generation
+function buildPFParamString(params, passphrase) {
+  const parts = Object.keys(params).sort().map(k => {
+    const v = params[k];
+    if (v === '' || v == null) return null;
+    return `${k}=${encodeURIComponent(String(v)).replace(/%20/g, '+')}`;
+  }).filter(Boolean);
+  let str = parts.join('&');
+  if (passphrase) str += '&passphrase=' + encodeURIComponent(passphrase).replace(/%20/g, '+');
+  return str;
+}
+
 async function verifyLemonSignature(secret, body, signature) {
   try {
     const encoder = new TextEncoder();
@@ -27,62 +77,10 @@ async function upsertSubscription(env, userId, data) {
 async function runBilling(env) {
   const now = new Date();
 
-  // Fetch live USD/ZAR rate
-  let zarRate = 18.7;
-  try {
-    const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
-    const rateData = await rateRes.json();
-    zarRate = rateData.rates?.ZAR || 18.7;
-  } catch(e) {}
-  const zarAmount = Math.ceil(29.99 * zarRate) * 100; // kobo/cents
+  // PayFast handles recurring charges automatically via subscription tokens.
+  // This scheduled job only needs to suspend past_due subs where the grace period expired.
 
-  // 1. Charge active subscriptions that are due
-  const dueRes = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/subscriptions?status=eq.active&current_period_end=lte.${now.toISOString()}&paystack_auth_code=not.is.null`,
-    { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
-  );
-  const dueSubs = await dueRes.json();
-
-  for (const sub of (Array.isArray(dueSubs) ? dueSubs : [])) {
-    try {
-      const chargeRes = await fetch('https://api.paystack.co/transaction/charge_authorization', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${env.PAYSTACK_SECRET_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          authorization_code: sub.paystack_auth_code,
-          email: sub.paystack_email,
-          amount: zarAmount,
-          currency: 'ZAR',
-          metadata: { custom_fields: [
-            { display_name: 'User ID', variable_name: 'user_id', value: sub.user_id },
-            { display_name: 'Type',    variable_name: 'type',    value: 'recurring' },
-            { display_name: 'USD Amount', variable_name: 'usd_amount', value: '29.99' },
-            { display_name: 'Exchange Rate', variable_name: 'exchange_rate', value: zarRate.toFixed(2) },
-          ]}
-        })
-      });
-      const chargeData = await chargeRes.json();
-
-      if (chargeData.data?.status === 'success') {
-        const newEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${sub.user_id}`, {
-          method: 'PATCH',
-          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ status: 'active', current_period_end: newEnd, updated_at: now.toISOString() })
-        });
-      } else {
-        // Charge failed — 48hr grace period
-        const graceEnd = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-        await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${sub.user_id}`, {
-          method: 'PATCH',
-          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ status: 'past_due', current_period_end: graceEnd, updated_at: now.toISOString() })
-        });
-      }
-    } catch(e) {}
-  }
-
-  // 2. Suspend past_due subscriptions where grace period has expired
+  // Suspend past_due subscriptions where grace period has expired
   const expiredRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/subscriptions?status=eq.past_due&current_period_end=lte.${now.toISOString()}`,
     { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
@@ -402,12 +400,33 @@ export default {
         if (!userRes.ok) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
         const { id: userId } = await userRes.json();
 
-        // Get current period end before cancelling
-        const subRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}&select=current_period_end`, {
+        // Get current period end + PayFast token before cancelling
+        const subRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}&select=current_period_end,paystack_auth_code`, {
           headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` }
         });
         const subs = await subRes.json();
         const accessUntil = subs[0]?.current_period_end || null;
+        const pfToken = subs[0]?.paystack_auth_code || null;
+
+        // Cancel the PayFast subscription if we have a token
+        if (pfToken && env.PAYFAST_MERCHANT_ID && env.PAYFAST_PASSPHRASE) {
+          try {
+            const isSandbox = env.PAYFAST_SANDBOX === 'true';
+            const pfApiBase = isSandbox ? 'https://api.sandbox.payfast.co.za' : 'https://api.payfast.co.za';
+            const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00');
+            const apiHeaders = {
+              'merchant-id': env.PAYFAST_MERCHANT_ID,
+              'passphrase':  md5(env.PAYFAST_PASSPHRASE),
+              'timestamp':   timestamp,
+              'version':     'v1',
+            };
+            apiHeaders.signature = md5(buildPFParamString(apiHeaders));
+            await fetch(`${pfApiBase}/subscriptions/${pfToken}/cancel`, {
+              method: 'PUT',
+              headers: { ...apiHeaders, 'Content-Length': '0' },
+            });
+          } catch(e) {}
+        }
 
         const patchRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}`, {
           method: 'PATCH',
@@ -430,6 +449,116 @@ export default {
         return new Response(JSON.stringify({ success: true, access_until: accessUntil }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+
+      // ── PayFast: Initiate Payment ─────────────────────────────────
+      if (url.pathname === '/payfast-initiate' && request.method === 'POST') {
+        const { user_id, email, first_name, last_name } = await request.json();
+        if (!user_id || !email) {
+          return new Response(JSON.stringify({ error: 'Missing user_id or email' }), {
+            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        let zarRate = 18.7;
+        try {
+          const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
+          const rateData = await rateRes.json();
+          zarRate = rateData.rates?.ZAR || 18.7;
+        } catch(e) {}
+        const zarAmount = Math.ceil(29.99 * zarRate).toFixed(2);
+
+        const isSandbox = env.PAYFAST_SANDBOX === 'true';
+        const pfUrl = isSandbox
+          ? 'https://sandbox.payfast.co.za/eng/process'
+          : 'https://www.payfast.co.za/eng/process';
+        const siteUrl = 'https://liquidityletter.com';
+
+        const params = {
+          merchant_id:      env.PAYFAST_MERCHANT_ID,
+          merchant_key:     env.PAYFAST_MERCHANT_KEY,
+          return_url:       `${siteUrl}/dashboard.html?subscribed=1`,
+          cancel_url:       `${siteUrl}/subscribe.html`,
+          notify_url:       `https://api.liquidityletter.com/payfast-itn`,
+          name_first:       (first_name || '').slice(0, 100),
+          name_last:        (last_name  || '').slice(0, 100),
+          email_address:    email,
+          m_payment_id:     `TLL_${user_id}_${Date.now()}`,
+          amount:           zarAmount,
+          item_name:        'The Liquidity Letter Monthly',
+          subscription_type: '1',
+          billing_date:     new Date().toISOString().split('T')[0],
+          recurring_amount: zarAmount,
+          frequency:        '3',
+          cycles:           '0',
+          custom_str1:      user_id,
+        };
+
+        // Remove empty fields before signing
+        for (const k of Object.keys(params)) {
+          if (params[k] === '' || params[k] == null) delete params[k];
+        }
+
+        const paramString = buildPFParamString(params, env.PAYFAST_PASSPHRASE || '');
+        params.signature = md5(paramString);
+
+        return new Response(JSON.stringify({ params, action: pfUrl, zarAmount }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // ── PayFast: ITN (Instant Transaction Notification / webhook) ──
+      if (url.pathname === '/payfast-itn' && request.method === 'POST') {
+        const rawBody = await request.text();
+        const formData = new URLSearchParams(rawBody);
+        const pfData = Object.fromEntries(formData.entries());
+
+        // Verify signature
+        const receivedSig = pfData.signature;
+        const paramsForSig = { ...pfData };
+        delete paramsForSig.signature;
+        const expectedSig = md5(buildPFParamString(paramsForSig, env.PAYFAST_PASSPHRASE || ''));
+
+        if (receivedSig !== expectedSig) {
+          return new Response('Invalid signature', { status: 400, headers: corsHeaders });
+        }
+
+        if (pfData.merchant_id !== env.PAYFAST_MERCHANT_ID) {
+          return new Response('Invalid merchant', { status: 400, headers: corsHeaders });
+        }
+
+        const userId        = pfData.custom_str1;
+        const paymentStatus = pfData.payment_status;
+        const pfToken       = pfData.token || null; // subscription token for recurring management
+
+        if (paymentStatus === 'COMPLETE' && userId) {
+          const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          await upsertSubscription(env, userId, {
+            status:                  'active',
+            plan:                    'monthly',
+            lemon_subscription_id:   pfData.m_payment_id || '',
+            current_period_end:      periodEnd,
+            updated_at:              new Date().toISOString(),
+            ...(pfToken              && { paystack_auth_code: pfToken }),
+            ...(pfData.email_address && { paystack_email: pfData.email_address }),
+          });
+          await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+            method: 'PATCH',
+            headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trial_used: true }),
+          });
+        }
+
+        if (paymentStatus === 'FAILED' && userId) {
+          const graceEnd = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+          await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${userId}`, {
+            method: 'PATCH',
+            headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ status: 'past_due', current_period_end: graceEnd, updated_at: new Date().toISOString() }),
+          });
+        }
+
+        return new Response('OK', { headers: corsHeaders });
       }
 
       // ── Paystack Verify ───────────────────────────────────────────
