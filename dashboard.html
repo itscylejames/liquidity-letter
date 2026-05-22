@@ -720,6 +720,17 @@
       .market-grid { grid-template-columns: repeat(2, 1fr); }
       .content-cols { grid-template-columns: 1fr; }
     }
+    /* ── Fear & Greed ────────────────────────────────────────────── */
+    .fg-sector-row { display: grid; grid-template-columns: 1fr 1.6fr; gap: 16px; margin-bottom: 24px; }
+    .fg-bar-wrap { position: relative; padding-bottom: 6px; }
+    .fg-bar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; gap: 2px; }
+    .fg-bar > div:first-child { border-radius: 4px 0 0 4px; }
+    .fg-bar > div:last-child  { border-radius: 0 4px 4px 0; }
+    .fg-needle { position: absolute; top: -5px; width: 3px; height: 17px; background: #fff; border-radius: 2px; transform: translateX(-50%); transition: left 0.9s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 8px rgba(255,255,255,0.5); }
+    .fg-bar-labels { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9px; color: var(--text-muted); letter-spacing: 0.04em; }
+    .fg-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+    @media (max-width: 900px) { .fg-sector-row { grid-template-columns: 1fr; } }
+
     /* ── Site footer ─────────────────────────────────────────────── */
     .site-footer { border-top: 1px solid var(--border); padding: 20px 24px; margin-top: auto; }
     .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; max-width: 1400px; }
@@ -962,6 +973,74 @@
 
         </div>
       </div><!-- /Market Overview -->
+
+      <!-- ── Fear & Greed + Sector Performance ──────────────── -->
+      <div class="fg-sector-row">
+
+        <!-- Fear & Greed Card -->
+        <div class="card" style="padding:20px;">
+          <div class="section-header" style="margin-bottom:18px;">
+            <span class="section-title">Fear &amp; Greed Index</span>
+            <span id="fg-updated" style="font-size:10px;color:var(--text-muted);"></span>
+          </div>
+          <div style="display:flex;gap:20px;align-items:flex-start;">
+
+            <!-- Equity -->
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Equity</div>
+              <div id="fg-equity-score" style="font-family:var(--font-display);font-size:38px;font-weight:700;line-height:1;margin-bottom:4px;">—</div>
+              <div id="fg-equity-label" style="font-size:12px;font-weight:600;margin-bottom:14px;color:var(--text-muted);">Loading…</div>
+              <div class="fg-bar-wrap">
+                <div class="fg-bar">
+                  <div style="flex:25;background:#EF5350;"></div>
+                  <div style="flex:19;background:#FF9800;"></div>
+                  <div style="flex:11;background:#FFC107;"></div>
+                  <div style="flex:19;background:#8BC34A;"></div>
+                  <div style="flex:26;background:#4CAF50;"></div>
+                </div>
+                <div class="fg-needle" id="fg-equity-needle" style="left:50%;"></div>
+              </div>
+              <div class="fg-bar-labels"><span>Fear</span><span>Neutral</span><span>Greed</span></div>
+            </div>
+
+            <div class="fg-divider" style="align-self:stretch;"></div>
+
+            <!-- Crypto -->
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Crypto</div>
+              <div id="fg-crypto-score" style="font-family:var(--font-display);font-size:38px;font-weight:700;line-height:1;margin-bottom:4px;">—</div>
+              <div id="fg-crypto-label" style="font-size:12px;font-weight:600;margin-bottom:14px;color:var(--text-muted);">Loading…</div>
+              <div class="fg-bar-wrap">
+                <div class="fg-bar">
+                  <div style="flex:25;background:#EF5350;"></div>
+                  <div style="flex:19;background:#FF9800;"></div>
+                  <div style="flex:11;background:#FFC107;"></div>
+                  <div style="flex:19;background:#8BC34A;"></div>
+                  <div style="flex:26;background:#4CAF50;"></div>
+                </div>
+                <div class="fg-needle" id="fg-crypto-needle" style="left:50%;"></div>
+              </div>
+              <div class="fg-bar-labels"><span>Fear</span><span>Neutral</span><span>Greed</span></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Sector Performance Card -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:16px 20px 8px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="section-title">Sector Performance</span>
+            <span style="font-size:11px;color:var(--text-muted);">S&amp;P 500 · Today</span>
+          </div>
+          <div class="tradingview-widget-container" style="height:260px;width:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-sector-performances.js" async>
+            {"width":"100%","height":"100%","colorTheme":"dark","dateRange":"1D","showChart":false,"locale":"en","isTransparent":true,"showSymbolLogo":false,"showFloatingTooltip":false,"plotLineColorGrowing":"rgba(46,175,80,1)","plotLineColorFalling":"rgba(239,83,80,1)","gridLineColor":"rgba(255,255,255,0.04)","scaleFontColor":"rgba(150,150,150,1)","belowLineFillColorGrowing":"rgba(46,175,80,0.08)","belowLineFillColorFalling":"rgba(239,83,80,0.08)","belowLineFillColorGrowingBottom":"rgba(46,175,80,0)","belowLineFillColorFallingBottom":"rgba(239,83,80,0)","symbolActiveColor":"rgba(201,168,76,0.12)"}
+            </script>
+          </div>
+        </div>
+
+      </div><!-- /Fear & Greed + Sector -->
 
       <!-- ── Two column: Research + ETF/Watchlist ─────────────── -->
       <div class="content-cols">
@@ -1374,6 +1453,51 @@
 <script>
 (function() {
   var API = 'https://api.liquidityletter.com';
+
+  /* ── Fear & Greed ──────────────────────────────────────────────── */
+  function fgColor(s) {
+    if (s <= 25) return '#EF5350';
+    if (s <= 44) return '#FF9800';
+    if (s <= 55) return '#FFC107';
+    if (s <= 74) return '#8BC34A';
+    return '#4CAF50';
+  }
+  function fgLabel(s) {
+    if (s <= 25) return 'Extreme Fear';
+    if (s <= 44) return 'Fear';
+    if (s <= 55) return 'Neutral';
+    if (s <= 74) return 'Greed';
+    return 'Extreme Greed';
+  }
+  function renderFG(scoreElId, labelElId, needleElId, score) {
+    var s = Math.round(score);
+    var color = fgColor(s);
+    document.getElementById(scoreElId).textContent = s;
+    document.getElementById(scoreElId).style.color = color;
+    document.getElementById(labelElId).textContent = fgLabel(s);
+    document.getElementById(labelElId).style.color = color;
+    document.getElementById(needleElId).style.left = s + '%';
+  }
+  fetch(API + '/fear-greed')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      /* Equity — CNN Fear & Greed */
+      if (d.equity && d.equity.fear_and_greed) {
+        var eq = d.equity.fear_and_greed;
+        renderFG('fg-equity-score', 'fg-equity-label', 'fg-equity-needle', eq.score);
+        var ts = eq.timestamp ? new Date(eq.timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+        if (ts) document.getElementById('fg-updated').textContent = 'Updated ' + ts;
+      }
+      /* Crypto — Alternative.me */
+      if (d.crypto && d.crypto.data && d.crypto.data[0]) {
+        renderFG('fg-crypto-score', 'fg-crypto-label', 'fg-crypto-needle', parseInt(d.crypto.data[0].value));
+      }
+    })
+    .catch(function() {
+      ['fg-equity-label','fg-crypto-label'].forEach(function(id) {
+        document.getElementById(id).textContent = 'Unavailable';
+      });
+    });
 
   function parseEventDate(e) {
     // Finnhub returns time as "2024-05-15 08:30:00" — replace space with T for ISO parsing

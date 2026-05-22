@@ -220,6 +220,20 @@ export default {
       }
 
       // ── Bitcoin ETF Flows (Farside scrape) ────────────────────────
+      // ── Fear & Greed ─────────────────────────────────────────────
+      if (url.pathname === '/fear-greed') {
+        const [cryptoRes, equityRes] = await Promise.all([
+          fetch('https://api.alternative.me/fng/?limit=1'),
+          fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata'),
+        ]);
+        let crypto = null, equity = null;
+        try { crypto = await cryptoRes.json(); } catch(e) {}
+        try { equity = await equityRes.json(); } catch(e) {}
+        return new Response(JSON.stringify({ crypto, equity }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       if (url.pathname === '/btc-flows') {
         const fsRes = await fetch('https://farside.co.uk/bitcoin-etf-flow-all-data/', {
           headers: {
