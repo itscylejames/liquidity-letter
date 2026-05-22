@@ -661,22 +661,15 @@
       </div>
 
       <!-- ── X Feed panel ──────────────────────────────────────────── -->
-      <div id="panel-x" style="display:none;" class="x-panel">
+      <div id="panel-x" style="visibility:hidden;position:absolute;pointer-events:none;" class="x-panel">
 
-        <div class="x-accounts-bar" id="x-accounts-bar">
-          <!-- Populated by JS from X_ACCOUNTS list below -->
-        </div>
-
-        <div class="x-embed-wrap">
-          <a class="twitter-timeline"
-             data-theme="dark"
-             data-chrome="nofooter noborders transparent"
-             data-tweet-limit="20"
-             id="x-timeline-link"
-             href="https://twitter.com/unusual_whales">
-            Loading X feed…
-          </a>
-        </div>
+        <a class="twitter-timeline"
+           data-theme="dark"
+           data-chrome="nofooter noborders transparent"
+           data-tweet-limit="25"
+           href="https://twitter.com/liquidityletter">
+          Loading @liquidityletter feed…
+        </a>
 
       </div>
 
@@ -879,66 +872,37 @@
         });
     }
 
-    /* ── X Feed accounts (edit this list to change what shows) ─── */
-    var X_ACCOUNTS = [
-      { handle: 'unusual_whales',  label: 'Unusual Whales',    desc: 'Options flow & market alerts' },
-      { handle: 'DeItaone',        label: 'DeItaone',          desc: 'Breaking macro headlines'     },
-      { handle: 'zerohedge',       label: 'ZeroHedge',         desc: 'Markets & macro commentary'   },
-      { handle: 'markets',         label: 'Bloomberg Markets', desc: 'Real-time market news'        },
-      { handle: 'MacroAlf',        label: 'Alfonso Peccatiello',desc: 'Global macro analysis'       },
-      { handle: 'FedGuy12',        label: 'Joseph Wang',       desc: 'Fed & rates commentary'       },
-    ];
-
-    var activeXHandle = X_ACCOUNTS[0].handle;
-    var widgetLoaded  = false;
-
-    /* ── Build account chips ─────────────────────────────────────── */
-    function buildXAccountBar() {
-      var bar = document.getElementById('x-accounts-bar');
-      bar.innerHTML = X_ACCOUNTS.map(function (acc) {
-        var isActive = acc.handle === activeXHandle;
-        return '<button class="x-account-chip" '
-          + 'style="' + (isActive ? 'border-color:var(--gold);color:var(--text-primary);' : '') + '"'
-          + ' title="' + acc.desc + '"'
-          + ' onclick="selectXAccount(\'' + acc.handle + '\')">'
-          + '@' + acc.handle
-          + '</button>';
-      }).join('');
-    }
-
-    /* ── Switch active X account ─────────────────────────────────── */
-    function selectXAccount(handle) {
-      activeXHandle = handle;
-      buildXAccountBar();
-
-      var wrap = document.querySelector('.x-embed-wrap');
-      wrap.innerHTML = '<a class="twitter-timeline"'
-        + ' data-theme="dark"'
-        + ' data-chrome="nofooter noborders transparent"'
-        + ' data-tweet-limit="20"'
-        + ' href="https://twitter.com/' + handle + '">'
-        + 'Loading…</a>';
-
-      if (window.twttr && window.twttr.widgets) {
-        window.twttr.widgets.load(wrap);
-      }
-    }
-
     /* ── Tab switcher ────────────────────────────────────────────── */
+    var xWidgetLoaded = false;
+
     function switchTab(tab) {
       document.getElementById('tab-market').classList.toggle('active', tab === 'market');
       document.getElementById('tab-x').classList.toggle('active', tab === 'x');
-      document.getElementById('panel-market').style.display = tab === 'market' ? '' : 'none';
-      document.getElementById('panel-x').style.display      = tab === 'x'      ? '' : 'none';
 
-      /* Load Twitter widget only when X tab is first opened */
-      if (tab === 'x' && !widgetLoaded) {
-        widgetLoaded = true;
-        buildXAccountBar();
-        var s = document.createElement('script');
-        s.src = 'https://platform.twitter.com/widgets.js';
-        s.async = true;
-        document.body.appendChild(s);
+      var pMarket = document.getElementById('panel-market');
+      var pX      = document.getElementById('panel-x');
+
+      if (tab === 'market') {
+        pMarket.style.cssText = '';
+        pX.style.cssText      = 'visibility:hidden;position:absolute;pointer-events:none;';
+      } else {
+        /* Make X panel visible in-flow before widget renders */
+        pX.style.cssText      = 'max-width:600px;';
+        pMarket.style.cssText = 'display:none;';
+
+        /* Trigger widget render on first open */
+        if (!xWidgetLoaded) {
+          xWidgetLoaded = true;
+          if (window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load(pX);
+          } else {
+            var s = document.createElement('script');
+            s.src = 'https://platform.twitter.com/widgets.js';
+            s.charset = 'utf-8';
+            s.async = true;
+            document.head.appendChild(s);
+          }
+        }
       }
     }
 
