@@ -428,6 +428,53 @@
     }
     .btn-retry:hover { border-color: rgba(255,255,255,0.2); color: var(--text-primary); }
 
+    /* ── Feed tabs ──────────────────────────────────────────────── */
+    .feed-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+    .feed-tab {
+      display: flex; align-items: center; gap: 7px;
+      height: 36px; padding: 0 16px;
+      font-size: 13px; font-weight: 600;
+      color: var(--text-muted);
+      background: none; border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .feed-tab:hover { color: var(--text-secondary); }
+    .feed-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .feed-tab svg { flex-shrink: 0; }
+
+    /* ── X Feed panel ────────────────────────────────────────────── */
+    .x-panel { max-width: 700px; }
+    .x-accounts-bar {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .x-account-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    }
+    .x-account-chip span { color: var(--text-muted); font-size: 11px; }
+    .x-embed-wrap {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    .x-embed-wrap iframe { border-radius: 10px; }
+
     /* ── Page footer ─────────────────────────────────────────────── */
     .page-footer {
       max-width: 700px;
@@ -541,6 +588,13 @@
           ETF Tracker
         </a>
 
+        <a href="mag7.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Earnings Watch
+        </a>
+
         <a href="macro-calendar.html" class="sidebar-item">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -581,15 +635,49 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
 
-      <div style="margin-bottom:24px;">
-        <div class="page-title">Market Newsfeed</div>
-        <div class="page-subtitle">Real-time financial headlines from global markets.</div>
+      <div style="margin-bottom:20px;">
+        <div class="page-title">Newsfeed</div>
+        <div class="page-subtitle">Real-time financial headlines and market chatter.</div>
       </div>
 
-      <div id="news-feed"></div>
+      <!-- ── Tabs ─────────────────────────────────────────────────── -->
+      <div class="feed-tabs">
+        <button class="feed-tab active" id="tab-market" onclick="switchTab('market')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+          Market News
+        </button>
+        <button class="feed-tab" id="tab-x" onclick="switchTab('x')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          X Feed
+        </button>
+      </div>
 
-      <div id="news-footer" style="display:none;text-align:center;padding:32px 0 8px;font-size:12px;color:var(--text-muted);">
-        End of feed — refreshes every 5 minutes
+      <!-- ── Market News panel ─────────────────────────────────────── -->
+      <div id="panel-market">
+        <div id="news-feed"></div>
+        <div id="news-footer" style="display:none;text-align:center;padding:32px 0 8px;font-size:12px;color:var(--text-muted);">
+          End of feed — refreshes every 5 minutes
+        </div>
+      </div>
+
+      <!-- ── X Feed panel ──────────────────────────────────────────── -->
+      <div id="panel-x" style="display:none;" class="x-panel">
+
+        <div class="x-accounts-bar" id="x-accounts-bar">
+          <!-- Populated by JS from X_ACCOUNTS list below -->
+        </div>
+
+        <div class="x-embed-wrap">
+          <a class="twitter-timeline"
+             data-theme="dark"
+             data-chrome="nofooter noborders transparent"
+             data-tweet-limit="20"
+             id="x-timeline-link"
+             href="https://twitter.com/unusual_whales">
+            Loading X feed…
+          </a>
+        </div>
+
       </div>
 
     </main>
@@ -789,6 +877,69 @@
         .catch(function () {
           renderError();
         });
+    }
+
+    /* ── X Feed accounts (edit this list to change what shows) ─── */
+    var X_ACCOUNTS = [
+      { handle: 'unusual_whales',  label: 'Unusual Whales',    desc: 'Options flow & market alerts' },
+      { handle: 'DeItaone',        label: 'DeItaone',          desc: 'Breaking macro headlines'     },
+      { handle: 'zerohedge',       label: 'ZeroHedge',         desc: 'Markets & macro commentary'   },
+      { handle: 'markets',         label: 'Bloomberg Markets', desc: 'Real-time market news'        },
+      { handle: 'MacroAlf',        label: 'Alfonso Peccatiello',desc: 'Global macro analysis'       },
+      { handle: 'FedGuy12',        label: 'Joseph Wang',       desc: 'Fed & rates commentary'       },
+    ];
+
+    var activeXHandle = X_ACCOUNTS[0].handle;
+    var widgetLoaded  = false;
+
+    /* ── Build account chips ─────────────────────────────────────── */
+    function buildXAccountBar() {
+      var bar = document.getElementById('x-accounts-bar');
+      bar.innerHTML = X_ACCOUNTS.map(function (acc) {
+        var isActive = acc.handle === activeXHandle;
+        return '<button class="x-account-chip" '
+          + 'style="' + (isActive ? 'border-color:var(--gold);color:var(--text-primary);' : '') + '"'
+          + ' title="' + acc.desc + '"'
+          + ' onclick="selectXAccount(\'' + acc.handle + '\')">'
+          + '@' + acc.handle
+          + '</button>';
+      }).join('');
+    }
+
+    /* ── Switch active X account ─────────────────────────────────── */
+    function selectXAccount(handle) {
+      activeXHandle = handle;
+      buildXAccountBar();
+
+      var wrap = document.querySelector('.x-embed-wrap');
+      wrap.innerHTML = '<a class="twitter-timeline"'
+        + ' data-theme="dark"'
+        + ' data-chrome="nofooter noborders transparent"'
+        + ' data-tweet-limit="20"'
+        + ' href="https://twitter.com/' + handle + '">'
+        + 'Loading…</a>';
+
+      if (window.twttr && window.twttr.widgets) {
+        window.twttr.widgets.load(wrap);
+      }
+    }
+
+    /* ── Tab switcher ────────────────────────────────────────────── */
+    function switchTab(tab) {
+      document.getElementById('tab-market').classList.toggle('active', tab === 'market');
+      document.getElementById('tab-x').classList.toggle('active', tab === 'x');
+      document.getElementById('panel-market').style.display = tab === 'market' ? '' : 'none';
+      document.getElementById('panel-x').style.display      = tab === 'x'      ? '' : 'none';
+
+      /* Load Twitter widget only when X tab is first opened */
+      if (tab === 'x' && !widgetLoaded) {
+        widgetLoaded = true;
+        buildXAccountBar();
+        var s = document.createElement('script');
+        s.src = 'https://platform.twitter.com/widgets.js';
+        s.async = true;
+        document.body.appendChild(s);
+      }
     }
 
     /* Boot */

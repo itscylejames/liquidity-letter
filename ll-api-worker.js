@@ -169,10 +169,34 @@ export default {
           fGenRes.json(), fCryptoRes.json(), fForexRes.json(), mRes.json(), polyRes.json()
         ]);
 
-        // Merge and deduplicate Finnhub by headline
+        // Keywords that qualify a general headline as financial/market/policy news
+        const FIN_KEYWORDS = [
+          'stock','market','fed','federal reserve','rate','inflation','gdp','earnings','revenue',
+          'profit','loss','ipo','merger','acquisition','trade','tariff','sanction','economy',
+          'economic','fiscal','monetary','treasury','bond','yield','equity','index','indices',
+          'nasdaq','s&p','dow','etf','fund','hedge','invest','bank','banking','finance','financial',
+          'crypto','bitcoin','ethereum','blockchain','defi','nft','token','coin','crypto',
+          'oil','energy','commodity','gold','silver','dollar','euro','yen','forex','currency',
+          'geopolit','ukraine','russia','china','taiwan','middle east','opec','g7','g20','imf',
+          'world bank','congress','senate','legislation','regulation','policy','white house',
+          'trade war','deficit','debt','budget','stimulus','bailout','recession','growth',
+          'employment','unemployment','jobs','payroll','cpi','pce','ppi','fomc','sec','cftc',
+          'quarter','annual','guidance','forecast','outlook','analyst','upgrade','downgrade',
+          'dividend','buyback','ipo','listing','delisting','bankrupt','default','credit',
+          'interest rate','inflation','supply chain','retail sales','housing','mortgage',
+          'tech','ai','artificial intelligence','semiconductor','chip','cloud','software',
+        ];
+
+        function isFinancialHeadline(headline) {
+          const h = (headline || '').toLowerCase();
+          return FIN_KEYWORDS.some(kw => h.includes(kw));
+        }
+
+        // Merge and deduplicate Finnhub by headline; filter general feed to financial topics
         const seen = new Set();
         const finnhub = [];
-        for (const item of [...(Array.isArray(fGen) ? fGen : []), ...(Array.isArray(fCrypto) ? fCrypto : []), ...(Array.isArray(fForex) ? fForex : [])]) {
+        const generalItems = Array.isArray(fGen) ? fGen.filter(item => isFinancialHeadline(item.headline)) : [];
+        for (const item of [...generalItems, ...(Array.isArray(fCrypto) ? fCrypto : []), ...(Array.isArray(fForex) ? fForex : [])]) {
           if (item.headline && !seen.has(item.headline)) {
             seen.add(item.headline);
             finnhub.push(item);
