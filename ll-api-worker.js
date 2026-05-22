@@ -36,15 +36,27 @@ function md5(str) {
   return r;
 }
 
+// PHP urlencode-compatible encoding (PayFast uses PHP server-side)
+function pfEncode(val) {
+  return encodeURIComponent(String(val))
+    .replace(/%20/g, '+')
+    .replace(/!/g,   '%21')
+    .replace(/~/g,   '%7E')
+    .replace(/\*/g,  '%2A')
+    .replace(/'/g,   '%27')
+    .replace(/\(/g,  '%28')
+    .replace(/\)/g,  '%29');
+}
+
 // Builds the sorted param string PayFast expects for signature generation
 function buildPFParamString(params, passphrase) {
   const parts = Object.keys(params).sort().map(k => {
     const v = params[k];
     if (v === '' || v == null) return null;
-    return `${k}=${encodeURIComponent(String(v)).replace(/%20/g, '+')}`;
+    return `${k}=${pfEncode(v)}`;
   }).filter(Boolean);
   let str = parts.join('&');
-  if (passphrase) str += '&passphrase=' + encodeURIComponent(passphrase).replace(/%20/g, '+');
+  if (passphrase) str += '&passphrase=' + pfEncode(passphrase);
   return str;
 }
 
