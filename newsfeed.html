@@ -492,7 +492,6 @@
       .main-content { padding: 20px 16px 40px; }
     }
   </style>
-  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <link rel="stylesheet" href="mobile.css">
 </head>
@@ -662,16 +661,14 @@
       </div>
 
       <!-- ── X Feed panel ──────────────────────────────────────────── -->
-      <div id="panel-x" style="visibility:hidden;position:absolute;pointer-events:none;" class="x-panel">
-
-        <a class="twitter-timeline"
-           data-theme="dark"
-           data-chrome="nofooter noborders transparent"
-           data-tweet-limit="25"
-           href="https://twitter.com/liquidityletter">
-          Loading @liquidityletter feed…
-        </a>
-
+      <div id="panel-x" style="display:none;" class="x-panel">
+        <div style="max-width:500px;margin-top:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:40px 32px;text-align:center;">
+          <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--text-muted)" stroke="none"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </div>
+          <div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">X Feed — Coming Soon</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.6;">Real-time breaking market news from X will live here. We're working on integrating the X API to bring you the fastest market intelligence directly in your feed.</div>
+        </div>
       </div>
 
     </main>
@@ -880,31 +877,11 @@
     }
 
     /* ── Tab switcher ────────────────────────────────────────────── */
-    var xWidgetLoaded = false;
-
     function switchTab(tab) {
       document.getElementById('tab-market').classList.toggle('active', tab === 'market');
       document.getElementById('tab-x').classList.toggle('active', tab === 'x');
-
-      var pMarket = document.getElementById('panel-market');
-      var pX      = document.getElementById('panel-x');
-
-      if (tab === 'market') {
-        pMarket.style.display = '';
-        pX.style.display      = 'none';
-      } else {
-        pX.style.display      = '';
-        pMarket.style.display = 'none';
-
-        if (!xWidgetLoaded) {
-          xWidgetLoaded = true;
-          setTimeout(function () {
-            if (window.twttr && window.twttr.widgets) {
-              window.twttr.widgets.load(pX);
-            }
-          }, 300);
-        }
-      }
+      document.getElementById('panel-market').style.display = tab === 'market' ? '' : 'none';
+      document.getElementById('panel-x').style.display      = tab === 'x'      ? '' : 'none';
     }
 
     /* Boot */
