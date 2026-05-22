@@ -224,7 +224,14 @@ export default {
       if (url.pathname === '/fear-greed') {
         const [cryptoRes, equityRes] = await Promise.all([
           fetch('https://api.alternative.me/fng/?limit=1'),
-          fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata'),
+          fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Accept': 'application/json, text/plain, */*',
+              'Referer': 'https://edition.cnn.com/',
+              'Origin': 'https://edition.cnn.com',
+            }
+          }),
         ]);
         let crypto = null, equity = null;
         try { crypto = await cryptoRes.json(); } catch(e) {}
