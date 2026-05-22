@@ -1,4 +1,8 @@
 (function () {
+  // ── Set to false to re-enable the subscription paywall ───────────
+  const PAYWALL_BYPASS = true;
+  // ─────────────────────────────────────────────────────────────────
+
   const SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
 
@@ -382,6 +386,7 @@
   };
 
   async function checkSubscription(user) {
+    if (PAYWALL_BYPASS) return true;
     if (_role === 'super_admin' || _role === 'admin') return true;
 
     var fromPayment = window.location.search.includes('subscribed=1');
