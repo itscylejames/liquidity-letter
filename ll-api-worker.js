@@ -138,6 +138,19 @@ export default {
 
     try {
 
+      // ── PayFast Debug (remove after testing) ──────────────────────
+      if (url.pathname === '/payfast-debug') {
+        const testHash = md5('hello');
+        const passHash = md5(env.PAYFAST_PASSPHRASE || 'NOT_SET');
+        return new Response(JSON.stringify({
+          md5_hello:    testHash,
+          md5_expected: '5d41402abc4b2a76b9719d911017c592',
+          md5_ok:       testHash === '5d41402abc4b2a76b9719d911017c592',
+          passphrase_set: !!env.PAYFAST_PASSPHRASE,
+          passphrase_hash: passHash,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       // ── Economic Calendar ──────────────────────────────────────────
       if (url.pathname === '/calendar') {
         const today = new Date();
