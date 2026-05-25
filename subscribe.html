@@ -237,6 +237,8 @@
         if (!data.params || !data.action) throw new Error(data.error || 'Init failed');
         pfParams = data.params;
         pfAction = data.action;
+        console.log('PF_PARAM_STRING:', data._paramString);
+        console.log('PF_PARAMS:', JSON.stringify(data.params, null, 2));
         document.getElementById('zar-amount').textContent = 'R' + Math.round(parseFloat(data.zarAmount)) + '/mo';
         document.getElementById('zar-rate-note').textContent = 'Billed in ZAR at the live USD exchange rate';
       } catch(e) {
