@@ -356,7 +356,7 @@
       }
       tbody.innerHTML = allAffiliates.map(function(a) {
         var count = (a.referrals && a.referrals[0] && a.referrals[0].count) || 0;
-        var link  = 'https://liquidityletter.com/subscribe?ref=' + encodeURIComponent(a.code);
+        var link  = 'https://liquidityletter.com/ref?c=' + encodeURIComponent(a.code);
         return '<tr>' +
           '<td><span class="code-badge">' + esc(a.code) + '</span></td>' +
           '<td>' + esc(a.name) + '</td>' +

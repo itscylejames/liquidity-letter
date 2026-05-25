@@ -290,6 +290,7 @@
   <script src="../auth.js"></script>
   <script>
     var allSubscribers = [];
+    var referralMap    = {};   // user_id → affiliate_code
     var modalUserId    = null;
     var selectedRole   = null;
     var isSuperAdmin   = false;
@@ -298,9 +299,20 @@
 
     async function loadSubscribers() {
       try {
-        var { data, error } = await getSB().rpc('get_subscribers');
-        if (error) throw error;
-        allSubscribers = data || [];
+        // Load subscribers and referrals in parallel
+        var [subRes, refRes] = await Promise.all([
+          getSB().rpc('get_subscribers'),
+          getSB().from('referrals').select('user_id, affiliate_code').eq('status', 'active'),
+        ]);
+        if (subRes.error) throw subRes.error;
+
+        // Build user_id → affiliate_code map
+        referralMap = {};
+        (refRes.data || []).forEach(function(r) {
+          if (r.user_id) referralMap[r.user_id] = r.affiliate_code;
+        });
+
+        allSubscribers = subRes.data || [];
         renderStats();
         renderTable(allSubscribers);
       } catch (e) {
@@ -377,10 +389,17 @@
               '<button class="btn-remove" onclick="removeUser(\'' + s.id + '\',\'' + esc(name) + '\')">Remove</button>' +
             '</div>'
           : '<span class="btn-role hidden">—</span>';
+
+        var affCode = referralMap[s.id];
+        var affCell = affCode
+          ? '<span style="font-family:monospace;font-size:11px;font-weight:700;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);padding:3px 8px;letter-spacing:1px;">' + esc(affCode) + '</span>'
+          : '<span style="color:var(--muted);font-size:13px;">—</span>';
+
         return '<tr>' +
           '<td><div class="user-cell"><div class="avatar">' + ini + '</div><div><div class="user-name">' + esc(name) + '</div><div class="user-email">' + esc(s.email || '') + '</div></div></div></td>' +
           '<td>' + roleBadge(s.role || 'user') + '</td>' +
           '<td>' + statusBadge(s.sub_status) + '</td>' +
+          '<td>' + affCell + '</td>' +
           '<td style="color:var(--muted);font-size:13px;">' + fmtDate(s.current_period_end) + '</td>' +
           '<td style="color:var(--muted);font-size:13px;">' + fmtDate(s.created_at) + '</td>' +
           '<td>' + actions + '</td>' +
@@ -390,7 +409,7 @@
       document.getElementById('table-container').innerHTML =
         '<div class="table-wrap"><table>' +
         '<thead><tr>' +
-          '<th>Subscriber</th><th>Role</th><th>Status</th><th>Next Billing</th><th>Joined</th><th>Actions</th>' +
+          '<th>Subscriber</th><th>Role</th><th>Status</th><th>Affiliate</th><th>Next Billing</th><th>Joined</th><th>Actions</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
         '</table></div>';

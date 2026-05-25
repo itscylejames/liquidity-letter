@@ -167,6 +167,10 @@
             <label>Password</label>
             <input type="password" id="s-password" placeholder="Minimum 6 characters" autocomplete="new-password">
           </div>
+          <div class="field">
+            <label>Affiliate Code <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <input type="text" id="s-refcode" placeholder="e.g. JOHNDOE20" autocomplete="off" style="text-transform:uppercase">
+          </div>
           <button class="btn-primary-full" id="btn-create-account">Create Account &rarr;</button>
           <div class="divider"><hr><span>or</span><hr></div>
           <button class="btn-google" id="btn-google-sub">
@@ -219,7 +223,17 @@
 
     // ── Capture affiliate ref code ───────────────────────────────────
     var refCode = new URLSearchParams(window.location.search).get('ref') || sessionStorage.getItem('ll_ref') || null;
-    if (refCode) sessionStorage.setItem('ll_ref', refCode);
+    if (refCode) {
+      sessionStorage.setItem('ll_ref', refCode);
+      // Pre-fill the affiliate code field
+      var refField = document.getElementById('s-refcode');
+      if (refField) refField.value = refCode.toUpperCase();
+    }
+    // Keep refCode in sync if user types manually
+    document.getElementById('s-refcode').addEventListener('input', function() {
+      refCode = this.value.trim().toUpperCase() || null;
+      this.value = this.value.toUpperCase();
+    });
 
     // ── Pre-generate PayFast form params ────────────────────────────
     async function fetchPayFastParams() {
@@ -326,15 +340,14 @@
     client.auth.getSession().then(function (res) {
       var session = res.data && res.data.session;
       if (!session || !session.user) return;
-      // Check their subscription status
       client.from('subscriptions').select('status, current_period_end').eq('user_id', session.user.id).maybeSingle().then(function(r) {
         var sub = r.data;
         if (sub && sub.status === 'active') {
-          window.location.href = 'dashboard.html'; // already paid
-        } else if (sub && sub.status === 'trial') {
-          showStep2(session.user); // on trial, show payment
+          window.location.href = 'dashboard.html'; // already paid, send to dashboard
+        } else {
+          // Logged in but not paid (no sub, trial, past_due, etc.) → skip to Step 2
+          showStep2(session.user);
         }
-        // no sub = new user, stay on step 1
       });
     });
 
@@ -345,6 +358,7 @@
       var lastName  = document.getElementById('s-lastname').value.trim();
       var email     = document.getElementById('s-email').value.trim();
       var password  = document.getElementById('s-password').value;
+      refCode       = document.getElementById('s-refcode').value.trim().toUpperCase() || refCode;
 
       if (!email || !password) { showError('Please enter your email and a password.'); return; }
       if (password.length < 6)  { showError('Password must be at least 6 characters.'); return; }
@@ -355,6 +369,22 @@
         email, password,
         options: { data: { first_name: firstName, last_name: lastName, full_name: firstName + ' ' + lastName } }
       });
+
+      // ── Account already exists → sign them in and skip to Step 2 ──
+      if (error && (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered'))) {
+        btn.textContent = 'Signing you in…';
+        var { data: siData, error: siError } = await client.auth.signInWithPassword({ email, password });
+        btn.textContent = 'Continue →'; btn.disabled = false;
+        if (siError) {
+          showError('Account exists but the password is wrong. Use "Log in here" below.');
+          return;
+        }
+        // Check if they already have an active sub
+        var { data: sub } = await client.from('subscriptions').select('status').eq('user_id', siData.user.id).maybeSingle();
+        if (sub && sub.status === 'active') { window.location.href = 'dashboard.html'; return; }
+        showStep2(siData.user);
+        return;
+      }
 
       btn.textContent = 'Continue →'; btn.disabled = false;
 

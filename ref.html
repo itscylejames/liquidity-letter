@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Liquidity Letter</title>
+  <link rel="icon" type="image/png" href="/logo.png">
+  <style>
+    body { margin: 0; background: #0A0A0A; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'DM Sans', sans-serif; }
+    .loader { text-align: center; color: #C9A84C; }
+    .loader-dot { display: inline-block; width: 8px; height: 8px; background: #C9A84C; border-radius: 50%; margin: 0 3px; animation: bounce 0.8s infinite alternate; }
+    .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { from { opacity: 0.3; transform: translateY(0); } to { opacity: 1; transform: translateY(-6px); } }
+  </style>
+</head>
+<body>
+  <div class="loader">
+    <div style="margin-bottom:16px">
+      <span class="loader-dot"></span>
+      <span class="loader-dot"></span>
+      <span class="loader-dot"></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var code   = (params.get('c') || params.get('ref') || '').trim().toUpperCase();
+
+      if (code) {
+        sessionStorage.setItem('ll_ref', code);
+      }
+
+      // Redirect to subscribe with ref param
+      var dest = '/subscribe' + (code ? '?ref=' + encodeURIComponent(code) : '');
+      window.location.replace(dest);
+    })();
+  </script>
+</body>
+</html>
