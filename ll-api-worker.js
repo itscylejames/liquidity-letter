@@ -815,6 +815,281 @@ export default {
         });
       }
 
+      // ── Intelligence: asset list ─────────────────────────────────
+      const INTEL_ASSETS = [
+        { id:'BTC',       name:'Bitcoin',       category:'crypto',    binance:'BTCUSDT',    tv:'BINANCE:BTCUSDT'   },
+        { id:'ETH',       name:'Ethereum',      category:'crypto',    binance:'ETHUSDT',    tv:'BINANCE:ETHUSDT'   },
+        { id:'SOL',       name:'Solana',        category:'crypto',    binance:'SOLUSDT',    tv:'BINANCE:SOLUSDT'   },
+        { id:'XRP',       name:'XRP',           category:'crypto',    binance:'XRPUSDT',    tv:'BINANCE:XRPUSDT'   },
+        { id:'AVAX',      name:'Avalanche',     category:'crypto',    binance:'AVAXUSDT',   tv:'BINANCE:AVAXUSDT'  },
+        { id:'ZEC',       name:'Zcash',         category:'crypto',    binance:'ZECUSDT',    tv:'BINANCE:ZECUSDT'   },
+        { id:'SUI',       name:'Sui',           category:'crypto',    binance:'SUIUSDT',    tv:'BINANCE:SUIUSDT'   },
+        { id:'NEO',       name:'Neo',           category:'crypto',    binance:'NEOUSDT',    tv:'BINANCE:NEOUSDT'   },
+        { id:'RENDER',    name:'Render',        category:'crypto',    binance:'RENDERUSDT', tv:'BINANCE:RENDERUSDT'},
+        { id:'LINK',      name:'Chainlink',     category:'crypto',    binance:'LINKUSDT',   tv:'BINANCE:LINKUSDT'  },
+        { id:'INJ',       name:'Injective',     category:'crypto',    binance:'INJUSDT',    tv:'BINANCE:INJUSDT'   },
+        { id:'NVDA',      name:'Nvidia',        category:'stock',     yahoo:'NVDA',         tv:'NASDAQ:NVDA'       },
+        { id:'AAPL',      name:'Apple',         category:'stock',     yahoo:'AAPL',         tv:'NASDAQ:AAPL'       },
+        { id:'MSFT',      name:'Microsoft',     category:'stock',     yahoo:'MSFT',         tv:'NASDAQ:MSFT'       },
+        { id:'GOOGL',     name:'Alphabet',      category:'stock',     yahoo:'GOOGL',        tv:'NASDAQ:GOOGL'      },
+        { id:'AMZN',      name:'Amazon',        category:'stock',     yahoo:'AMZN',         tv:'NASDAQ:AMZN'       },
+        { id:'META',      name:'Meta',          category:'stock',     yahoo:'META',         tv:'NASDAQ:META'       },
+        { id:'TSLA',      name:'Tesla',         category:'stock',     yahoo:'TSLA',         tv:'NASDAQ:TSLA'       },
+        { id:'AMD',       name:'AMD',           category:'stock',     yahoo:'AMD',          tv:'NASDAQ:AMD'        },
+        { id:'WDC',       name:'SanDisk (WDC)', category:'stock',     yahoo:'WDC',          tv:'NASDAQ:WDC'        },
+        { id:'NFLX',      name:'Netflix',       category:'stock',     yahoo:'NFLX',         tv:'NASDAQ:NFLX'       },
+        { id:'GOLD',      name:'Gold',          category:'commodity', yahoo:'GC=F',         tv:'TVC:GOLD'          },
+        { id:'SILVER',    name:'Silver',        category:'commodity', yahoo:'SI=F',         tv:'TVC:SILVER'        },
+        { id:'BRENT',     name:'Brent Crude',   category:'commodity', yahoo:'BZ=F',         tv:'TVC:UKOIL'         },
+        { id:'COPPER',    name:'Copper',        category:'commodity', yahoo:'HG=F',         tv:'COMEX:HG1!'        },
+        { id:'NATGAS',    name:'Natural Gas',   category:'commodity', yahoo:'NG=F',         tv:'NYMEX:NG1!'        },
+        { id:'OJ',        name:'Orange Juice',  category:'commodity', yahoo:'OJ=F',         tv:'ICEUS:OJ1!'        },
+        { id:'SOYBEAN',   name:'Soybeans',      category:'commodity', yahoo:'ZS=F',         tv:'CBOT:ZS1!'         },
+        { id:'PLATINUM',  name:'Platinum',      category:'commodity', yahoo:'PL=F',         tv:'TVC:PLATINUM'      },
+        { id:'PALLADIUM', name:'Palladium',     category:'commodity', yahoo:'PA=F',         tv:'TVC:PALLADIUM'     },
+        { id:'COCOA',     name:'Cocoa',         category:'commodity', yahoo:'CC=F',         tv:'ICEUS:CC1!'        },
+      ];
+
+      function intelFmtP(p) {
+        if (!p || isNaN(p)) return '—';
+        if (p >= 1000) return p.toFixed(2);
+        if (p >= 1)    return p.toFixed(4);
+        return p.toFixed(6);
+      }
+
+      async function intelFetchCrypto(sym) {
+        const r = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=100`);
+        if (!r.ok) throw new Error(`Binance ${r.status}`);
+        const d = await r.json();
+        return { closes: d.map(k=>parseFloat(k[4])), highs: d.map(k=>parseFloat(k[2])), lows: d.map(k=>parseFloat(k[3])) };
+      }
+
+      async function intelFetchYahoo(sym) {
+        const end = Math.floor(Date.now()/1000);
+        const r = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${end-200*86400}&period2=${end}&interval=1d`,
+          { headers:{ 'User-Agent':'Mozilla/5.0' } }
+        );
+        if (!r.ok) throw new Error(`Yahoo ${r.status}`);
+        const d = await r.json();
+        const res = d.chart?.result?.[0];
+        if (!res) throw new Error('No Yahoo data');
+        const q = res.indicators?.quote?.[0]||{};
+        const closes=[],highs=[],lows=[];
+        (res.timestamp||[]).forEach((_,i)=>{
+          if(q.close?.[i]!=null&&q.high?.[i]!=null&&q.low?.[i]!=null){
+            closes.push(q.close[i]); highs.push(q.high[i]); lows.push(q.low[i]);
+          }
+        });
+        return { closes, highs, lows };
+      }
+
+      function intelCalcIndicators(closes, highs, lows) {
+        const n = closes.length;
+        if (n < 60) return null;
+        const p = closes[n-1];
+
+        // EMA50
+        const k50 = 2/51;
+        let ema50 = closes[0];
+        for (let i=1;i<n;i++) ema50 = closes[i]*k50 + ema50*(1-k50);
+
+        // RSI(14) Wilder's
+        const rp=14; let ag=0,al=0;
+        for (let i=1;i<=rp;i++){const d=closes[i]-closes[i-1];if(d>0)ag+=d;else al-=d;}
+        ag/=rp;al/=rp;
+        const rsiArr=[];
+        for(let i=rp+1;i<n;i++){
+          const d=closes[i]-closes[i-1];
+          ag=(ag*(rp-1)+Math.max(d,0))/rp;
+          al=(al*(rp-1)+Math.max(-d,0))/rp;
+          rsiArr.push(al===0?100:100-100/(1+ag/al));
+        }
+        const rsi=rsiArr[rsiArr.length-1], prevRsi=rsiArr[rsiArr.length-2];
+
+        // MACD(12,26,9)
+        function emaA(arr,per){const k=2/(per+1);let e=arr[0];const o=[e];for(let i=1;i<arr.length;i++){e=arr[i]*k+e*(1-k);o.push(e);}return o;}
+        const e12=emaA(closes,12),e26=emaA(closes,26);
+        const macdL=closes.map((_,i)=>e12[i]-e26[i]);
+        const sigL=emaA(macdL,9);
+        const hist=macdL[n-1]-sigL[n-1], prevHist=macdL[n-2]-sigL[n-2];
+
+        // Resistance/support
+        const r50h=Math.max(...highs.slice(-50)), r50l=Math.min(...lows.slice(-50));
+        const nearRes=p>=r50h*0.98, nearSup=p<=r50l*1.02;
+        const swHi=Math.max(...highs.slice(-10)), swLo=Math.min(...lows.slice(-10));
+
+        const longSigs=[
+          {name:'Price above 50 EMA',               hit:p>ema50},
+          {name:'RSI oversold (0–30) turning up',   hit:rsi>=0&&rsi<=30&&rsi>prevRsi},
+          {name:'MACD histogram turning positive',  hit:hist>0&&hist>prevHist},
+          {name:'Not into major resistance',        hit:!nearRes},
+          {name:'Sentiment neutral/positive',       hit:null},
+        ];
+        const shortSigs=[
+          {name:'Price below 50 EMA',                   hit:p<ema50},
+          {name:'RSI overbought (70–100) turning down', hit:rsi>=70&&rsi<=100&&rsi<prevRsi},
+          {name:'MACD histogram turning negative',      hit:hist<0&&hist<prevHist},
+          {name:'Not into major support',               hit:!nearSup},
+          {name:'Sentiment neutral/negative',           hit:null},
+        ];
+
+        const ls=longSigs.filter(s=>s.hit===true).length;
+        const ss=shortSigs.filter(s=>s.hit===true).length;
+        let direction='NO CALL',score=0,signals=longSigs;
+        if(ls>=3&&ls>=ss){direction='LONG';score=ls;signals=longSigs;}
+        else if(ss>=3&&ss>ls){direction='SHORT';score=ss;signals=shortSigs;}
+
+        let entry_zone=null,target=null,stop_loss=null;
+        if(direction==='LONG'){
+          entry_zone=`${intelFmtP(p*0.990)} – ${intelFmtP(p*1.005)}`;
+          target=intelFmtP(p*1.10); stop_loss=intelFmtP(swLo*0.990);
+        } else if(direction==='SHORT'){
+          entry_zone=`${intelFmtP(p*0.995)} – ${intelFmtP(p*1.010)}`;
+          target=intelFmtP(p*0.90); stop_loss=intelFmtP(swHi*1.010);
+        }
+
+        return {
+          direction, signal_score:score, signals, entry_zone, target, stop_loss,
+          technicals:{ currentPrice:p, ema50, rsi:+rsi.toFixed(2), prevRsi:+prevRsi.toFixed(2),
+                       macdHistogram:+hist.toFixed(6), prevMacdHistogram:+prevHist.toFixed(6),
+                       recent50High:r50h, recent50Low:r50l }
+        };
+      }
+
+      async function intelGenReasoning(openaiKey, assetName, direction, signals, tech) {
+        if (!openaiKey || direction==='NO CALL') return '';
+        const sText=signals.map(s=>`${s.hit===true?'✓':s.hit===false?'✗':'?'} ${s.name}`).join('\n');
+        const prompt=`You are a professional swing trader writing a daily trade call for The Liquidity Letter — a premium financial newsletter.
+
+Asset: ${assetName}
+Direction: ${direction}
+Current Price: ${intelFmtP(tech.currentPrice)}
+50-day EMA: ${intelFmtP(tech.ema50)}
+RSI(14): ${tech.rsi} (prev day: ${tech.prevRsi})
+MACD Histogram: ${tech.macdHistogram} (prev: ${tech.prevMacdHistogram})
+
+Confirmed signals (${signals.filter(s=>s.hit===true).length}/5):
+${sText}
+
+Write 3–4 sentences of trade reasoning for this ${direction} setup. Reference specific indicators. Professional, authoritative tone. No bullet points. Under 90 words.`;
+        try {
+          const r=await fetch('https://api.openai.com/v1/chat/completions',{
+            method:'POST',
+            headers:{'Authorization':`Bearer ${openaiKey}`,'Content-Type':'application/json'},
+            body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],max_tokens:200,temperature:0.65})
+          });
+          const d=await r.json();
+          return d.choices?.[0]?.message?.content?.trim()||'';
+        } catch(e){return '';}
+      }
+
+      // GET /intelligence/assets
+      if (url.pathname === '/intelligence/assets') {
+        return new Response(JSON.stringify(INTEL_ASSETS), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // GET /intelligence/calls
+      if (url.pathname === '/intelligence/calls') {
+        const callDate = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+        const cat      = url.searchParams.get('category') || null;
+        const status   = url.searchParams.get('status') || 'published';
+        let q = `${env.SUPABASE_URL}/rest/v1/trade_calls?call_date=eq.${callDate}&status=eq.${status}&order=asset_category.asc,created_at.asc`;
+        if (cat) q += `&asset_category=eq.${cat}`;
+        const r = await fetch(q, { headers:{ 'apikey':env.SUPABASE_SERVICE_KEY, 'Authorization':`Bearer ${env.SUPABASE_SERVICE_KEY}` } });
+        const data = await r.json();
+        return new Response(JSON.stringify(data), { headers:{ ...corsHeaders, 'Content-Type':'application/json' } });
+      }
+
+      // POST /intelligence/generate (admin)
+      if (url.pathname === '/intelligence/generate' && request.method === 'POST') {
+        const authH = request.headers.get('Authorization')||'';
+        const tok = authH.replace('Bearer ','').trim();
+        if (!tok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const uRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`,{headers:{'Authorization':`Bearer ${tok}`,'apikey':env.SUPABASE_SERVICE_KEY}});
+        if (!uRes.ok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+
+        const { asset_id } = await request.json();
+        const asset = INTEL_ASSETS.find(a=>a.id===asset_id);
+        if (!asset) return new Response(JSON.stringify({error:'Unknown asset'}),{status:400,headers:{...corsHeaders,'Content-Type':'application/json'}});
+
+        let ohlcv;
+        try { ohlcv = asset.binance ? await intelFetchCrypto(asset.binance) : await intelFetchYahoo(asset.yahoo); }
+        catch(e) { return new Response(JSON.stringify({error:`Data fetch failed: ${e.message}`}),{status:500,headers:{...corsHeaders,'Content-Type':'application/json'}}); }
+
+        const ind = intelCalcIndicators(ohlcv.closes, ohlcv.highs, ohlcv.lows);
+        if (!ind) return new Response(JSON.stringify({error:'Insufficient data for analysis'}),{status:422,headers:{...corsHeaders,'Content-Type':'application/json'}});
+
+        const reasoning = await intelGenReasoning(env.OPENAI_KEY, asset.name, ind.direction, ind.signals, ind.technicals);
+
+        const today = new Date().toISOString().split('T')[0];
+        const record = {
+          asset_symbol: asset.id, asset_name: asset.name, asset_category: asset.category,
+          tradingview_symbol: asset.tv, direction: ind.direction,
+          entry_zone: ind.entry_zone, target: ind.target, stop_loss: ind.stop_loss,
+          reasoning, signal_score: ind.signal_score, signals: ind.signals, technicals: ind.technicals,
+          status: 'draft', call_date: today,
+        };
+        const saveRes = await fetch(`${env.SUPABASE_URL}/rest/v1/trade_calls`,{
+          method:'POST',
+          headers:{'apikey':env.SUPABASE_SERVICE_KEY,'Authorization':`Bearer ${env.SUPABASE_SERVICE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'},
+          body:JSON.stringify(record),
+        });
+        const saved = await saveRes.json();
+        return new Response(JSON.stringify(Array.isArray(saved)?saved[0]:saved),{headers:{...corsHeaders,'Content-Type':'application/json'}});
+      }
+
+      // POST /intelligence/publish (admin)
+      if (url.pathname === '/intelligence/publish' && request.method === 'POST') {
+        const authH = request.headers.get('Authorization')||'';
+        const tok = authH.replace('Bearer ','').trim();
+        if (!tok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const uRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`,{headers:{'Authorization':`Bearer ${tok}`,'apikey':env.SUPABASE_SERVICE_KEY}});
+        if (!uRes.ok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const { id, ...updates } = await request.json();
+        const r = await fetch(`${env.SUPABASE_URL}/rest/v1/trade_calls?id=eq.${id}`,{
+          method:'PATCH',
+          headers:{'apikey':env.SUPABASE_SERVICE_KEY,'Authorization':`Bearer ${env.SUPABASE_SERVICE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'},
+          body:JSON.stringify({...updates, status:'published', published_at:new Date().toISOString(), updated_at:new Date().toISOString()}),
+        });
+        const data = await r.json();
+        return new Response(JSON.stringify(Array.isArray(data)?data[0]:data),{headers:{...corsHeaders,'Content-Type':'application/json'}});
+      }
+
+      // PATCH /intelligence/call (admin - edit draft)
+      if (url.pathname === '/intelligence/call' && request.method === 'PATCH') {
+        const authH = request.headers.get('Authorization')||'';
+        const tok = authH.replace('Bearer ','').trim();
+        if (!tok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const uRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`,{headers:{'Authorization':`Bearer ${tok}`,'apikey':env.SUPABASE_SERVICE_KEY}});
+        if (!uRes.ok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const { id, ...updates } = await request.json();
+        const r = await fetch(`${env.SUPABASE_URL}/rest/v1/trade_calls?id=eq.${id}`,{
+          method:'PATCH',
+          headers:{'apikey':env.SUPABASE_SERVICE_KEY,'Authorization':`Bearer ${env.SUPABASE_SERVICE_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'},
+          body:JSON.stringify({...updates, updated_at:new Date().toISOString()}),
+        });
+        const data = await r.json();
+        return new Response(JSON.stringify(Array.isArray(data)?data[0]:data),{headers:{...corsHeaders,'Content-Type':'application/json'}});
+      }
+
+      // DELETE /intelligence/call (admin)
+      if (url.pathname === '/intelligence/call' && request.method === 'DELETE') {
+        const authH = request.headers.get('Authorization')||'';
+        const tok = authH.replace('Bearer ','').trim();
+        if (!tok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const uRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`,{headers:{'Authorization':`Bearer ${tok}`,'apikey':env.SUPABASE_SERVICE_KEY}});
+        if (!uRes.ok) return new Response('Unauthorized',{status:401,headers:corsHeaders});
+        const { id } = await request.json();
+        await fetch(`${env.SUPABASE_URL}/rest/v1/trade_calls?id=eq.${id}`,{
+          method:'DELETE',
+          headers:{'apikey':env.SUPABASE_SERVICE_KEY,'Authorization':`Bearer ${env.SUPABASE_SERVICE_KEY}`},
+        });
+        return new Response(JSON.stringify({success:true}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
+      }
+
       return new Response('Not found', { status: 404, headers: corsHeaders });
 
     } catch (err) {

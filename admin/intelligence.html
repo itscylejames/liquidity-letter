@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelligence Admin — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #C9A84C;
+      --gold-dim:    rgba(201,168,76,0.10);
+      --gold-border: rgba(201,168,76,0.32);
+      --bg:          #0A0A0A;
+      --bg-card:     #111111;
+      --bg-input:    #0D0D0D;
+      --border:      rgba(255,255,255,0.08);
+      --text:        #F0EDE6;
+      --muted:       #888580;
+      --green:       #4ADE80;
+      --green-dim:   rgba(74,222,128,0.10);
+      --green-border:rgba(74,222,128,0.28);
+      --red:         #F87171;
+      --red-dim:     rgba(248,113,113,0.10);
+      --red-border:  rgba(248,113,113,0.28);
+      --nav-h:       60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; background: none; color: inherit; }
+    textarea, input, select { font-family: 'DM Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.09); border-radius: 3px; }
+
+    /* ── Nav ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h); background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 16px; }
+    .nav-logo  { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gold); }
+    .nav-badge { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold-border); padding: 3px 9px; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .nav-back  { font-size: 13px; color: var(--muted); transition: color .15s; }
+    .nav-back:hover { color: var(--text); }
+    #btn-so { color: var(--muted); font-size: 13px; transition: color .15s; }
+    #btn-so:hover { color: var(--text); }
+
+    /* ── Layout ── */
+    .page { padding-top: var(--nav-h); min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 44px 32px 80px; }
+    .two-col { display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: start; }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 36px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; margin-bottom: 5px; }
+    .page-sub   { font-size: 13px; color: var(--muted); }
+
+    /* ── Section labels ── */
+    .section-hd {
+      font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Asset panel (left) ── */
+    .asset-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 20px; }
+    .asset-panel .section-hd { margin-top: 0; }
+
+    .cat-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+    .cat-tab  {
+      padding: 5px 12px; font-size: 12px; font-weight: 500; cursor: pointer;
+      color: var(--muted); border: 1px solid transparent; transition: all .15s;
+    }
+    .cat-tab:hover  { color: var(--text); }
+    .cat-tab.active { color: var(--gold); border-color: var(--gold-border); background: var(--gold-dim); }
+
+    .asset-list { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+    .asset-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 12px; border: 1px solid var(--border);
+      transition: border-color .15s, background .15s;
+    }
+    .asset-item:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.02); }
+    .asset-item-name { font-size: 13px; font-weight: 500; }
+    .asset-item-id   { font-size: 11px; color: var(--muted); font-family: monospace; }
+    .gen-btn {
+      font-size: 11px; font-weight: 600; padding: 5px 12px;
+      background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-border);
+      letter-spacing: 0.5px; transition: background .15s, opacity .15s;
+    }
+    .gen-btn:hover   { background: rgba(201,168,76,0.20); }
+    .gen-btn:disabled{ opacity: .4; cursor: not-allowed; }
+    .gen-btn.loading { opacity: .6; cursor: not-allowed; }
+
+    .gen-all-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .gen-all-btn {
+      width: 100%; padding: 10px; font-size: 12px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; background: var(--gold-dim); color: var(--gold);
+      border: 1px solid var(--gold-border); transition: background .15s;
+    }
+    .gen-all-btn:hover { background: rgba(201,168,76,0.20); }
+    .gen-all-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Drafts / Published panel (right) ── */
+    .right-panel { display: flex; flex-direction: column; gap: 24px; }
+
+    .tabs-row { display: flex; gap: 4px; margin-bottom: 20px; }
+    .panel-tab {
+      padding: 7px 18px; font-size: 13px; font-weight: 500; cursor: pointer;
+      color: var(--muted); border-bottom: 2px solid transparent; transition: all .15s;
+    }
+    .panel-tab:hover  { color: var(--text); }
+    .panel-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* ── Draft card ── */
+    .draft-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .draft-card.long  { border-left: 3px solid var(--green); }
+    .draft-card.short { border-left: 3px solid var(--red); }
+    .draft-card.nocall{ border-left: 3px solid rgba(255,255,255,0.12); }
+
+    .draft-top {
+      padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+    }
+    .draft-top:hover { background: rgba(255,255,255,0.02); }
+    .draft-info { display: flex; align-items: center; gap: 12px; }
+    .dir-pill {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 9px;
+    }
+    .dir-pill.long  { color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); }
+    .dir-pill.short { color: var(--red);   background: var(--red-dim);   border: 1px solid var(--red-border);   }
+    .dir-pill.nocall{ color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+    .draft-asset { font-weight: 600; font-size: 14px; }
+    .draft-score { font-size: 12px; color: var(--gold); }
+    .draft-actions { display: flex; gap: 8px; align-items: center; }
+    .pub-btn {
+      font-size: 11px; font-weight: 600; padding: 5px 14px; letter-spacing: 0.5px;
+      background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border);
+      transition: background .15s;
+    }
+    .pub-btn:hover { background: rgba(74,222,128,0.18); }
+    .pub-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .del-btn {
+      font-size: 11px; font-weight: 500; padding: 5px 10px;
+      background: none; color: var(--muted); border: 1px solid var(--border);
+      transition: color .15s, border-color .15s;
+    }
+    .del-btn:hover { color: var(--red); border-color: var(--red-border); }
+
+    /* ── Editable body ── */
+    .draft-body { display: none; padding: 16px; border-top: 1px solid var(--border); }
+    .draft-body.open { display: block; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .field input, .field select {
+      background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 10px; font-size: 13px; outline: none; transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--gold-border); }
+    .field textarea {
+      background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+      padding: 10px; font-size: 13px; outline: none; resize: vertical; min-height: 80px;
+      line-height: 1.6; transition: border-color .15s;
+    }
+    .field textarea:focus { border-color: var(--gold-border); }
+    .field-full { grid-column: 1 / -1; }
+
+    /* ── Signals editor ── */
+    .signals-editor { margin-bottom: 12px; }
+    .sig-edit-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .sig-edit-row:last-child { border-bottom: none; }
+    .sig-check { width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold); }
+    .sig-indeterminate { width: 18px; height: 18px; opacity: .4; cursor: pointer; }
+    .sig-edit-name { font-size: 13px; flex: 1; }
+    .sig-toggle { display: flex; gap: 4px; }
+    .sig-toggle-btn {
+      font-size: 10px; font-weight: 600; padding: 3px 8px; cursor: pointer;
+      border: 1px solid var(--border); color: var(--muted); background: none; transition: all .15s;
+    }
+    .sig-toggle-btn.yes  { border-color: var(--green-border); color: var(--green); background: var(--green-dim); }
+    .sig-toggle-btn.no   { border-color: var(--red-border);   color: var(--red);   background: var(--red-dim);   }
+    .sig-toggle-btn.null { border-color: var(--border);       color: var(--muted); background: none; }
+
+    /* ── Technicals strip ── */
+    .tech-strip {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+      padding: 10px 0; border-top: 1px solid var(--border); margin-bottom: 12px;
+    }
+    .tech-item label { display: block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+    .tech-item span  { font-size: 12px; font-family: monospace; }
+
+    /* ── Published calls ── */
+    .pub-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; border: 1px solid var(--border); margin-bottom: 6px;
+      background: var(--bg-card);
+    }
+    .pub-list-left { display: flex; align-items: center; gap: 12px; }
+    .pub-meta { font-size: 12px; color: var(--muted); }
+    .archive-btn {
+      font-size: 11px; padding: 4px 10px; color: var(--muted); border: 1px solid var(--border);
+      transition: all .15s;
+    }
+    .archive-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* ── Empty ── */
+    .empty-msg { text-align: center; padding: 48px 20px; color: var(--muted); }
+    .empty-msg .icon { font-size: 28px; margin-bottom: 12px; }
+    .empty-msg p { font-size: 13px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: #1A1A1A; border: 1px solid var(--border); color: var(--text);
+      padding: 12px 24px; font-size: 13px; z-index: 9999;
+      opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { border-color: var(--green-border); color: var(--green); }
+    .toast.error   { border-color: var(--red-border);   color: var(--red);   }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; }
+      .field-row { grid-template-columns: 1fr 1fr; }
+      .tech-strip { grid-template-columns: repeat(3,1fr); }
+    }
+  </style>
+</head>
+<body data-require-admin="true">
+
+  <nav class="top-nav">
+    <div class="nav-left">
+      <span class="nav-logo">The Liquidity Letter</span>
+      <span class="nav-badge">Intelligence Admin</span>
+    </div>
+    <div class="nav-right">
+      <a href="index.html" class="nav-back">← Admin</a>
+      <button id="btn-so" onclick="doSignOut()">Log out</button>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+
+      <div class="page-header">
+        <div class="page-title">Intelligence</div>
+        <div class="page-sub">Generate, review, and publish daily trade calls. AI drafts the reasoning — you approve before it goes live.</div>
+      </div>
+
+      <div class="two-col">
+
+        <!-- ── Left: Asset Selector ── -->
+        <div class="asset-panel">
+          <div class="section-hd">Assets</div>
+          <div class="cat-tabs">
+            <button class="cat-tab active" data-cat="crypto">Crypto</button>
+            <button class="cat-tab" data-cat="stock">Stocks</button>
+            <button class="cat-tab" data-cat="commodity">Commodities</button>
+          </div>
+          <div class="asset-list" id="asset-list"></div>
+          <div class="gen-all-wrap">
+            <button class="gen-all-btn" id="gen-all-btn" onclick="generateAll()">
+              ⚡ Generate All <span id="gen-all-cat-label">Crypto</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Right: Drafts / Published ── -->
+        <div class="right-panel">
+          <div>
+            <div class="tabs-row">
+              <button class="panel-tab active" data-panel="drafts">Drafts <span id="draft-count" style="color:var(--muted);font-size:12px"></span></button>
+              <button class="panel-tab" data-panel="published">Published <span id="pub-count" style="color:var(--muted);font-size:12px"></span></button>
+            </div>
+            <div id="panel-drafts">
+              <div class="empty-msg" id="drafts-empty"><div class="icon">📋</div><p>No drafts yet. Generate calls using the panel on the left.</p></div>
+              <div id="drafts-list"></div>
+            </div>
+            <div id="panel-published" style="display:none">
+              <div class="empty-msg" id="pub-empty"><div class="icon">✅</div><p>No published calls for today yet.</p></div>
+              <div id="pub-list"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../auth.js"></script>
+  <script>
+  (function () {
+    const SB_URL  = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+    const API     = 'https://api.liquidityletter.com';
+    const sb      = window.supabase.createClient(SB_URL, SB_ANON);
+
+    let allAssets    = [];
+    let currentCat   = 'crypto';
+    let drafts       = [];
+    let published    = [];
+    let authToken    = null;
+    let genAllActive = false;
+
+    // ── Init ────────────────────────────────────────────────────
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = '../index.html'; return; }
+      authToken = session.access_token;
+      await loadAssets();
+      await loadCalls();
+      setupUI();
+    }
+
+    async function loadAssets() {
+      try {
+        const r = await fetch(`${API}/intelligence/assets`);
+        allAssets = await r.json();
+      } catch(e) { allAssets = []; }
+      renderAssets();
+    }
+
+    async function loadCalls() {
+      const today = new Date().toISOString().split('T')[0];
+      const [dr, pr] = await Promise.all([
+        fetch(`${API}/intelligence/calls?date=${today}&status=draft`),
+        fetch(`${API}/intelligence/calls?date=${today}&status=published`),
+      ]);
+      drafts    = Array.isArray(await dr.json()) ? await dr.json() : [];
+      published = Array.isArray(await pr.json()) ? await pr.json() : [];
+
+      // Re-fetch properly (json() consumed above)
+      const dr2 = await fetch(`${API}/intelligence/calls?date=${today}&status=draft`);
+      const pr2 = await fetch(`${API}/intelligence/calls?date=${today}&status=published`);
+      drafts    = await dr2.json() || [];
+      published = await pr2.json() || [];
+      if (!Array.isArray(drafts))    drafts    = [];
+      if (!Array.isArray(published)) published = [];
+      renderDrafts();
+      renderPublished();
+    }
+
+    function setupUI() {
+      // Cat tabs
+      document.querySelectorAll('.cat-tab').forEach(t => {
+        t.onclick = () => {
+          document.querySelectorAll('.cat-tab').forEach(x => x.classList.remove('active'));
+          t.classList.add('active');
+          currentCat = t.dataset.cat;
+          renderAssets();
+          document.getElementById('gen-all-cat-label').textContent =
+            currentCat.charAt(0).toUpperCase() + currentCat.slice(1);
+        };
+      });
+      // Panel tabs
+      document.querySelectorAll('.panel-tab').forEach(t => {
+        t.onclick = () => {
+          document.querySelectorAll('.panel-tab').forEach(x => x.classList.remove('active'));
+          t.classList.add('active');
+          document.getElementById('panel-drafts').style.display    = t.dataset.panel === 'drafts'    ? '' : 'none';
+          document.getElementById('panel-published').style.display = t.dataset.panel === 'published' ? '' : 'none';
+        };
+      });
+    }
+
+    // ── Render assets ────────────────────────────────────────────
+    function renderAssets() {
+      const list = document.getElementById('asset-list');
+      const filtered = allAssets.filter(a => a.category === currentCat);
+      list.innerHTML = filtered.map(a => `
+        <div class="asset-item" id="aitem-${a.id}">
+          <div>
+            <div class="asset-item-name">${escHtml(a.name)}</div>
+            <div class="asset-item-id">${a.id}</div>
+          </div>
+          <button class="gen-btn" id="genbtn-${a.id}" onclick="generateOne('${a.id}')">Generate</button>
+        </div>
+      `).join('');
+    }
+
+    // ── Render drafts ─────────────────────────────────────────────
+    function renderDrafts() {
+      const list  = document.getElementById('drafts-list');
+      const empty = document.getElementById('drafts-empty');
+      document.getElementById('draft-count').textContent = drafts.length ? `(${drafts.length})` : '';
+      if (!drafts.length) { empty.style.display = ''; list.innerHTML = ''; return; }
+      empty.style.display = 'none';
+      list.innerHTML = drafts.map(d => buildDraftCard(d)).join('');
+      drafts.forEach(d => {
+        document.getElementById(`draft-top-${d.id}`).onclick = () => toggleDraft(d.id);
+      });
+    }
+
+    function buildDraftCard(d) {
+      const dir = (d.direction || 'NO CALL').toUpperCase();
+      const dirClass = dir === 'LONG' ? 'long' : dir === 'SHORT' ? 'short' : 'nocall';
+      const tech = d.technicals || {};
+      const signals = Array.isArray(d.signals) ? d.signals : [];
+
+      const techStrip = `
+        <div class="tech-strip">
+          <div class="tech-item"><label>Price</label><span>${fmtP(tech.currentPrice)}</span></div>
+          <div class="tech-item"><label>50 EMA</label><span>${fmtP(tech.ema50)}</span></div>
+          <div class="tech-item"><label>RSI(14)</label><span>${tech.rsi ?? '—'}</span></div>
+          <div class="tech-item"><label>MACD Hist</label><span>${tech.macdHistogram ?? '—'}</span></div>
+          <div class="tech-item"><label>Score</label><span style="color:var(--gold)">${d.signal_score || 0}/5</span></div>
+        </div>`;
+
+      const sigEditor = signals.map((s, idx) => `
+        <div class="sig-edit-row">
+          <span class="sig-name" style="flex:1;font-size:13px">${escHtml(s.name)}</span>
+          <div class="sig-toggle">
+            <button class="sig-toggle-btn ${s.hit===true?'yes':''}" onclick="setSig('${d.id}',${idx},true)">Yes</button>
+            <button class="sig-toggle-btn ${s.hit===false?'no':''}" onclick="setSig('${d.id}',${idx},false)">No</button>
+            <button class="sig-toggle-btn ${s.hit===null?'null':''}" onclick="setSig('${d.id}',${idx},null)">?</button>
+          </div>
+        </div>`).join('');
+
+      return `
+        <div class="draft-card ${dirClass}" id="draftcard-${d.id}">
+          <div class="draft-top" id="draft-top-${d.id}">
+            <div class="draft-info">
+              <span class="dir-pill ${dirClass}">${dir === 'NO CALL' ? 'No Call' : dir}</span>
+              <span class="draft-asset">${escHtml(d.asset_name)}</span>
+              ${dir !== 'NO CALL' ? `<span class="draft-score">${d.signal_score || 0}/5</span>` : ''}
+            </div>
+            <div class="draft-actions" onclick="event.stopPropagation()">
+              <button class="pub-btn" onclick="publishCall('${d.id}')">Publish</button>
+              <button class="del-btn" onclick="deleteCall('${d.id}')">Delete</button>
+            </div>
+          </div>
+          <div class="draft-body" id="draftbody-${d.id}">
+            ${techStrip}
+            <div class="field-row">
+              <div class="field">
+                <label>Direction</label>
+                <select id="dir-${d.id}" onchange="updateDraftField('${d.id}','direction',this.value)">
+                  <option value="LONG"    ${dir==='LONG'   ?'selected':''}>LONG</option>
+                  <option value="SHORT"   ${dir==='SHORT'  ?'selected':''}>SHORT</option>
+                  <option value="NO CALL" ${dir==='NO CALL'?'selected':''}>NO CALL</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Entry Zone</label>
+                <input type="text" id="entry-${d.id}" value="${escAttr(d.entry_zone||'')}" placeholder="e.g. 97,500 – 98,200" oninput="updateDraftField('${d.id}','entry_zone',this.value)">
+              </div>
+              <div class="field">
+                <label>Target</label>
+                <input type="text" id="target-${d.id}" value="${escAttr(d.target||'')}" placeholder="e.g. 108,000" oninput="updateDraftField('${d.id}','target',this.value)">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Stop Loss</label>
+                <input type="text" id="sl-${d.id}" value="${escAttr(d.stop_loss||'')}" placeholder="e.g. 94,200" oninput="updateDraftField('${d.id}','stop_loss',this.value)">
+              </div>
+              <div class="field" style="grid-column:2/4">
+                <label>Reasoning</label>
+                <textarea id="reasoning-${d.id}" oninput="updateDraftField('${d.id}','reasoning',this.value)">${escHtml(d.reasoning||'')}</textarea>
+              </div>
+            </div>
+            <div class="section-hd" style="margin-top:4px">Signal Override</div>
+            <div class="signals-editor">${sigEditor}</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="pub-btn" style="padding:8px 20px;font-size:12px" onclick="saveDraftEdits('${d.id}')">Save Edits</button>
+              <button class="pub-btn" style="padding:8px 20px;font-size:12px;background:rgba(74,222,128,0.15)" onclick="publishCall('${d.id}')">Publish Call</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function toggleDraft(id) {
+      const body = document.getElementById('draftbody-' + id);
+      if (body) body.classList.toggle('open');
+    }
+
+    // ── Signal override ──────────────────────────────────────────
+    const _draftEdits = {};
+
+    function updateDraftField(id, field, value) {
+      if (!_draftEdits[id]) _draftEdits[id] = {};
+      _draftEdits[id][field] = value;
+    }
+
+    function setSig(draftId, idx, value) {
+      const d = drafts.find(x => x.id === draftId);
+      if (!d) return;
+      const sigs = Array.isArray(d.signals) ? JSON.parse(JSON.stringify(d.signals)) : [];
+      if (sigs[idx]) sigs[idx].hit = value;
+      d.signals = sigs;
+      if (!_draftEdits[draftId]) _draftEdits[draftId] = {};
+      _draftEdits[draftId].signals = sigs;
+      // Re-score
+      const score = sigs.filter(s => s.hit === true).length;
+      _draftEdits[draftId].signal_score = score;
+      d.signal_score = score;
+      // Re-render just the toggle buttons
+      sigs.forEach((s, i) => {
+        const row = document.querySelectorAll(`#draftbody-${draftId} .sig-edit-row`)[i];
+        if (!row) return;
+        const btns = row.querySelectorAll('.sig-toggle-btn');
+        btns[0].className = `sig-toggle-btn ${s.hit===true?'yes':''}`;
+        btns[1].className = `sig-toggle-btn ${s.hit===false?'no':''}`;
+        btns[2].className = `sig-toggle-btn ${s.hit===null?'null':''}`;
+      });
+      const scoreEl = document.querySelector(`#draftcard-${draftId} .draft-score`);
+      if (scoreEl) scoreEl.textContent = `${score}/5`;
+    }
+
+    async function saveDraftEdits(id) {
+      const edits = _draftEdits[id] || {};
+      if (!Object.keys(edits).length) { showToast('Nothing to save'); return; }
+      try {
+        const r = await fetch(`${API}/intelligence/call`, {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...edits }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        delete _draftEdits[id];
+        showToast('Saved ✓', 'success');
+        await loadCalls();
+      } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    // ── Generate call ────────────────────────────────────────────
+    async function generateOne(assetId) {
+      const btn = document.getElementById('genbtn-' + assetId);
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      try {
+        const r = await fetch(`${API}/intelligence/generate`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset_id: assetId }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || r.statusText);
+        showToast(`${data.asset_name} → ${data.direction}`, 'success');
+        await loadCalls();
+        // Switch to drafts panel
+        document.querySelectorAll('.panel-tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.panel === 'drafts');
+        });
+        document.getElementById('panel-drafts').style.display    = '';
+        document.getElementById('panel-published').style.display = 'none';
+      } catch(e) { showToast('Error: ' + e.message, 'error'); }
+      finally { btn.disabled = false; btn.textContent = 'Generate'; }
+    }
+
+    async function generateAll() {
+      if (genAllActive) return;
+      genAllActive = true;
+      const btn = document.getElementById('gen-all-btn');
+      btn.disabled = true;
+      const assets = allAssets.filter(a => a.category === currentCat);
+      let done = 0;
+      for (const asset of assets) {
+        btn.textContent = `Generating ${asset.name}… (${done+1}/${assets.length})`;
+        try {
+          await fetch(`${API}/intelligence/generate`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ asset_id: asset.id }),
+          });
+          done++;
+        } catch(e) {}
+        await new Promise(r => setTimeout(r, 800)); // rate limit
+      }
+      btn.textContent = `⚡ Generate All ${currentCat.charAt(0).toUpperCase()+currentCat.slice(1)}`;
+      btn.disabled = false;
+      genAllActive = false;
+      showToast(`Generated ${done}/${assets.length} calls`, 'success');
+      await loadCalls();
+    }
+
+    // ── Publish call ─────────────────────────────────────────────
+    async function publishCall(id) {
+      const draft = drafts.find(d => d.id === id);
+      if (!draft) return;
+      const edits = _draftEdits[id] || {};
+      try {
+        const r = await fetch(`${API}/intelligence/publish`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...edits }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        showToast(`${draft.asset_name} published ✓`, 'success');
+        await loadCalls();
+      } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    // ── Delete call ──────────────────────────────────────────────
+    async function deleteCall(id) {
+      if (!confirm('Delete this call?')) return;
+      try {
+        const r = await fetch(`${API}/intelligence/call`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        showToast('Deleted', 'success');
+        await loadCalls();
+      } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    // ── Render published ──────────────────────────────────────────
+    function renderPublished() {
+      const list  = document.getElementById('pub-list');
+      const empty = document.getElementById('pub-empty');
+      document.getElementById('pub-count').textContent = published.length ? `(${published.length})` : '';
+      if (!published.length) { empty.style.display = ''; list.innerHTML = ''; return; }
+      empty.style.display = 'none';
+      list.innerHTML = published.map(p => {
+        const dir = (p.direction||'NO CALL').toUpperCase();
+        const dirClass = dir==='LONG'?'long':dir==='SHORT'?'short':'nocall';
+        const time = p.published_at ? new Date(p.published_at).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : '';
+        return `
+          <div class="pub-list-item">
+            <div class="pub-list-left">
+              <span class="dir-pill ${dirClass}">${dir==='NO CALL'?'No Call':dir}</span>
+              <span style="font-weight:600;font-size:14px">${escHtml(p.asset_name)}</span>
+              <span class="pub-meta">${p.signal_score||0}/5 signals &bull; ${time}</span>
+            </div>
+            <button class="archive-btn" onclick="archiveCall('${p.id}')">Archive</button>
+          </div>`;
+      }).join('');
+    }
+
+    async function archiveCall(id) {
+      if (!confirm('Archive this published call?')) return;
+      try {
+        const r = await fetch(`${API}/intelligence/call`, {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: 'archived' }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        showToast('Archived', 'success');
+        await loadCalls();
+      } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    // ── Sign out ──────────────────────────────────────────────────
+    function doSignOut() {
+      sb.auth.signOut().then(() => { window.location.href = '../index.html'; });
+    }
+    window.doSignOut = doSignOut;
+
+    // ── Toast ─────────────────────────────────────────────────────
+    let _toastTimer;
+    function showToast(msg, type='') {
+      const t = document.getElementById('toast');
+      clearTimeout(_toastTimer);
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      _toastTimer = setTimeout(() => { t.className = 'toast'; }, 3000);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    function fmtP(p) {
+      if (p==null||isNaN(p)) return '—';
+      if (p>=1000) return p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      if (p>=1)    return p.toFixed(4);
+      return p.toFixed(6);
+    }
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) { return escHtml(s); }
+
+    // Expose for onclick handlers
+    window.generateOne   = generateOne;
+    window.generateAll   = generateAll;
+    window.publishCall   = publishCall;
+    window.deleteCall    = deleteCall;
+    window.archiveCall   = archiveCall;
+    window.toggleDraft   = toggleDraft;
+    window.setSig        = setSig;
+    window.updateDraftField = updateDraftField;
+    window.saveDraftEdits   = saveDraftEdits;
+
+    init();
+  })();
+  </script>
+</body>
+</html>

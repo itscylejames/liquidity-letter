@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelligence — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #C9A84C;
+      --gold-dim:    rgba(201,168,76,0.12);
+      --gold-border: rgba(201,168,76,0.30);
+      --bg:          #0A0A0A;
+      --bg-card:     #111111;
+      --bg-hover:    #161616;
+      --border:      rgba(255,255,255,0.07);
+      --text:        #F0EDE6;
+      --muted:       #888580;
+      --green:       #4ADE80;
+      --green-dim:   rgba(74,222,128,0.10);
+      --green-border:rgba(74,222,128,0.28);
+      --red:         #F87171;
+      --red-dim:     rgba(248,113,113,0.10);
+      --red-border:  rgba(248,113,113,0.28);
+      --nav-h:       60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+    a { color: inherit; text-decoration: none; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.09); border-radius: 3px; }
+
+    /* ── Nav ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: var(--nav-h);
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 16px; }
+    .nav-logo  { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gold); }
+    .nav-badge { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold-border); padding: 3px 9px; }
+    .nav-right { display: flex; align-items: center; gap: 20px; }
+    .nav-back  { font-size: 13px; color: var(--muted); transition: color .15s; }
+    .nav-back:hover { color: var(--text); }
+
+    /* ── Page layout ── */
+    .page { padding-top: var(--nav-h); min-height: 100vh; }
+    .container { max-width: 1120px; margin: 0 auto; padding: 48px 28px 80px; }
+
+    /* ── Hero ── */
+    .page-hero { margin-bottom: 36px; }
+    .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 600; margin-bottom: 6px; }
+    .page-hero p  { font-size: 14px; color: var(--muted); max-width: 520px; line-height: 1.6; }
+
+    /* ── Controls bar ── */
+    .controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 32px; }
+    .tabs { display: flex; gap: 4px; }
+    .tab {
+      padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+      color: var(--muted); border: 1px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+      background: none;
+    }
+    .tab:hover  { color: var(--text); }
+    .tab.active { color: var(--gold); border-color: var(--gold-border); background: var(--gold-dim); }
+
+    .date-wrap { display: flex; align-items: center; gap: 8px; }
+    .date-nav  { width: 30px; height: 30px; background: var(--bg-card); border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; }
+    .date-nav:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+    #date-label { font-size: 13px; font-weight: 500; color: var(--text); min-width: 110px; text-align: center; }
+
+    /* ── Empty / loading ── */
+    .status-msg { text-align: center; padding: 80px 20px; color: var(--muted); }
+    .status-msg .icon { font-size: 36px; margin-bottom: 16px; }
+    .status-msg h3 { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .status-msg p  { font-size: 13px; max-width: 380px; margin: 0 auto; line-height: 1.6; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px; margin-top: 36px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── Call grid ── */
+    .call-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 14px; }
+
+    /* ── Call card ── */
+    .call-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      transition: border-color .2s;
+      overflow: hidden;
+    }
+    .call-card:hover { border-color: rgba(255,255,255,0.14); }
+    .call-card.long   { border-left: 3px solid var(--green); }
+    .call-card.short  { border-left: 3px solid var(--red); }
+    .call-card.nocall { border-left: 3px solid rgba(255,255,255,0.15); }
+
+    .card-header { padding: 18px 18px 14px; }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .direction-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 10px; display: inline-block;
+    }
+    .direction-badge.long  { color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); }
+    .direction-badge.short { color: var(--red);   background: var(--red-dim);   border: 1px solid var(--red-border);   }
+    .direction-badge.nocall{ color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+
+    .score-badge { font-size: 11px; font-weight: 600; color: var(--gold); }
+
+    .asset-name { font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+    .asset-meta { font-size: 12px; color: var(--muted); text-transform: capitalize; }
+
+    .card-levels {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border);
+    }
+    .level-item label { display: block; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .level-item span  { font-size: 13px; font-weight: 500; font-family: 'DM Mono', 'Menlo', monospace; }
+    .level-item span.green { color: var(--green); }
+    .level-item span.red   { color: var(--red); }
+    .level-item span.gold  { color: var(--gold); }
+
+    .card-footer {
+      padding: 12px 18px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .signal-dots { display: flex; gap: 5px; }
+    .sig-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .sig-dot.hit     { background: var(--green); }
+    .sig-dot.miss    { background: var(--red); opacity: .5; }
+    .sig-dot.unknown { background: var(--muted); opacity: .4; }
+
+    .expand-btn {
+      font-size: 12px; color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; gap: 5px; background: none; border: none;
+      transition: color .15s;
+    }
+    .expand-btn:hover { color: var(--text); }
+
+    /* ── Expanded section ── */
+    .card-expanded { display: none; border-top: 1px solid var(--border); }
+    .card-expanded.open { display: block; }
+
+    .tv-chart-wrap { width: 100%; height: 380px; background: #0d0d0d; position: relative; }
+    .tv-chart-inner { width: 100%; height: 100%; }
+
+    .analysis-section { padding: 20px 18px; }
+    .analysis-section h4 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .signals-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .sig-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .sig-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+    .sig-icon.hit  { color: var(--green); }
+    .sig-icon.miss { color: var(--red); opacity: .6; }
+    .sig-icon.unk  { color: var(--muted); }
+    .sig-name.hit  { color: var(--text); }
+    .sig-name.miss { color: var(--muted); }
+    .sig-name.unk  { color: var(--muted); font-style: italic; }
+
+    .reasoning-box {
+      background: rgba(201,168,76,0.04); border: 1px solid var(--gold-border);
+      padding: 16px; margin-top: 4px;
+    }
+    .reasoning-box p { font-size: 13px; line-height: 1.75; color: #D8D4CC; }
+
+    .tech-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      padding: 14px 18px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .tech-item label { display: block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+    .tech-item span  { font-size: 12px; font-weight: 500; font-family: monospace; color: var(--text); }
+
+    /* ── Spinner ── */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .controls { flex-direction: column; align-items: flex-start; }
+      .call-grid { grid-template-columns: 1fr; }
+      .tech-row  { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-require-auth="true">
+
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="dashboard.html" class="nav-logo">The Liquidity Letter</a>
+      <span class="nav-badge">Intelligence</span>
+    </div>
+    <div class="nav-right">
+      <a href="dashboard.html" class="nav-back">← Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+
+      <div class="page-hero">
+        <h1>Daily Trade Calls</h1>
+        <p>AI-assisted swing trade setups scored across 5 technical signals on a daily timeframe. Subscriber-only intelligence.</p>
+      </div>
+
+      <div class="controls">
+        <div class="tabs">
+          <button class="tab active" data-cat="all">All</button>
+          <button class="tab" data-cat="crypto">Crypto</button>
+          <button class="tab" data-cat="stock">Stocks</button>
+          <button class="tab" data-cat="commodity">Commodities</button>
+        </div>
+        <div class="date-wrap">
+          <button class="date-nav" id="btn-prev">‹</button>
+          <span id="date-label">Today</span>
+          <button class="date-nav" id="btn-next">›</button>
+        </div>
+      </div>
+
+      <div id="calls-container">
+        <div class="status-msg">
+          <div class="icon"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="auth.js"></script>
+  <script>
+  (function () {
+    const SB_URL  = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+    const API     = 'https://api.liquidityletter.com';
+    const sb      = window.supabase.createClient(SB_URL, SB_ANON);
+
+    let currentDate = new Date().toISOString().split('T')[0];
+    let currentCat  = 'all';
+    let tvWidgets   = {};
+
+    // ── Auth gate ───────────────────────────────────────────────
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = 'subscribe.html'; return; }
+      const { data: sub } = await sb.from('subscriptions').select('status').eq('user_id', session.user.id).maybeSingle();
+      if (!sub || sub.status !== 'active') { window.location.href = 'subscribe.html'; return; }
+      setupDateNav();
+      setupTabs();
+      loadCalls();
+    }
+
+    // ── Date nav ────────────────────────────────────────────────
+    function setupDateNav() {
+      document.getElementById('btn-prev').onclick = () => { changeDate(-1); };
+      document.getElementById('btn-next').onclick = () => { changeDate(1); };
+      updateDateLabel();
+    }
+
+    function changeDate(delta) {
+      const d = new Date(currentDate + 'T12:00:00');
+      d.setDate(d.getDate() + delta);
+      const newDate = d.toISOString().split('T')[0];
+      const today   = new Date().toISOString().split('T')[0];
+      if (newDate > today) return;
+      currentDate = newDate;
+      updateDateLabel();
+      loadCalls();
+    }
+
+    function updateDateLabel() {
+      const today = new Date().toISOString().split('T')[0];
+      const el = document.getElementById('date-label');
+      if (currentDate === today) { el.textContent = 'Today'; return; }
+      const d = new Date(currentDate + 'T12:00:00');
+      el.textContent = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    }
+
+    // ── Tabs ────────────────────────────────────────────────────
+    function setupTabs() {
+      document.querySelectorAll('.tab').forEach(t => {
+        t.onclick = () => {
+          document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+          t.classList.add('active');
+          currentCat = t.dataset.cat;
+          loadCalls();
+        };
+      });
+    }
+
+    // ── Load calls ──────────────────────────────────────────────
+    async function loadCalls() {
+      const con = document.getElementById('calls-container');
+      con.innerHTML = '<div class="status-msg"><div class="icon"><span class="spinner"></span></div></div>';
+      tvWidgets = {};
+
+      let q = `${API}/intelligence/calls?date=${currentDate}`;
+      if (currentCat !== 'all') q += `&category=${currentCat}`;
+
+      let calls = [];
+      try {
+        const r = await fetch(q);
+        calls = await r.json();
+        if (!Array.isArray(calls)) calls = [];
+      } catch(e) { calls = []; }
+
+      if (calls.length === 0) {
+        const today = new Date().toISOString().split('T')[0];
+        const msg = currentDate === today
+          ? "Trade calls for today haven't been published yet. Check back soon."
+          : "No calls were published for this date.";
+        con.innerHTML = `<div class="status-msg"><div class="icon">📊</div><h3>No calls available</h3><p>${msg}</p></div>`;
+        return;
+      }
+
+      // Group by category
+      const groups = { crypto:[], stock:[], commodity:[] };
+      calls.forEach(c => { if (groups[c.asset_category]) groups[c.asset_category].push(c); });
+
+      const catLabels = { crypto:'Crypto', stock:'Stocks', commodity:'Commodities' };
+      let html = '';
+
+      ['crypto','stock','commodity'].forEach(cat => {
+        if (currentCat !== 'all' && currentCat !== cat) return;
+        if (!groups[cat].length) return;
+        html += `<div class="section-label">${catLabels[cat]}</div>`;
+        html += `<div class="call-grid" style="margin-bottom:8px">`;
+        groups[cat].forEach(c => { html += buildCard(c); });
+        html += `</div>`;
+      });
+
+      con.innerHTML = html;
+
+      // Attach expand listeners
+      con.querySelectorAll('.expand-btn').forEach(btn => {
+        btn.onclick = () => toggleCard(btn.dataset.id);
+      });
+    }
+
+    // ── Build card HTML ─────────────────────────────────────────
+    function buildCard(c) {
+      const dir = (c.direction || 'NO CALL').toUpperCase();
+      const dirClass = dir === 'LONG' ? 'long' : dir === 'SHORT' ? 'short' : 'nocall';
+      const dirBadgeClass = dirClass;
+      const score = c.signal_score || 0;
+
+      const signals = Array.isArray(c.signals) ? c.signals : [];
+      const dots = signals.map(s => {
+        const cls = s.hit === true ? 'hit' : s.hit === false ? 'miss' : 'unknown';
+        return `<span class="sig-dot ${cls}" title="${s.name}"></span>`;
+      }).join('');
+
+      const lvls = dir !== 'NO CALL' ? `
+        <div class="card-levels">
+          <div class="level-item"><label>Entry</label><span class="gold">${c.entry_zone || '—'}</span></div>
+          <div class="level-item"><label>Target</label><span class="green">${c.target || '—'}</span></div>
+          <div class="level-item"><label>Stop</label><span class="red">${c.stop_loss || '—'}</span></div>
+        </div>` : '';
+
+      const tech = c.technicals || {};
+      const techRow = `
+        <div class="tech-row">
+          <div class="tech-item"><label>Price</label><span>${fmtP(tech.currentPrice)}</span></div>
+          <div class="tech-item"><label>50 EMA</label><span>${fmtP(tech.ema50)}</span></div>
+          <div class="tech-item"><label>RSI(14)</label><span>${tech.rsi ?? '—'}</span></div>
+        </div>`;
+
+      const sigRows = signals.map(s => {
+        const cls = s.hit === true ? 'hit' : s.hit === false ? 'miss' : 'unk';
+        const icon = s.hit === true ? '✓' : s.hit === false ? '✗' : '?';
+        return `<div class="sig-row"><span class="sig-icon ${cls}">${icon}</span><span class="sig-name ${cls}">${s.name}</span></div>`;
+      }).join('');
+
+      const reasoning = c.reasoning
+        ? `<div class="reasoning-box"><p>${escHtml(c.reasoning)}</p></div>`
+        : '';
+
+      return `
+        <div class="call-card ${dirClass}" id="card-${c.id}">
+          <div class="card-header">
+            <div class="card-top">
+              <span class="direction-badge ${dirBadgeClass}">${dir === 'NO CALL' ? 'No Call' : dir + ' ↑'}</span>
+              ${dir !== 'NO CALL' ? `<span class="score-badge">${score}/5 signals</span>` : ''}
+            </div>
+            <div class="asset-name">${escHtml(c.asset_name)}</div>
+            <div class="asset-meta">${c.asset_category} &bull; Daily</div>
+          </div>
+          ${lvls}
+          <div class="card-footer">
+            <div class="signal-dots">${dots}</div>
+            <button class="expand-btn" data-id="${c.id}">
+              <span class="expand-label-${c.id}">View Chart & Analysis</span> <span>›</span>
+            </button>
+          </div>
+          <div class="card-expanded" id="expanded-${c.id}">
+            <div class="tv-chart-wrap">
+              <div class="tv-chart-inner" id="tv-${c.id}"></div>
+            </div>
+            ${techRow}
+            <div class="analysis-section">
+              <h4>Signal Breakdown</h4>
+              <div class="signals-list">${sigRows}</div>
+              ${reasoning ? '<h4>Analysis</h4>' + reasoning : ''}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── Toggle card expand ───────────────────────────────────────
+    function toggleCard(id) {
+      const expanded = document.getElementById('expanded-' + id);
+      const label    = document.querySelector('.expand-label-' + id);
+      if (!expanded) return;
+      const isOpen = expanded.classList.toggle('open');
+      if (label) label.textContent = isOpen ? 'Collapse' : 'View Chart & Analysis';
+
+      if (isOpen && !tvWidgets[id]) {
+        // Find the call's TV symbol
+        const card = document.getElementById('card-' + id);
+        if (!card) return;
+        // Get TV symbol from calls cache
+        const call = _callsCache[id];
+        if (call && call.tradingview_symbol) {
+          setTimeout(() => {
+            try {
+              tvWidgets[id] = new TradingView.widget({
+                container_id: 'tv-' + id,
+                symbol: call.tradingview_symbol,
+                interval: 'D',
+                theme: 'dark',
+                style: '1',
+                locale: 'en',
+                toolbar_bg: '#111111',
+                enable_publishing: false,
+                allow_symbol_change: false,
+                hide_side_toolbar: true,
+                save_image: false,
+                width: '100%',
+                height: 380,
+                backgroundColor: '#0A0A0A',
+                gridColor: 'rgba(255,255,255,0.04)',
+              });
+            } catch(e) {}
+          }, 100);
+        }
+      }
+    }
+
+    // ── Calls cache (for TV symbols on expand) ───────────────────
+    const _callsCache = {};
+    const _origLoad = loadCalls;
+    loadCalls = async function() {
+      const con = document.getElementById('calls-container');
+      con.innerHTML = '<div class="status-msg"><div class="icon"><span class="spinner"></span></div></div>';
+      tvWidgets = {};
+
+      let q = `${API}/intelligence/calls?date=${currentDate}`;
+      if (currentCat !== 'all') q += `&category=${currentCat}`;
+
+      let calls = [];
+      try {
+        const r = await fetch(q);
+        calls = await r.json();
+        if (!Array.isArray(calls)) calls = [];
+      } catch(e) { calls = []; }
+
+      // Cache calls by id
+      calls.forEach(c => { _callsCache[c.id] = c; });
+
+      if (calls.length === 0) {
+        const today = new Date().toISOString().split('T')[0];
+        const msg = currentDate === today
+          ? "Trade calls for today haven't been published yet. Check back soon."
+          : "No calls were published for this date.";
+        con.innerHTML = `<div class="status-msg"><div class="icon">📊</div><h3>No calls available</h3><p>${msg}</p></div>`;
+        return;
+      }
+
+      const groups = { crypto:[], stock:[], commodity:[] };
+      calls.forEach(c => { if (groups[c.asset_category]) groups[c.asset_category].push(c); });
+      const catLabels = { crypto:'Crypto', stock:'Stocks', commodity:'Commodities' };
+      let html = '';
+
+      ['crypto','stock','commodity'].forEach(cat => {
+        if (currentCat !== 'all' && currentCat !== cat) return;
+        if (!groups[cat].length) return;
+        html += `<div class="section-label">${catLabels[cat]}</div>`;
+        html += `<div class="call-grid" style="margin-bottom:8px">`;
+        groups[cat].forEach(c => { html += buildCard(c); });
+        html += `</div>`;
+      });
+
+      con.innerHTML = html;
+      con.querySelectorAll('.expand-btn').forEach(btn => {
+        btn.onclick = () => toggleCard(btn.dataset.id);
+      });
+    };
+
+    // ── Helpers ──────────────────────────────────────────────────
+    function fmtP(p) {
+      if (p == null || isNaN(p)) return '—';
+      if (p >= 1000) return '$' + Number(p).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+      if (p >= 1)    return '$' + Number(p).toFixed(4);
+      return '$' + Number(p).toFixed(6);
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>
