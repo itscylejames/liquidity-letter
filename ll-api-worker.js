@@ -48,9 +48,12 @@ function pfEncode(val) {
     .replace(/\)/g,  '%29');
 }
 
-// Builds the sorted param string PayFast expects for signature generation
-function buildPFParamString(params, passphrase) {
-  const parts = Object.keys(params).sort().map(k => {
+// Builds the param string PayFast expects for signature generation.
+// sortKeys=true  → ITN / API verification (PayFast uses ksort on their end)
+// sortKeys=false → payment form signature (PayFast uses field submission order)
+function buildPFParamString(params, passphrase, sortKeys = true) {
+  const keys = sortKeys ? Object.keys(params).sort() : Object.keys(params);
+  const parts = keys.map(k => {
     const v = params[k];
     if (v === '' || v == null) return null;
     return `${k}=${pfEncode(v)}`;
@@ -524,7 +527,8 @@ export default {
           if (params[k] === '' || params[k] == null) delete params[k];
         }
 
-        const paramString = buildPFParamString(params, env.PAYFAST_PASSPHRASE || '');
+        // Payment form: do NOT sort — PayFast verifies in form field submission order
+        const paramString = buildPFParamString(params, env.PAYFAST_PASSPHRASE || '', false);
         params.signature = md5(paramString);
 
         return new Response(JSON.stringify({ params, action: pfUrl, zarAmount, _paramString: paramString }), {
