@@ -527,7 +527,7 @@ export default {
         const paramString = buildPFParamString(params, env.PAYFAST_PASSPHRASE || '');
         params.signature = md5(paramString);
 
-        return new Response(JSON.stringify({ params, action: pfUrl, zarAmount }), {
+        return new Response(JSON.stringify({ params, action: pfUrl, zarAmount, _paramString: paramString }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
