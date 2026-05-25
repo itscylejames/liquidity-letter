@@ -217,7 +217,11 @@
     var pfParams    = null;
     var pfAction    = null;
 
-    // ── Pre-generate signed PayFast form params ──────────────────────
+    // ── Capture affiliate ref code ───────────────────────────────────
+    var refCode = new URLSearchParams(window.location.search).get('ref') || sessionStorage.getItem('ll_ref') || null;
+    if (refCode) sessionStorage.setItem('ll_ref', refCode);
+
+    // ── Pre-generate PayFast form params ────────────────────────────
     async function fetchPayFastParams() {
       document.getElementById('zar-amount').textContent = 'Loading…';
       document.getElementById('zar-rate-note').textContent = '';
@@ -231,16 +235,24 @@
             email:      currentUser.email,
             first_name: meta.first_name || '',
             last_name:  meta.last_name  || '',
+            ref_code:   refCode || null,
           })
         });
         var data = await res.json();
         if (!data.params || !data.action) throw new Error(data.error || 'Init failed');
         pfParams = data.params;
         pfAction = data.action;
-        console.log('PF_PARAM_STRING:', data._paramString);
-        console.log('PF_PARAMS:', JSON.stringify(data.params, null, 2));
-        document.getElementById('zar-amount').textContent = 'R' + Math.round(parseFloat(data.zarAmount)) + '/mo';
-        document.getElementById('zar-rate-note').textContent = 'Billed in ZAR at the live USD exchange rate';
+
+        if (data.discountPct > 0 && data.originalZar) {
+          // Show discounted price with strikethrough original
+          document.getElementById('zar-amount').innerHTML =
+            '<span style="text-decoration:line-through;color:var(--muted);font-size:14px;font-family:DM Sans,sans-serif">R' + Math.round(parseFloat(data.originalZar)) + '</span>' +
+            '&nbsp;<span style="color:#2ECC8A">R' + Math.round(parseFloat(data.zarAmount)) + '/mo</span>';
+          document.getElementById('zar-rate-note').textContent = data.discountPct + '% affiliate discount applied!';
+        } else {
+          document.getElementById('zar-amount').textContent = 'R' + Math.round(parseFloat(data.zarAmount)) + '/mo';
+          document.getElementById('zar-rate-note').textContent = 'Billed in ZAR at the live USD exchange rate';
+        }
       } catch(e) {
         document.getElementById('zar-amount').textContent = '~R562/mo';
         document.getElementById('zar-rate-note').textContent = 'Actual amount calculated at checkout';

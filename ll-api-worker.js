@@ -146,19 +146,6 @@ export default {
 
     try {
 
-      // ── PayFast Debug (remove after testing) ──────────────────────
-      if (url.pathname === '/payfast-debug') {
-        const testHash = md5('hello');
-        const passHash = md5(env.PAYFAST_PASSPHRASE || 'NOT_SET');
-        return new Response(JSON.stringify({
-          md5_hello:    testHash,
-          md5_expected: '5d41402abc4b2a76b9719d911017c592',
-          md5_ok:       testHash === '5d41402abc4b2a76b9719d911017c592',
-          passphrase_set: !!env.PAYFAST_PASSPHRASE,
-          passphrase_hash: passHash,
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-
       // ── Economic Calendar ──────────────────────────────────────────
       if (url.pathname === '/calendar') {
         const today = new Date();
@@ -486,11 +473,28 @@ export default {
 
       // ── PayFast: Initiate Payment ─────────────────────────────────
       if (url.pathname === '/payfast-initiate' && request.method === 'POST') {
-        const { user_id, email, first_name, last_name } = await request.json();
+        const { user_id, email, first_name, last_name, ref_code } = await request.json();
         if (!user_id || !email) {
           return new Response(JSON.stringify({ error: 'Missing user_id or email' }), {
             status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
+        }
+
+        // ── Look up affiliate discount ────────────────────────────────
+        let discountPct    = 0;
+        let affiliateCode  = null;
+        if (ref_code) {
+          try {
+            const affRes  = await fetch(
+              `${env.SUPABASE_URL}/rest/v1/affiliates?code=eq.${encodeURIComponent(ref_code)}&active=eq.true&select=code,discount_pct`,
+              { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+            );
+            const affData = await affRes.json();
+            if (Array.isArray(affData) && affData.length > 0) {
+              discountPct   = parseFloat(affData[0].discount_pct) || 0;
+              affiliateCode = affData[0].code;
+            }
+          } catch(e) {}
         }
 
         let zarRate = 18.7;
@@ -499,7 +503,10 @@ export default {
           const rateData = await rateRes.json();
           zarRate = rateData.rates?.ZAR || 18.7;
         } catch(e) {}
-        const zarAmount = Math.ceil(29.99 * zarRate).toFixed(2);
+
+        const baseUsd       = 29.99;
+        const discountedUsd = discountPct > 0 ? baseUsd * (1 - discountPct / 100) : baseUsd;
+        const zarAmount     = Math.ceil(discountedUsd * zarRate).toFixed(2);
 
         const isSandbox = env.PAYFAST_SANDBOX === 'true';
         const pfUrl = isSandbox
@@ -507,24 +514,27 @@ export default {
           : 'https://www.payfast.co.za/eng/process';
         const siteUrl = 'https://liquidityletter.com';
 
+        const mPaymentId = `TLL_${user_id}_${Date.now()}`;
+
         const params = {
-          merchant_id:      env.PAYFAST_MERCHANT_ID,
-          merchant_key:     env.PAYFAST_MERCHANT_KEY,
-          return_url:       `${siteUrl}/dashboard.html?subscribed=1`,
-          cancel_url:       `${siteUrl}/subscribe.html`,
-          notify_url:       `https://api.liquidityletter.com/payfast-itn`,
-          name_first:       (first_name || '').slice(0, 100),
-          name_last:        (last_name  || '').slice(0, 100),
-          email_address:    email,
-          m_payment_id:     `TLL_${user_id}_${Date.now()}`,
-          amount:           zarAmount,
-          item_name:        'The Liquidity Letter Monthly',
+          merchant_id:       env.PAYFAST_MERCHANT_ID,
+          merchant_key:      env.PAYFAST_MERCHANT_KEY,
+          return_url:        `${siteUrl}/dashboard.html?subscribed=1`,
+          cancel_url:        `${siteUrl}/subscribe.html`,
+          notify_url:        `https://api.liquidityletter.com/payfast-itn`,
+          name_first:        (first_name || '').slice(0, 100),
+          name_last:         (last_name  || '').slice(0, 100),
+          email_address:     email,
+          m_payment_id:      mPaymentId,
+          amount:            zarAmount,
+          item_name:         'The Liquidity Letter Monthly',
           subscription_type: '1',
-          billing_date:     new Date().toISOString().split('T')[0],
-          recurring_amount: zarAmount,
-          frequency:        '3',
-          cycles:           '0',
-          custom_str1:      user_id,
+          billing_date:      new Date().toISOString().split('T')[0],
+          recurring_amount:  zarAmount,
+          frequency:         '3',
+          cycles:            '0',
+          custom_str1:       user_id,
+          ...(affiliateCode && { custom_str2: affiliateCode }),
         };
 
         // Remove empty fields
@@ -532,12 +542,36 @@ export default {
           if (params[k] === '' || params[k] == null) delete params[k];
         }
 
-        // No signature — "Enable require signature" is OFF in PayFast settings
-        // so PayFast will accept unsigned forms
+        // Log referral in Supabase
+        if (affiliateCode) {
+          try {
+            await fetch(`${env.SUPABASE_URL}/rest/v1/referrals`, {
+              method:  'POST',
+              headers: {
+                'apikey':        env.SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+                'Content-Type':  'application/json',
+              },
+              body: JSON.stringify({
+                affiliate_code:   affiliateCode,
+                user_id:          user_id,
+                email:            email,
+                m_payment_id:     mPaymentId,
+                discount_applied: discountPct,
+                status:           'pending',
+              }),
+            });
+          } catch(e) {}
+        }
 
-        return new Response(JSON.stringify({ params, action: pfUrl, zarAmount }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        // No signature — "Enable require signature" is OFF in PayFast settings
+        return new Response(JSON.stringify({
+          params,
+          action:      pfUrl,
+          zarAmount,
+          discountPct,
+          originalZar: discountPct > 0 ? Math.ceil(baseUsd * zarRate).toFixed(2) : null,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       // ── PayFast: ITN (Instant Transaction Notification / webhook) ──
@@ -580,6 +614,15 @@ export default {
             headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ trial_used: true }),
           });
+          // Mark referral as active if one exists
+          const mPaymentId = pfData.m_payment_id;
+          if (mPaymentId) {
+            await fetch(`${env.SUPABASE_URL}/rest/v1/referrals?m_payment_id=eq.${encodeURIComponent(mPaymentId)}`, {
+              method:  'PATCH',
+              headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+              body:    JSON.stringify({ status: 'active' }),
+            });
+          }
         }
 
         if (paymentStatus === 'FAILED' && userId) {
