@@ -254,14 +254,29 @@
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { window.location.href = 'subscribe.html'; return; }
-      const [{ data: sub }, { data: profile }] = await Promise.all([
-        sb.from('subscriptions').select('status').eq('user_id', session.user.id).maybeSingle(),
-        sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle(),
-      ]);
-      const isAdmin = profile && (profile.role === 'admin' || profile.role === 'super_admin');
-      if (!isAdmin && (!sub || sub.status !== 'active')) {
-        window.location.href = 'subscribe.html'; return;
+
+      // Admin check — try multiple methods
+      let isAdmin = false;
+      // 1. JWT app_metadata (fastest, no DB round trip)
+      const appRole = session.user?.app_metadata?.role || session.user?.user_metadata?.role || '';
+      if (['admin','super_admin'].includes(appRole)) isAdmin = true;
+      // 2. Profiles table
+      if (!isAdmin) {
+        try {
+          const { data: prof } = await sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+          if (prof?.role && ['admin','super_admin'].includes(prof.role)) isAdmin = true;
+        } catch(e) {}
       }
+      // 3. window.Auth from auth.js
+      if (!isAdmin && window.Auth) {
+        try { isAdmin = !!(window.Auth.isAdmin?.() || window.Auth.isSuperAdmin?.()); } catch(e) {}
+      }
+
+      if (!isAdmin) {
+        const { data: sub } = await sb.from('subscriptions').select('status').eq('user_id', session.user.id).maybeSingle();
+        if (!sub || sub.status !== 'active') { window.location.href = 'subscribe.html'; return; }
+      }
+
       setupDateNav();
       setupTabs();
       loadCalls();

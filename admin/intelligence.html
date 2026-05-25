@@ -325,9 +325,9 @@
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { window.location.href = '../index.html'; return; }
       authToken = session.access_token;
+      setupUI();        // Run first — tabs must work regardless of data loading
       await loadAssets();
       await loadCalls();
-      setupUI();
     }
 
     async function loadAssets() {
