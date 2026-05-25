@@ -884,6 +884,81 @@ export default {
         });
       }
 
+      // ── Admin: Cancel billing + remove subscriber ─────────────────
+      if (url.pathname === '/admin/remove-subscriber' && request.method === 'POST') {
+        const authH = request.headers.get('Authorization') || '';
+        const tok = authH.replace('Bearer ', '').trim();
+        if (!tok) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+
+        // Verify caller is logged in
+        const uRes = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+          headers: { 'Authorization': `Bearer ${tok}`, 'apikey': env.SUPABASE_SERVICE_KEY }
+        });
+        if (!uRes.ok) return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        const adminUser = await uRes.json();
+
+        // Verify caller is admin or super_admin
+        const profRes = await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${adminUser.id}&select=role`, {
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+        });
+        const profs = await profRes.json();
+        const callerRole = profs[0]?.role || adminUser.app_metadata?.role || '';
+        if (!['admin', 'super_admin'].includes(callerRole)) {
+          return new Response('Forbidden', { status: 403, headers: corsHeaders });
+        }
+
+        const { user_id } = await request.json();
+        if (!user_id) return new Response(JSON.stringify({ error: 'Missing user_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+        // 1. Fetch PayFast subscription token
+        const subRes = await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${user_id}&select=paystack_auth_code`, {
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+        });
+        const subs = await subRes.json();
+        const pfToken = subs[0]?.paystack_auth_code || null;
+
+        // 2. Cancel on PayFast (best-effort — don't block deletion if this fails)
+        if (pfToken && env.PAYFAST_MERCHANT_ID && env.PAYFAST_PASSPHRASE) {
+          try {
+            const isSandbox = env.PAYFAST_SANDBOX === 'true';
+            const pfApiBase = isSandbox ? 'https://api.sandbox.payfast.co.za' : 'https://api.payfast.co.za';
+            const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00');
+            const pfHeaders = {
+              'merchant-id': env.PAYFAST_MERCHANT_ID,
+              'passphrase':  md5(env.PAYFAST_PASSPHRASE),
+              'timestamp':   timestamp,
+              'version':     'v1',
+            };
+            pfHeaders.signature = md5(buildPFParamString(pfHeaders));
+            await fetch(`${pfApiBase}/subscriptions/${pfToken}/cancel`, {
+              method: 'PUT',
+              headers: { ...pfHeaders, 'Content-Length': '0' },
+            });
+          } catch(e) {}
+        }
+
+        // 3. Mark subscription cancelled in DB
+        await fetch(`${env.SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${user_id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ status: 'cancelled', updated_at: new Date().toISOString() }),
+        });
+
+        // 4. Delete user from Supabase auth
+        const delRes = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${user_id}`, {
+          method: 'DELETE',
+          headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` },
+        });
+        if (!delRes.ok) {
+          const errText = await delRes.text();
+          return new Response(JSON.stringify({ error: 'Failed to delete user: ' + errText.slice(0, 200) }), {
+            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       // ── Mag 7 Earnings Data ─────────────────────────────────────────
       if (url.pathname === '/mag7/data') {
         const sym = (url.searchParams.get('symbol') || 'NVDA').toUpperCase();

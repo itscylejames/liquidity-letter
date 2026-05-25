@@ -461,10 +461,20 @@
     }
 
     async function removeUser(userId, name) {
-      if (!confirm('Remove ' + name + '? This permanently deletes their account and cannot be undone.')) return;
+      if (!confirm('Remove ' + name + '?\n\nThis will cancel their PayFast subscription and permanently delete their account. This cannot be undone.')) return;
       try {
-        var { error } = await getSB().rpc('admin_delete_user', { target_id: userId });
-        if (error) throw error;
+        var sess = await getSB().auth.getSession();
+        var token = sess.data && sess.data.session && sess.data.session.access_token;
+        if (!token) throw new Error('Not logged in');
+
+        var res = await fetch('https://api.liquidityletter.com/admin/remove-subscriber', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to remove user');
+
         allSubscribers = allSubscribers.filter(function(s) { return s.id !== userId; });
         renderStats();
         renderTable(filteredList());
