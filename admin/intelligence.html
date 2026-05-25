@@ -340,20 +340,17 @@
 
     async function loadCalls() {
       const today = new Date().toISOString().split('T')[0];
-      const [dr, pr] = await Promise.all([
-        fetch(`${API}/intelligence/calls?date=${today}&status=draft`),
-        fetch(`${API}/intelligence/calls?date=${today}&status=published`),
-      ]);
-      drafts    = Array.isArray(await dr.json()) ? await dr.json() : [];
-      published = Array.isArray(await pr.json()) ? await pr.json() : [];
-
-      // Re-fetch properly (json() consumed above)
-      const dr2 = await fetch(`${API}/intelligence/calls?date=${today}&status=draft`);
-      const pr2 = await fetch(`${API}/intelligence/calls?date=${today}&status=published`);
-      drafts    = await dr2.json() || [];
-      published = await pr2.json() || [];
-      if (!Array.isArray(drafts))    drafts    = [];
-      if (!Array.isArray(published)) published = [];
+      try {
+        const [dr, pr] = await Promise.all([
+          fetch(`${API}/intelligence/calls?date=${today}&status=draft`).then(r => r.json()),
+          fetch(`${API}/intelligence/calls?date=${today}&status=published`).then(r => r.json()),
+        ]);
+        drafts    = Array.isArray(dr) ? dr : [];
+        published = Array.isArray(pr) ? pr : [];
+      } catch(e) {
+        drafts    = [];
+        published = [];
+      }
       renderDrafts();
       renderPublished();
     }

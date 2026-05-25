@@ -164,7 +164,7 @@
         'https://dumqszzkbynjeejswyki.supabase.co',
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg'
       );
-      sb.auth.signOut().then(() => { window.location.href = '../index.html'; });
+      sb.auth.signOut().finally(() => { window.location.href = '/index.html'; });
     }
 
     function openResearchEditor() {

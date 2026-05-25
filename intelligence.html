@@ -254,8 +254,14 @@
     async function init() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { window.location.href = 'subscribe.html'; return; }
-      const { data: sub } = await sb.from('subscriptions').select('status').eq('user_id', session.user.id).maybeSingle();
-      if (!sub || sub.status !== 'active') { window.location.href = 'subscribe.html'; return; }
+      const [{ data: sub }, { data: profile }] = await Promise.all([
+        sb.from('subscriptions').select('status').eq('user_id', session.user.id).maybeSingle(),
+        sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle(),
+      ]);
+      const isAdmin = profile && (profile.role === 'admin' || profile.role === 'super_admin');
+      if (!isAdmin && (!sub || sub.status !== 'active')) {
+        window.location.href = 'subscribe.html'; return;
+      }
       setupDateNav();
       setupTabs();
       loadCalls();
