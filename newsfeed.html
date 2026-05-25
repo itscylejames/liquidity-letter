@@ -813,6 +813,7 @@
       var time     = relativeTime(item.date);
       var url      = item.url || '#';
       var askText  = 'Analyze this macro news: ' + item.headline;
+      var askAttr  = askText.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
       return '<div class="news-card">'
         + '<div class="news-card-top">'
@@ -826,7 +827,7 @@
         + '<a href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer">'
         + '<button class="btn-read-more">Read more →</button>'
         + '</a>'
-        + '<button class="btn-ask-zeus" onclick="askZeus(' + JSON.stringify(askText) + ')">⚡ Ask Zeus</button>'
+        + '<button class="btn-ask-zeus" data-ask="' + askAttr + '" onclick="askZeus(this.dataset.ask)">⚡ Ask Zeus</button>'
         + '</div>'
         + '</div>';
     }
