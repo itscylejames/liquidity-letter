@@ -121,15 +121,17 @@
       width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
     }
-    .notif-icon.newsletter { background: rgba(201,168,76,0.12); color: var(--gold); }
-    .notif-icon.research   { background: rgba(91,141,239,0.12); color: var(--blue); }
-    .notif-icon.macro      { background: rgba(76,175,80,0.12);  color: var(--green); }
+    .notif-icon.newsletter    { background: rgba(201,168,76,0.12); color: var(--gold); }
+    .notif-icon.research      { background: rgba(91,141,239,0.12); color: var(--blue); }
+    .notif-icon.macro         { background: rgba(76,175,80,0.12);  color: var(--green); }
+    .notif-icon.intelligence  { background: rgba(201,168,76,0.12); color: var(--gold); }
 
     .notif-content { flex: 1; min-width: 0; }
     .notif-type { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
-    .notif-type.newsletter { color: var(--gold); }
-    .notif-type.research   { color: var(--blue); }
-    .notif-type.macro      { color: var(--green); }
+    .notif-type.newsletter   { color: var(--gold); }
+    .notif-type.research     { color: var(--blue); }
+    .notif-type.macro        { color: var(--green); }
+    .notif-type.intelligence { color: var(--gold); }
     .notif-title { font-size: 13px; color: var(--text-primary); font-weight: 500; margin-bottom: 3px; line-height: 1.4; }
     .notif-message { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
     .notif-time { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
@@ -478,9 +480,10 @@
   let userId = null;
 
   const icons = {
-    newsletter: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
-    research:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
-    macro:      `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`
+    newsletter:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+    research:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+    macro:        `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    intelligence: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
   };
 
   function timeAgo(iso) {
@@ -507,9 +510,14 @@
       <div class="notif-row ${n.read_at ? '' : 'unread'}" data-id="${n.id}">
         <div class="notif-icon ${n.type}">${icons[n.type] || icons.macro}</div>
         <div class="notif-content">
-          <div class="notif-type ${n.type}">${n.type === 'newsletter' ? 'Newsletter' : n.type === 'research' ? 'Research' : 'Macro Event'}</div>
+          <div class="notif-type ${n.type}">${
+            n.type === 'newsletter'   ? 'Newsletter'      :
+            n.type === 'research'     ? 'Research'        :
+            n.type === 'intelligence' ? 'Zeus Intelligence':
+            n.type === 'macro'        ? 'Macro Event'     : 'Alert'
+          }</div>
           <div class="notif-title">${n.title}</div>
-          ${n.message ? `<div class="notif-message">${n.message}</div>` : ''}
+          ${(n.body || n.message) ? `<div class="notif-message">${n.body || n.message}</div>` : ''}
           <div class="notif-time">${timeAgo(n.created_at)}</div>
         </div>
         ${!n.read_at ? '<div class="notif-unread-dot"></div>' : ''}

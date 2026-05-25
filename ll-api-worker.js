@@ -1030,7 +1030,28 @@ export default {
           body:JSON.stringify({...updates, status:'published', published_at:new Date().toISOString(), updated_at:new Date().toISOString()}),
         });
         const data = await r.json();
-        return new Response(JSON.stringify(Array.isArray(data)?data[0]:data),{headers:{...corsHeaders,'Content-Type':'application/json'}});
+        const callData = Array.isArray(data) ? data[0] : data;
+
+        // Auto-notify subscribers when a real call (LONG or SHORT) is published
+        if (callData && callData.direction && callData.direction !== 'NO CALL') {
+          const notifTitle = `⚡ ${callData.asset_name} — ${callData.direction}`;
+          const entryStr   = callData.entry_zone || '—';
+          const targetStr  = callData.target     || '—';
+          const stopStr    = callData.stop_loss   || '—';
+          const notifBody  = `Entry: ${entryStr} · Target: ${targetStr} · Stop: ${stopStr} · Zeus Intelligence`;
+          await fetch(`${env.SUPABASE_URL}/rest/v1/notifications`, {
+            method: 'POST',
+            headers: {
+              'apikey': env.SUPABASE_SERVICE_KEY,
+              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({ title: notifTitle, body: notifBody, type: 'intelligence', user_id: null, created_by: null }),
+          });
+        }
+
+        return new Response(JSON.stringify(callData),{headers:{...corsHeaders,'Content-Type':'application/json'}});
       }
 
       // PATCH /intelligence/call (admin - edit draft)
