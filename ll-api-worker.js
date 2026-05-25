@@ -51,15 +51,20 @@ function pfEncode(val) {
 // Builds the param string PayFast expects for signature generation.
 // sortKeys=true  → ITN / API verification (PayFast uses ksort on their end)
 // sortKeys=false → payment form signature (PayFast uses field submission order)
-function buildPFParamString(params, passphrase, sortKeys = true) {
+// encodeValues=true  → URL-encode values (PHP urlencode style)
+// encodeValues=false → raw values (no encoding)
+function buildPFParamString(params, passphrase, sortKeys = true, encodeValues = true) {
   const keys = sortKeys ? Object.keys(params).sort() : Object.keys(params);
   const parts = keys.map(k => {
-    const v = params[k];
-    if (v === '' || v == null) return null;
-    return `${k}=${pfEncode(v)}`;
+    const v = String(params[k] ?? '').trim();
+    if (v === '') return null;
+    return `${k}=${encodeValues ? pfEncode(v) : v}`;
   }).filter(Boolean);
   let str = parts.join('&');
-  if (passphrase) str += '&passphrase=' + pfEncode(passphrase);
+  if (passphrase) {
+    const p = String(passphrase).trim();
+    str += '&passphrase=' + (encodeValues ? pfEncode(p) : p);
+  }
   return str;
 }
 
@@ -522,16 +527,15 @@ export default {
           custom_str1:      user_id,
         };
 
-        // Remove empty fields before signing
+        // Remove empty fields
         for (const k of Object.keys(params)) {
           if (params[k] === '' || params[k] == null) delete params[k];
         }
 
-        // Payment form: do NOT sort — PayFast verifies in form field submission order
-        const paramString = buildPFParamString(params, env.PAYFAST_PASSPHRASE || '', false);
-        params.signature = md5(paramString);
+        // No signature — "Enable require signature" is OFF in PayFast settings
+        // so PayFast will accept unsigned forms
 
-        return new Response(JSON.stringify({ params, action: pfUrl, zarAmount, _paramString: paramString }), {
+        return new Response(JSON.stringify({ params, action: pfUrl, zarAmount }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
