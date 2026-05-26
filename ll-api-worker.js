@@ -434,7 +434,7 @@ export default {
     }
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     const corsHeaders = {
@@ -478,11 +478,17 @@ export default {
 
       // ── News Feed ──────────────────────────────────────────────────
       if (url.pathname === '/news') {
+        // Serve from edge cache if available (5-minute TTL)
+        const cache    = caches.default;
+        const cacheKey = new Request('https://cache.liquidityletter.com/news-v1');
+        const cached   = await cache.match(cacheKey);
+        if (cached) return cached;
+
         const [fGenRes, fCryptoRes, fForexRes, mRes, polyRes] = await Promise.all([
           fetch(`https://finnhub.io/api/v1/news?category=general&minId=0&token=${env.FINNHUB_KEY}`),
           fetch(`https://finnhub.io/api/v1/news?category=crypto&minId=0&token=${env.FINNHUB_KEY}`),
           fetch(`https://finnhub.io/api/v1/news?category=forex&minId=0&token=${env.FINNHUB_KEY}`),
-          fetch(`https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&limit=100&api_token=${env.MARKETAUX_KEY}`),
+          fetch(`https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&limit=25&api_token=${env.MARKETAUX_KEY}`),
           fetch(`https://api.polygon.io/v2/reference/news?limit=50&sort=published_utc&order=desc&apiKey=${env.POLYGON_KEY}`),
         ]);
 
@@ -535,9 +541,16 @@ export default {
           }
         }
 
-        return new Response(JSON.stringify({ finnhub, marketaux, polygon }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        const newsResponse = new Response(JSON.stringify({ finnhub, marketaux, polygon }), {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=300',  // 5-minute browser hint
+          },
         });
+        // Store in Cloudflare edge cache — next request returns instantly
+        ctx.waitUntil(cache.put(cacheKey, newsResponse.clone()));
+        return newsResponse;
       }
 
       // ── Bitcoin ETF Flows (Farside scrape) ────────────────────────
