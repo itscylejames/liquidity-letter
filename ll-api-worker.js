@@ -165,22 +165,25 @@ TOP NEWS HEADLINES:
 ${headlines.join('\n') || 'Unavailable'}`;
 
   // 5. Generate article via GPT-4o
+  // 5. Generate article via GPT-4o — plain text with ## headers and - bullets
   const systemPrompt = `You are Zeus, the macro intelligence engine of The Liquidity Letter — a premium financial research platform. Every morning you write the "Zeus Macro Pulse", a sharp daily briefing for sophisticated investors and traders.
 
-Write a structured, professional HTML article. No markdown — HTML only. Target 600–900 words. Be authoritative, data-driven, and direct. No fluff.
+Write in plain text only. No HTML, no markdown formatting, no asterisks, no bold. Target 600–900 words. Be authoritative, data-driven, and direct. No fluff.
 
-Use exactly these sections with <h2> tags:
-1. Market Overview — overnight context, pre-market sentiment, risk-on vs risk-off tone
-2. Price Action — what the provided price moves are telling us, what matters
-3. Zeus Intelligence — discuss today's trade setups if available; if none yet, note they'll be published shortly
-4. Headlines to Watch — concise analysis of the 4-5 most market-moving stories
-5. Today's Focus — 2–3 <li> bullet points: the specific things traders should watch today
+Use EXACTLY these section headers (with ## prefix):
+## Market Overview
+## Price Action
+## Zeus Intelligence
+## Headlines to Watch
+## Today's Focus
 
-Use <p>, <h2>, <ul>, <li>, <strong> tags only. Do not include a title, date, or byline — those are added separately.`;
+Under "Today's Focus" use bullet points prefixed with "- " (dash space).
+Under "Headlines to Watch" use bullet points prefixed with "- " (dash space).
+Do not include a title, date, or byline — those are added separately.`;
 
-  let articleHtml = '';
+  let rawText = '';
   try {
-    const gr   = await fetch('https://api.openai.com/v1/chat/completions', {
+    const gr = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${env.OPENAI_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -191,12 +194,42 @@ Use <p>, <h2>, <ul>, <li>, <strong> tags only. Do not include a title, date, or 
       }),
     });
     const gd = await gr.json();
-    articleHtml = gd.choices?.[0]?.message?.content || '';
+    rawText = gd.choices?.[0]?.message?.content || '';
   } catch(e) {}
 
-  if (!articleHtml) return;
+  if (!rawText) return;
 
-  // 6. Save as draft
+  // 6. Convert plain text to EditorJS blocks
+  function textToEditorBlocks(text) {
+    const blocks = [];
+    const lines  = text.split('\n').map(l => l.trim()).filter(Boolean);
+    let listItems = null;
+    const flush = () => {
+      if (listItems) { blocks.push({ type:'list', data:{ style:'unordered', items:listItems } }); listItems = null; }
+    };
+    for (const line of lines) {
+      if (line.startsWith('## ')) {
+        flush();
+        blocks.push({ type:'header', data:{ text: line.slice(3).trim(), level: 2 } });
+      } else if (line.startsWith('- ')) {
+        if (!listItems) listItems = [];
+        listItems.push(line.slice(2).trim());
+      } else {
+        flush();
+        blocks.push({ type:'paragraph', data:{ text: line } });
+      }
+    }
+    flush();
+    return blocks;
+  }
+
+  const editorContent = {
+    time:    Date.now(),
+    blocks:  textToEditorBlocks(rawText),
+    version: '2.28.0',
+  };
+
+  // 7. Save as draft
   const title   = `Zeus Macro Pulse — ${today.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}`;
   const slug    = `zeus-macro-pulse-${dateStr}`;
   const excerpt = `Daily macro intelligence briefing for ${dateFormatted}. Market overview, price action, trade setups, and key headlines.`;
@@ -210,7 +243,7 @@ Use <p>, <h2>, <ul>, <li>, <strong> tags only. Do not include a title, date, or 
       'Prefer':        'return=minimal',
     },
     body: JSON.stringify({
-      title, content: articleHtml, type: 'research',
+      title, content: editorContent, type: 'research',
       published: false, excerpt, slug, category: 'macro liquidity',
     }),
   });
