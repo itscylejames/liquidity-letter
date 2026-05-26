@@ -394,10 +394,11 @@ Write 3–4 sentences of trade reasoning. Professional tone. No bullets. Under 9
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(Promise.all([
-      runBilling(env),
-      generateMacroPulse(env),
-    ]));
+    if (event.cron === '25 7 * * *') {
+      ctx.waitUntil(generateMacroPulse(env));
+    } else {
+      ctx.waitUntil(runBilling(env));
+    }
   },
 
   async fetch(request, env) {
