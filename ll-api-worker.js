@@ -94,6 +94,128 @@ async function upsertSubscription(env, userId, data) {
   return res.ok;
 }
 
+// ── Zeus Macro Pulse — daily auto-draft ──────────────────────────
+async function generateMacroPulse(env) {
+  const today        = new Date();
+  const dateStr      = today.toISOString().split('T')[0];
+  const dateFormatted = today.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // 1. One headline each from crypto, geopolitics, and tech
+  let headlines = [];
+  try {
+    const [cryptoRes, techRes, geoRes] = await Promise.all([
+      fetch(`https://api.polygon.io/v2/reference/news?limit=1&sort=published_utc&order=desc&ticker=X:BTCUSD&apiKey=${env.POLYGON_KEY}`),
+      fetch(`https://api.polygon.io/v2/reference/news?limit=1&sort=published_utc&order=desc&ticker=NVDA&apiKey=${env.POLYGON_KEY}`),
+      fetch(`https://api.polygon.io/v2/reference/news?limit=1&sort=published_utc&order=desc&apiKey=${env.POLYGON_KEY}`),
+    ]);
+    const [cryptoData, techData, geoData] = await Promise.all([cryptoRes.json(), techRes.json(), geoRes.json()]);
+    const pick = (data, label) => {
+      const item = data.results?.[0];
+      return item ? `[${label}] ${item.title} (${item.publisher?.name || ''})` : null;
+    };
+    headlines = [pick(cryptoData,'Crypto'), pick(techData,'Tech'), pick(geoData,'Macro/Geo')].filter(Boolean);
+  } catch(e) {}
+
+  // 2. Price snapshot — BTC, Gold, S&P 500, Oil
+  const prices = {};
+  try {
+    const btcData = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT').then(r=>r.json());
+    prices['BTC'] = { price: parseFloat(btcData.lastPrice).toFixed(2), chg: parseFloat(btcData.priceChangePercent).toFixed(2) };
+  } catch(e) {}
+  try {
+    await Promise.all([['GC=F','Gold'],['CL=F','Oil'],['^GSPC','S&P 500']].map(async ([sym, label]) => {
+      try {
+        const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`);
+        const d = await r.json();
+        const m = d.chart?.result?.[0]?.meta;
+        if (m) {
+          const prev = m.chartPreviousClose || m.previousClose || m.regularMarketPrice;
+          const chg  = prev ? (((m.regularMarketPrice - prev) / prev) * 100).toFixed(2) : '0.00';
+          prices[label] = { price: m.regularMarketPrice?.toFixed(2), chg };
+        }
+      } catch(e) {}
+    }));
+  } catch(e) {}
+
+  // 3. Today's published Zeus Intelligence calls
+  let tradeCalls = [];
+  try {
+    const cr  = await fetch(`${env.SUPABASE_URL}/rest/v1/trade_calls?date=eq.${dateStr}&status=eq.published&select=asset_name,direction,entry_zone,target,stop_loss&order=asset_id.asc`, {
+      headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` }
+    });
+    const cd = await cr.json();
+    tradeCalls = Array.isArray(cd) ? cd.filter(c => c.direction !== 'NO CALL') : [];
+  } catch(e) {}
+
+  // 4. Build data context
+  const priceLines = Object.entries(prices).map(([s,d]) => `${s}: $${d.price} (${d.chg > 0 ? '+' : ''}${d.chg}%)`).join('\n');
+  const callLines  = tradeCalls.length
+    ? tradeCalls.map(c => `${c.asset_name}: ${c.direction} | Entry: ${c.entry_zone} | Target: ${c.target} | Stop: ${c.stop_loss}`).join('\n')
+    : 'No trade calls generated yet for today.';
+
+  const dataContext = `DATE: ${dateFormatted}
+
+PRICE SNAPSHOT (24h):
+${priceLines || 'Unavailable'}
+
+ZEUS INTELLIGENCE CALLS TODAY:
+${callLines}
+
+TOP NEWS HEADLINES:
+${headlines.join('\n') || 'Unavailable'}`;
+
+  // 5. Generate article via GPT-4o
+  const systemPrompt = `You are Zeus, the macro intelligence engine of The Liquidity Letter — a premium financial research platform. Every morning you write the "Zeus Macro Pulse", a sharp daily briefing for sophisticated investors and traders.
+
+Write a structured, professional HTML article. No markdown — HTML only. Target 600–900 words. Be authoritative, data-driven, and direct. No fluff.
+
+Use exactly these sections with <h2> tags:
+1. Market Overview — overnight context, pre-market sentiment, risk-on vs risk-off tone
+2. Price Action — what the provided price moves are telling us, what matters
+3. Zeus Intelligence — discuss today's trade setups if available; if none yet, note they'll be published shortly
+4. Headlines to Watch — concise analysis of the 4-5 most market-moving stories
+5. Today's Focus — 2–3 <li> bullet points: the specific things traders should watch today
+
+Use <p>, <h2>, <ul>, <li>, <strong> tags only. Do not include a title, date, or byline — those are added separately.`;
+
+  let articleHtml = '';
+  try {
+    const gr   = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env.OPENAI_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model:       'gpt-4o',
+        messages:    [{ role:'system', content:systemPrompt }, { role:'user', content:dataContext }],
+        max_tokens:  1600,
+        temperature: 0.65,
+      }),
+    });
+    const gd = await gr.json();
+    articleHtml = gd.choices?.[0]?.message?.content || '';
+  } catch(e) {}
+
+  if (!articleHtml) return;
+
+  // 6. Save as draft
+  const title   = `Zeus Macro Pulse — ${today.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}`;
+  const slug    = `zeus-macro-pulse-${dateStr}`;
+  const excerpt = `Daily macro intelligence briefing for ${dateFormatted}. Market overview, price action, trade setups, and key headlines.`;
+
+  await fetch(`${env.SUPABASE_URL}/rest/v1/articles`, {
+    method:  'POST',
+    headers: {
+      'apikey':        env.SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type':  'application/json',
+      'Prefer':        'return=minimal',
+    },
+    body: JSON.stringify({
+      title, content: articleHtml, type: 'research',
+      published: false, excerpt, slug, category: 'macro liquidity',
+    }),
+  });
+}
+
 async function runBilling(env) {
   const now = new Date();
 
@@ -272,7 +394,10 @@ Write 3–4 sentences of trade reasoning. Professional tone. No bullets. Under 9
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runBilling(env));
+    ctx.waitUntil(Promise.all([
+      runBilling(env),
+      generateMacroPulse(env),
+    ]));
   },
 
   async fetch(request, env) {
