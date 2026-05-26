@@ -8,80 +8,267 @@
   <title>Intelligence — The Liquidity Letter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="mobile.css">
   <style>
+    /* ── Design tokens ── */
     :root {
-      --gold:        #C9A84C;
-      --gold-dim:    rgba(201,168,76,0.12);
-      --gold-border: rgba(201,168,76,0.30);
-      --bg:          #0A0A0A;
-      --bg-card:     #111111;
-      --bg-hover:    #161616;
-      --border:      rgba(255,255,255,0.07);
-      --text:        #F0EDE6;
-      --muted:       #888580;
-      --green:       #4ADE80;
-      --green-dim:   rgba(74,222,128,0.10);
-      --green-border:rgba(74,222,128,0.28);
-      --red:         #F87171;
-      --red-dim:     rgba(248,113,113,0.10);
-      --red-border:  rgba(248,113,113,0.28);
-      --nav-h:       60px;
+      --gold:          #C9A84C;
+      --gold-dim:      rgba(201,168,76,0.12);
+      --gold-border:   rgba(201,168,76,0.30);
+      --bg:            #0A0A0A;
+      --bg-card:       #111111;
+      --bg-hover:      #181818;
+      --border:        rgba(255,255,255,0.08);
+      --border-hover:  rgba(255,255,255,0.14);
+      --text-primary:  #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:    #555555;
+      --green:         #4ADE80;
+      --green-dim:     rgba(74,222,128,0.10);
+      --green-border:  rgba(74,222,128,0.28);
+      --red:           #F87171;
+      --red-dim:       rgba(248,113,113,0.10);
+      --red-border:    rgba(248,113,113,0.28);
+      --nav-h:         60px;
+      --sidebar-w:     210px;
+      --font-display:  'Playfair Display', serif;
+      --font-body:     'Inter', sans-serif;
+      /* Aliases used by page-specific styles */
+      --text:          #F5F5F5;
+      --muted:         #888580;
     }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
     a { color: inherit; text-decoration: none; }
-    ::-webkit-scrollbar { width: 5px; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.09); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
-    /* ── Nav ── */
+    /* ══════════════════════════════════════════════════════════════
+       TOP NAV
+    ══════════════════════════════════════════════════════════════ */
     .top-nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       height: var(--nav-h);
-      background: rgba(10,10,10,0.95);
+      background: rgba(10,10,10,0.92);
       backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 28px;
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
     }
-    .nav-left { display: flex; align-items: center; gap: 16px; }
-    .nav-logo  { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gold); }
-    .nav-badge { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold-border); padding: 3px 9px; }
-    .nav-right { display: flex; align-items: center; gap: 20px; }
-    .nav-back  { font-size: 13px; color: var(--muted); transition: color .15s; }
-    .nav-back:hover { color: var(--text); }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; text-decoration: none;
+    }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text {
+      font-family: var(--font-body);
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 0.18em; color: var(--text-primary); line-height: 1;
+    }
+    .nav-logo-sub {
+      font-size: 9px; letter-spacing: 0.22em;
+      color: var(--gold); margin-top: 2px;
+    }
+    .nav-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .nav-bell {
+      position: relative; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 8px;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .nav-bell:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+    .nav-bell-badge {
+      position: absolute; top: 4px; right: 4px;
+      width: 16px; height: 16px;
+      background: var(--gold); border-radius: 50%;
+      font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: #000;
+    }
+    .nav-bell-badge.hidden { display: none; }
 
-    /* ── Page layout ── */
-    .page { padding-top: var(--nav-h); min-height: 100vh; }
-    .container { max-width: 1120px; margin: 0 auto; padding: 48px 28px 80px; }
+    .notif-dropdown {
+      display: none;
+      position: absolute; top: calc(100% + 8px); right: 0;
+      width: 320px;
+      background: #161616;
+      border: 0.5px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+      z-index: 200; overflow: hidden;
+    }
+    .notif-dropdown.open { display: block; }
+    .notif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .notif-header-title {
+      font-size: 12px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-secondary);
+    }
+    .notif-mark-read {
+      font-size: 11px; color: var(--gold); cursor: pointer;
+      background: none; border: none; font-family: var(--font-body);
+    }
+    .notif-list { max-height: 340px; overflow-y: auto; }
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px; border-bottom: 0.5px solid var(--border);
+      transition: background 0.15s;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item.unread { background: rgba(201,168,76,0.04); }
+    .notif-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--gold); flex-shrink: 0; margin-top: 5px;
+    }
+    .notif-dot.read { background: transparent; border: 1px solid var(--border); }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 13px; color: var(--text-primary); margin-bottom: 3px; line-height: 1.4; }
+    .notif-meta  { font-size: 11px; color: var(--text-muted); }
+    .notif-empty {
+      padding: 40px 16px; text-align: center;
+      color: var(--text-muted); font-size: 13px;
+    }
+    .notif-empty svg { display: block; margin: 0 auto 12px; opacity: 0.3; }
+    .notif-footer {
+      padding: 10px 16px; border-top: 0.5px solid var(--border); text-align: center;
+    }
+    .notif-footer a { font-size: 12px; color: var(--gold); }
+
+    .nav-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #C9A84C 0%, #7a6030 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #000; flex-shrink: 0;
+    }
+    .nav-user {
+      display: flex; align-items: center; gap: 6px;
+      cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .nav-user:hover { background: rgba(255,255,255,0.05); }
+    .nav-user-name { font-size: 13px; color: var(--text-primary); }
+    .nav-user-caret { color: var(--text-muted); font-size: 10px; }
+
+    /* ══════════════════════════════════════════════════════════════
+       LAYOUT SHELL
+    ══════════════════════════════════════════════════════════════ */
+    .layout {
+      display: flex;
+      padding-top: var(--nav-h);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      height: 100%; overflow-y: auto;
+      background: var(--bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+      color: var(--text-muted); padding: 8px 20px 6px; text-transform: uppercase;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 20px;
+      color: var(--text-secondary); font-size: 13px; font-weight: 500;
+      cursor: pointer; border-left: 2px solid transparent;
+      transition: all 0.15s; position: relative;
+    }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active {
+      color: var(--gold); border-left-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+    }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+
+    .sidebar-premium {
+      margin: 12px 14px; padding: 14px;
+      border: 1px solid var(--gold-border); border-radius: 10px;
+      background: rgba(201,168,76,0.04);
+    }
+    .sidebar-premium-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; color: var(--gold); margin-bottom: 6px;
+    }
+    .sidebar-premium-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+    .btn-manage {
+      width: 100%; height: 30px;
+      border: 1px solid var(--gold-border); border-radius: 6px;
+      color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      transition: background 0.2s;
+    }
+    .btn-manage:hover { background: var(--gold-dim); }
+
+    .sidebar-signout {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 20px; color: var(--text-muted); font-size: 13px;
+      cursor: pointer; border-top: 1px solid var(--border); transition: color 0.15s;
+    }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ══════════════════════════════════════════════════════════════
+       MAIN CONTENT
+    ══════════════════════════════════════════════════════════════ */
+    .main-content {
+      flex: 1; min-width: 0; height: 100%; overflow-y: auto;
+      padding: 32px 28px 80px;
+    }
 
     /* ── Hero ── */
     .page-hero { margin-bottom: 36px; }
-    .page-hero h1 { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 600; margin-bottom: 6px; }
-    .page-hero p  { font-size: 14px; color: var(--muted); max-width: 520px; line-height: 1.6; }
+    .page-hero h1 {
+      font-family: var(--font-display); font-size: 34px; font-weight: 600;
+      color: var(--text-primary); margin-bottom: 6px;
+    }
+    .page-hero p { font-size: 14px; color: var(--muted); max-width: 520px; line-height: 1.6; }
 
     /* ── Controls bar ── */
-    .controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 32px; }
+    .controls {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px; margin-bottom: 32px;
+    }
     .tabs { display: flex; gap: 4px; }
     .tab {
       padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
       color: var(--muted); border: 1px solid transparent;
       transition: color .15s, border-color .15s, background .15s;
-      background: none;
+      background: none; border-radius: 4px;
     }
-    .tab:hover  { color: var(--text); }
+    .tab:hover  { color: var(--text-primary); }
     .tab.active { color: var(--gold); border-color: var(--gold-border); background: var(--gold-dim); }
 
     .date-wrap { display: flex; align-items: center; gap: 8px; }
-    .date-nav  { width: 30px; height: 30px; background: var(--bg-card); border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; transition: color .15s, border-color .15s; }
-    .date-nav:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
-    #date-label { font-size: 13px; font-weight: 500; color: var(--text); min-width: 110px; text-align: center; }
+    .date-nav  {
+      width: 30px; height: 30px; background: var(--bg-card);
+      border: 1px solid var(--border); color: var(--muted); cursor: pointer;
+      font-size: 15px; display: flex; align-items: center; justify-content: center;
+      transition: color .15s, border-color .15s; border-radius: 4px;
+    }
+    .date-nav:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.18); }
+    #date-label { font-size: 13px; font-weight: 500; color: var(--text-primary); min-width: 110px; text-align: center; }
 
     /* ── Empty / loading ── */
     .status-msg { text-align: center; padding: 80px 20px; color: var(--muted); }
     .status-msg .icon { font-size: 36px; margin-bottom: 16px; }
-    .status-msg h3 { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .status-msg h3 { font-size: 16px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
     .status-msg p  { font-size: 13px; max-width: 380px; margin: 0 auto; line-height: 1.6; }
 
     /* ── Section label ── */
@@ -97,10 +284,8 @@
 
     /* ── Call card ── */
     .call-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      transition: border-color .2s;
-      overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border);
+      transition: border-color .2s; overflow: hidden; border-radius: 8px;
     }
     .call-card:hover { border-color: rgba(255,255,255,0.14); }
     .call-card.long   { border-left: 3px solid var(--green); }
@@ -111,15 +296,14 @@
     .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
     .direction-badge {
       font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 4px 10px; display: inline-block;
+      padding: 4px 10px; display: inline-block; border-radius: 4px;
     }
     .direction-badge.long  { color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); }
     .direction-badge.short { color: var(--red);   background: var(--red-dim);   border: 1px solid var(--red-border);   }
     .direction-badge.nocall{ color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
 
     .score-badge { font-size: 11px; font-weight: 600; color: var(--gold); }
-
-    .asset-name { font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+    .asset-name { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
     .asset-meta { font-size: 12px; color: var(--muted); text-transform: capitalize; }
 
     .card-levels {
@@ -147,7 +331,7 @@
       display: flex; align-items: center; gap: 5px; background: none; border: none;
       transition: color .15s;
     }
-    .expand-btn:hover { color: var(--text); }
+    .expand-btn:hover { color: var(--text-primary); }
 
     /* ── Expanded section ── */
     .card-expanded { display: none; border-top: 1px solid var(--border); }
@@ -164,13 +348,13 @@
     .sig-icon.hit  { color: var(--green); }
     .sig-icon.miss { color: var(--red); opacity: .6; }
     .sig-icon.unk  { color: var(--muted); }
-    .sig-name.hit  { color: var(--text); }
+    .sig-name.hit  { color: var(--text-primary); }
     .sig-name.miss { color: var(--muted); }
     .sig-name.unk  { color: var(--muted); font-style: italic; }
 
     .reasoning-box {
       background: rgba(201,168,76,0.04); border: 1px solid var(--gold-border);
-      padding: 16px; margin-top: 4px;
+      padding: 16px; border-radius: 6px; margin-top: 4px;
     }
     .reasoning-box p { font-size: 13px; line-height: 1.75; color: #D8D4CC; }
 
@@ -179,7 +363,7 @@
       padding: 14px 18px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
     }
     .tech-item label { display: block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
-    .tech-item span  { font-size: 12px; font-weight: 500; font-family: monospace; color: var(--text); }
+    .tech-item span  { font-size: 12px; font-weight: 500; font-family: monospace; color: var(--text-primary); }
 
     /* ── Spinner ── */
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(201,168,76,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; }
@@ -195,18 +379,164 @@
 </head>
 <body data-require-auth="true">
 
+  <!-- ════════════════════════════════════════════════════════════
+       TOP NAV
+  ════════════════════════════════════════════════════════════ -->
   <nav class="top-nav">
-    <div class="nav-left">
-      <a href="dashboard.html" class="nav-logo">The Liquidity Letter</a>
-      <span class="nav-badge">Intelligence</span>
-    </div>
+    <a href="dashboard.html" class="nav-logo">
+      <img src="logo.png" alt="LL" style="width:36px;height:36px;object-fit:contain;">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+        <div class="nav-logo-sub">INTELLIGENCE</div>
+      </div>
+    </a>
+
     <div class="nav-right">
-      <a href="dashboard.html" class="nav-back">← Dashboard</a>
+      <div class="nav-bell" id="notif-bell" onclick="toggleNotifDropdown()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary)">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="nav-bell-badge hidden" id="notif-badge">0</span>
+
+        <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
+          <div class="notif-header">
+            <span class="notif-header-title">Notifications</span>
+            <button class="notif-mark-read" id="notif-mark-all" onclick="markAllRead()" style="display:none;">Mark all read</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              No new notifications
+            </div>
+          </div>
+          <div class="notif-footer">
+            <a href="alerts.html">Manage alerts →</a>
+          </div>
+        </div>
+      </div>
+
+      <a href="profile.html" class="nav-user">
+        <div class="nav-avatar" id="nav-avatar">LL</div>
+        <span class="nav-user-name" id="nav-user-name">Account</span>
+        <span class="nav-user-caret">▾</span>
+      </a>
     </div>
   </nav>
 
-  <div class="page">
-    <div class="container">
+  <!-- ════════════════════════════════════════════════════════════
+       LAYOUT
+  ════════════════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- ══════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+
+        <a href="dashboard.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <a href="newsfeed.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10l6 6v8a2 2 0 0 1-2 2z"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Newsfeed
+        </a>
+
+        <a href="intelligence.html" class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          Intelligence
+        </a>
+
+        <a href="research.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Research
+        </a>
+
+        <a href="newsletters.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </a>
+
+        <a href="etf-tracker.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </a>
+
+        <a href="mag7.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Earnings Watch
+        </a>
+
+        <a href="macro-calendar.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Macro Calendar
+        </a>
+
+        <a href="alerts.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </a>
+
+      </nav>
+
+      <div class="sidebar-premium">
+        <div class="sidebar-premium-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none">
+            <path d="M2 20h20L12 4z"/>
+          </svg>
+          Premium Subscriber
+        </div>
+        <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+        <button class="btn-manage">Manage Subscription</button>
+      </div>
+
+      <div class="sidebar-signout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </div>
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MAIN CONTENT
+    ══════════════════════════════════════════════════════════ -->
+    <main class="main-content">
 
       <div class="page-hero">
         <h1>Zeus Intelligence</h1>
@@ -233,7 +563,7 @@
         </div>
       </div>
 
-    </div>
+    </main>
   </div>
 
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
@@ -255,32 +585,93 @@
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { window.location.href = 'subscribe.html'; return; }
 
-      // Admin check — try multiple methods
+      // Update nav user info
+      try {
+        const { data: prof } = await sb.from('profiles').select('full_name, role').eq('id', session.user.id).maybeSingle();
+        const name = prof?.full_name || session.user.email?.split('@')[0] || 'Account';
+        const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+        const avatarEl = document.getElementById('nav-avatar');
+        const nameEl   = document.getElementById('nav-user-name');
+        if (avatarEl) avatarEl.textContent = initials;
+        if (nameEl)   nameEl.textContent   = name;
+      } catch(e) {}
+
+      // Admin/subscription check
       let isAdmin = false;
-      // 1. JWT app_metadata (fastest, no DB round trip)
       const appRole = session.user?.app_metadata?.role || session.user?.user_metadata?.role || '';
       if (['admin','super_admin'].includes(appRole)) isAdmin = true;
-      // 2. Profiles table
       if (!isAdmin) {
         try {
           const { data: prof } = await sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
           if (prof?.role && ['admin','super_admin'].includes(prof.role)) isAdmin = true;
         } catch(e) {}
       }
-      // 3. window.Auth from auth.js
       if (!isAdmin && window.Auth) {
         try { isAdmin = !!(window.Auth.isAdmin?.() || window.Auth.isSuperAdmin?.()); } catch(e) {}
       }
-
       if (!isAdmin) {
         const { data: sub } = await sb.from('subscriptions').select('status').eq('user_id', session.user.id).maybeSingle();
         if (!sub || sub.status !== 'active') { window.location.href = 'subscribe.html'; return; }
       }
 
+      loadNotifications();
       setupDateNav();
       setupTabs();
       loadCalls();
     }
+
+    // ── Notifications ───────────────────────────────────────────
+    async function loadNotifications() {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) return;
+        const { data } = await sb.from('notifications')
+          .select('*')
+          .or(`user_id.eq.${session.user.id},user_id.is.null`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (!data || !data.length) return;
+        const unread = data.filter(n => !n.read_at);
+        const badge  = document.getElementById('notif-badge');
+        if (badge) {
+          badge.textContent = unread.length;
+          badge.classList.toggle('hidden', unread.length === 0);
+        }
+        const list = document.getElementById('notif-list');
+        if (!list) return;
+        const markAll = document.getElementById('notif-mark-all');
+        if (markAll && unread.length > 0) markAll.style.display = '';
+        list.innerHTML = data.map(n => `
+          <div class="notif-item ${n.read_at ? '' : 'unread'}">
+            <div class="notif-dot ${n.read_at ? 'read' : ''}"></div>
+            <div class="notif-body">
+              <div class="notif-title">${escHtml(n.title || '')}</div>
+              <div class="notif-meta">${n.body ? escHtml(n.body) + ' · ' : ''}${timeAgo(n.created_at)}</div>
+            </div>
+          </div>`).join('');
+      } catch(e) {}
+    }
+
+    window.toggleNotifDropdown = function() {
+      document.getElementById('notif-dropdown')?.classList.toggle('open');
+    };
+    window.markAllRead = async function() {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) return;
+        await sb.from('notifications')
+          .update({ read_at: new Date().toISOString() })
+          .or(`user_id.eq.${session.user.id},user_id.is.null`)
+          .is('read_at', null);
+        loadNotifications();
+      } catch(e) {}
+    };
+    document.addEventListener('click', e => {
+      const bell = document.getElementById('notif-bell');
+      if (bell && !bell.contains(e.target)) {
+        document.getElementById('notif-dropdown')?.classList.remove('open');
+      }
+    });
 
     // ── Date nav ────────────────────────────────────────────────
     function setupDateNav() {
@@ -288,7 +679,6 @@
       document.getElementById('btn-next').onclick = () => { changeDate(1); };
       updateDateLabel();
     }
-
     function changeDate(delta) {
       const d = new Date(currentDate + 'T12:00:00');
       d.setDate(d.getDate() + delta);
@@ -299,7 +689,6 @@
       updateDateLabel();
       loadCalls();
     }
-
     function updateDateLabel() {
       const today = new Date().toISOString().split('T')[0];
       const el = document.getElementById('date-label');
@@ -320,6 +709,9 @@
       });
     }
 
+    // ── Calls cache ──────────────────────────────────────────────
+    const _callsCache = {};
+
     // ── Load calls ──────────────────────────────────────────────
     async function loadCalls() {
       const con = document.getElementById('calls-container');
@@ -336,6 +728,8 @@
         if (!Array.isArray(calls)) calls = [];
       } catch(e) { calls = []; }
 
+      calls.forEach(c => { _callsCache[c.id] = c; });
+
       if (calls.length === 0) {
         const today = new Date().toISOString().split('T')[0];
         const msg = currentDate === today
@@ -345,10 +739,8 @@
         return;
       }
 
-      // Group by category
       const groups = { crypto:[], stock:[], commodity:[] };
       calls.forEach(c => { if (groups[c.asset_category]) groups[c.asset_category].push(c); });
-
       const catLabels = { crypto:'Crypto', stock:'Stocks', commodity:'Commodities' };
       let html = '';
 
@@ -362,8 +754,6 @@
       });
 
       con.innerHTML = html;
-
-      // Attach expand listeners
       con.querySelectorAll('.expand-btn').forEach(btn => {
         btn.onclick = () => toggleCard(btn.dataset.id);
       });
@@ -373,7 +763,6 @@
     function buildCard(c) {
       const dir = (c.direction || 'NO CALL').toUpperCase();
       const dirClass = dir === 'LONG' ? 'long' : dir === 'SHORT' ? 'short' : 'nocall';
-      const dirBadgeClass = dirClass;
       const score = c.signal_score || 0;
 
       const signals = Array.isArray(c.signals) ? c.signals : [];
@@ -411,7 +800,7 @@
         <div class="call-card ${dirClass}" id="card-${c.id}">
           <div class="card-header">
             <div class="card-top">
-              <span class="direction-badge ${dirBadgeClass}">${dir === 'NO CALL' ? 'No Call' : dir + ' ↑'}</span>
+              <span class="direction-badge ${dirClass}">${dir === 'NO CALL' ? 'No Call' : dir + ' ↑'}</span>
               ${dir !== 'NO CALL' ? `<span class="score-badge">${score}/5 signals</span>` : ''}
             </div>
             <div class="asset-name">${escHtml(c.asset_name)}</div>
@@ -445,12 +834,7 @@
       if (!expanded) return;
       const isOpen = expanded.classList.toggle('open');
       if (label) label.textContent = isOpen ? 'Collapse' : 'View Chart & Analysis';
-
       if (isOpen && !tvWidgets[id]) {
-        // Find the call's TV symbol
-        const card = document.getElementById('card-' + id);
-        if (!card) return;
-        // Get TV symbol from calls cache
         const call = _callsCache[id];
         if (call && call.tradingview_symbol) {
           setTimeout(() => {
@@ -458,75 +842,17 @@
               tvWidgets[id] = new TradingView.widget({
                 container_id: 'tv-' + id,
                 symbol: call.tradingview_symbol,
-                interval: 'D',
-                theme: 'dark',
-                style: '1',
-                locale: 'en',
-                toolbar_bg: '#111111',
-                enable_publishing: false,
-                allow_symbol_change: false,
-                hide_side_toolbar: true,
-                save_image: false,
-                width: '100%',
-                height: 380,
-                backgroundColor: '#0A0A0A',
-                gridColor: 'rgba(255,255,255,0.04)',
+                interval: 'D', theme: 'dark', style: '1', locale: 'en',
+                toolbar_bg: '#111111', enable_publishing: false,
+                allow_symbol_change: false, hide_side_toolbar: true,
+                save_image: false, width: '100%', height: 380,
+                backgroundColor: '#0A0A0A', gridColor: 'rgba(255,255,255,0.04)',
               });
             } catch(e) {}
           }, 100);
         }
       }
     }
-
-    // ── Calls cache (for TV symbols on expand) ───────────────────
-    const _callsCache = {};
-    const _origLoad = loadCalls;
-    loadCalls = async function() {
-      const con = document.getElementById('calls-container');
-      con.innerHTML = '<div class="status-msg"><div class="icon"><span class="spinner"></span></div></div>';
-      tvWidgets = {};
-
-      let q = `${API}/intelligence/calls?date=${currentDate}`;
-      if (currentCat !== 'all') q += `&category=${currentCat}`;
-
-      let calls = [];
-      try {
-        const r = await fetch(q);
-        calls = await r.json();
-        if (!Array.isArray(calls)) calls = [];
-      } catch(e) { calls = []; }
-
-      // Cache calls by id
-      calls.forEach(c => { _callsCache[c.id] = c; });
-
-      if (calls.length === 0) {
-        const today = new Date().toISOString().split('T')[0];
-        const msg = currentDate === today
-          ? "Trade calls for today haven't been published yet. Check back soon."
-          : "No calls were published for this date.";
-        con.innerHTML = `<div class="status-msg"><div class="icon">📊</div><h3>No calls available</h3><p>${msg}</p></div>`;
-        return;
-      }
-
-      const groups = { crypto:[], stock:[], commodity:[] };
-      calls.forEach(c => { if (groups[c.asset_category]) groups[c.asset_category].push(c); });
-      const catLabels = { crypto:'Crypto', stock:'Stocks', commodity:'Commodities' };
-      let html = '';
-
-      ['crypto','stock','commodity'].forEach(cat => {
-        if (currentCat !== 'all' && currentCat !== cat) return;
-        if (!groups[cat].length) return;
-        html += `<div class="section-label">${catLabels[cat]}</div>`;
-        html += `<div class="call-grid" style="margin-bottom:8px">`;
-        groups[cat].forEach(c => { html += buildCard(c); });
-        html += `</div>`;
-      });
-
-      con.innerHTML = html;
-      con.querySelectorAll('.expand-btn').forEach(btn => {
-        btn.onclick = () => toggleCard(btn.dataset.id);
-      });
-    };
 
     // ── Helpers ──────────────────────────────────────────────────
     function fmtP(p) {
@@ -535,13 +861,23 @@
       if (p >= 1)    return '$' + Number(p).toFixed(4);
       return '$' + Number(p).toFixed(6);
     }
-
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function timeAgo(ts) {
+      if (!ts) return '';
+      const diff = Date.now() - new Date(ts).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1)  return 'Just now';
+      if (m < 60) return m + 'm ago';
+      const h = Math.floor(m / 60);
+      if (h < 24) return h + 'h ago';
+      return Math.floor(h / 24) + 'd ago';
     }
 
     init();
   })();
   </script>
+  <script src="mobile.js"></script>
 </body>
 </html>
