@@ -1,13 +1,13 @@
-/* ─────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════
    MOBILE.CSS  —  phone-only styles (≤ 768px)
-   Desktop/tablet layout is completely unaffected.
-───────────────────────────────────────────────────────────── */
+   App-like experience: bottom tab bar, drawer, safe areas
+═══════════════════════════════════════════════════════════════ */
 
-/* ── Always hide nav welcome text & caret on inner pages ──── */
+/* ── Always hide verbose nav text on all viewports ─────────── */
 .nav-user-name  { display: none !important; }
 .nav-user-caret { display: none !important; }
 
-/* ── Hamburger button (hidden on desktop) ─────────────────── */
+/* ── Hamburger (hidden on desktop, shown via JS injection) ─── */
 .mob-ham {
   display: none;
   flex-direction: column;
@@ -16,130 +16,218 @@
   cursor: pointer;
   background: none;
   border: none;
-  padding: 6px;
-  margin-left: auto;
+  padding: 8px;
   flex-shrink: 0;
-  z-index: 101;
+  z-index: 201;
+  -webkit-tap-highlight-color: transparent;
 }
 .mob-ham span {
   display: block;
-  width: 22px;
+  width: 20px;
   height: 2px;
   background: #F0EDE6;
   border-radius: 2px;
   transition: all 0.25s ease;
 }
 
-/* ── Mobile drawer overlay ────────────────────────────────── */
+/* ── Overlay (for drawer) ───────────────────────────────────── */
 .mob-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 8000;
-  background: rgba(0,0,0,0.65);
+  z-index: 9000;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 .mob-overlay.mob-open { display: block; }
 
+/* ── Slide-up More drawer ───────────────────────────────────── */
 .mob-drawer {
   position: fixed;
-  top: 0; left: 0; bottom: 0;
-  width: 272px;
+  bottom: 0; left: 0; right: 0;
+  max-height: 75vh;
   background: #111111;
-  border-right: 1px solid rgba(255,255,255,0.08);
-  z-index: 8001;
-  transform: translateX(-100%);
-  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px 20px 0 0;
+  z-index: 9001;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .mob-overlay.mob-open .mob-drawer {
-  transform: translateX(0);
+  transform: translateY(0);
 }
+
+/* Drawer handle */
+.mob-drawer-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  margin: 12px auto 6px;
+  flex-shrink: 0;
+}
+
 .mob-drawer-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 12px 20px 16px;
   flex-shrink: 0;
 }
-.mob-drawer-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.mob-drawer-logo img { width: 28px; height: 28px; object-fit: contain; }
-.mob-drawer-logo span {
-  font-family: 'DM Sans', 'Inter', sans-serif;
-  font-size: 11px;
+.mob-drawer-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #F0EDE6;
+  color: #8A8780;
 }
 .mob-drawer-close {
-  background: none;
+  background: rgba(255,255,255,0.06);
   border: none;
   color: #8A8780;
-  font-size: 24px;
+  font-size: 18px;
   cursor: pointer;
   line-height: 1;
-  padding: 2px 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Drawer nav links */
 .mob-nav-links {
-  padding: 10px 0;
+  padding: 0 12px 12px;
   flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-content: start;
 }
 .mob-nav-link {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 13px 20px;
+  padding: 14px 16px;
   color: #8A8780;
-  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
-  border-left: 2px solid transparent;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
   transition: all 0.15s;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .mob-nav-link:hover,
 .mob-nav-link.mob-active {
   color: #C9A84C;
-  border-left-color: #C9A84C;
+  border-color: rgba(201,168,76,0.3);
   background: rgba(201,168,76,0.06);
 }
+.mob-nav-link svg { flex-shrink: 0; opacity: 0.8; }
+
+/* ── Bottom Tab Bar ─────────────────────────────────────────── */
+.mob-tab-bar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(58px + env(safe-area-inset-bottom, 0px));
+  background: rgba(10,10,10,0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  z-index: 8999;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: none;
+  align-items: flex-start;
+  justify-content: space-around;
+  padding-top: 0;
+}
+.mob-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 4px 6px;
+  color: #555555;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+  gap: 4px;
+  min-height: 58px;
+}
+.mob-tab svg { flex-shrink: 0; transition: transform 0.15s; }
+.mob-tab.mob-tab-active { color: #C9A84C; }
+.mob-tab.mob-tab-active svg { transform: scale(1.08); }
+.mob-tab-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #C9A84C;
+  margin-top: 2px;
+  opacity: 0;
+}
+.mob-tab.mob-tab-active .mob-tab-dot { opacity: 1; }
 
 /* ══════════════════════════════════════════════════════════════
-   MOBILE BREAKPOINT  (≤ 768px only)
+   BREAKPOINT  ≤ 768px
 ══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* Show hamburger */
-  .mob-ham { display: flex; }
+  /* ── Kill horizontal scroll globally ─────────────────────── */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    -webkit-text-size-adjust: 100%;
+  }
+  * { max-width: 100%; }
+  img, video, iframe, table { max-width: 100% !important; }
 
-  /* ── Inner pages ──────────────────────────────────────── */
+  /* ── Show hamburger & tab bar ─────────────────────────────── */
+  .mob-ham     { display: flex; }
+  .mob-tab-bar { display: flex; }
+
+  /* ── Inner page layout ────────────────────────────────────── */
   .sidebar       { display: none !important; }
   .right-panel   { display: none !important; }
-  .layout        { padding-top: 60px; }
-  .main-content  { padding: 14px 14px 40px !important; }
+  .layout        { padding-top: 60px !important; }
 
-  /* Shrink top nav padding */
-  .top-nav { padding: 0 14px !important; gap: 8px !important; }
+  /* Extra bottom padding so content clears the tab bar */
+  .main-content  {
+    padding: 16px 14px calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+  }
 
-  /* Hide verbose user info, keep avatar + bell */
-  .nav-user-name  { display: none !important; }
-  .nav-user-caret { display: none !important; }
+  /* ── Top nav ──────────────────────────────────────────────── */
+  .top-nav {
+    padding: 0 14px !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+  }
+  /* Hide desktop nav items that aren't needed */
+  .top-nav .nav-links { display: none !important; }
 
-  /* ── Home page nav ────────────────────────────────────── */
+  /* ── Home page nav ────────────────────────────────────────── */
   .nav-links { display: none !important; }
 
-  /* ── Hero ─────────────────────────────────────────────── */
+  /* ── Hero ─────────────────────────────────────────────────── */
   .hero {
     flex-direction: column !important;
-    padding: 80px 20px 36px !important;
+    padding: 80px 20px 40px !important;
     min-height: auto !important;
     gap: 0 !important;
   }
@@ -149,53 +237,58 @@
     padding: 0 !important;
   }
   .hero-right { display: none !important; }
-  .hero-title { font-size: 34px !important; line-height: 1.18 !important; }
-  .hero-sub   { font-size: 14px !important; }
+  .hero-title { font-size: 30px !important; line-height: 1.18 !important; }
+  .hero-sub   { font-size: 13px !important; }
   .hero-body  { font-size: 13px !important; }
   .hero-ctas  { flex-wrap: wrap !important; gap: 10px !important; }
 
-  /* Ticker tape — hide on mobile (too small to be useful) */
+  /* ── Ticker tape — hide on mobile ────────────────────────── */
   .ticker-tape-bar { display: none !important; }
 
-  /* ── Dashboard eco banner ─────────────────────────────── */
-  .eco-banner { flex-direction: column !important; }
-  .eco-event  { min-width: 100% !important; }
-
-  /* ── Market cards grid ────────────────────────────────── */
-  .market-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* ── Two-column content layouts ───────────────────────── */
-  .content-cols {
-    flex-direction: column !important;
-  }
-  .col-left,
-  .col-right {
-    width: 100% !important;
-  }
-
-  /* ── Tables: horizontal scroll ────────────────────────── */
-  .data-table   { min-width: 480px; }
-  .section-block > div { overflow-x: auto; }
-
-  /* ── Home page feature/section grids ──────────────────── */
+  /* ── Cards & grids ────────────────────────────────────────── */
+  .market-grid          { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
   .section-grid,
   .features-grid,
-  .etf-preview-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .etf-preview-grid     { grid-template-columns: 1fr !important; }
+  .content-cols         { flex-direction: column !important; }
+  .col-left, .col-right { width: 100% !important; }
+  .eco-banner           { flex-direction: column !important; }
+  .eco-event            { min-width: 100% !important; }
 
-  /* ── Footer ───────────────────────────────────────────── */
+  /* ── Tables: horizontal scroll container ─────────────────── */
+  .section-block > div  { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .data-table           { min-width: 480px; }
+
+  /* ── Footer ───────────────────────────────────────────────── */
   .footer-grid  { grid-template-columns: 1fr !important; gap: 24px !important; }
   .footer-inner { flex-direction: column !important; text-align: center !important; gap: 12px !important; }
 
-  /* ── Zeus FAB: don't overlap mobile browser chrome ────── */
-  #zeus-fab { bottom: 20px !important; right: 16px !important; }
+  /* ── Zeus FAB ─────────────────────────────────────────────── */
+  #zeus-fab {
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 16px !important;
+  }
 
-  /* ── About page hero ──────────────────────────────────── */
-  .about-hero { min-height: 220px !important; }
+  /* ── About page ───────────────────────────────────────────── */
+  .about-content { padding: 32px 24px calc(80px + env(safe-area-inset-bottom,0px)) !important; }
+  .about-h1      { font-size: 28px !important; }
+  .about-h2      { font-size: 17px !important; }
 
-  /* ── Greeting title ───────────────────────────────────── */
+  /* ── Greeting ─────────────────────────────────────────────── */
   .greeting-title { font-size: 20px !important; }
+
+  /* ── Intelligence page ────────────────────────────────────── */
+  .intel-layout { padding-top: 0 !important; }
+
+  /* ── News cards ───────────────────────────────────────────── */
+  .news-card { padding: 14px !important; }
+
+  /* ── Touch targets: min 44px ──────────────────────────────── */
+  button, a, [role="button"] { min-height: 36px; }
+
+  /* ── Prevent zoom on inputs ───────────────────────────────── */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* ── Home page padding for tab bar ───────────────────────── */
+  .page { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
 }
