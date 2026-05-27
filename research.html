@@ -886,15 +886,6 @@
       document.body.style.overflow = '';
     }
 
-    // Wire close button + overlay click + Escape key
-    document.getElementById('modal-close').addEventListener('click', closeArticleModal);
-    document.getElementById('article-modal').addEventListener('click', function(e) {
-      if (e.target === this) closeArticleModal();
-    });
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeArticleModal();
-    });
-
     // ── Render Article Reader ──────────────────────────────────
     function renderBlocks(content) {
       if (!content) return '<p style="color:var(--text-muted)">Content coming soon.</p>';
@@ -936,6 +927,15 @@
 
     // ── Load Articles ──────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', async () => {
+      // Wire modal close — safe here because HTML is already parsed
+      document.getElementById('modal-close').addEventListener('click', closeArticleModal);
+      document.getElementById('article-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeArticleModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeArticleModal();
+      });
+
       try {
         const sb = window.Auth.getClient();
         const { data, error } = await sb
