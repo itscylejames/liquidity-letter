@@ -21,6 +21,19 @@
     localStorage.setItem(LAST_READ_KEY, new Date().toISOString());
   }
 
+  // ── Work out where a notification should take you ──────────────
+  function notifLink(type, title) {
+    if (type === 'intelligence') {
+      // Title format: "⚡ ASSET NAME — LONG" or "⚡ ASSET NAME — SHORT"
+      var m = String(title || '').match(/[⚡\s]*(.+?)\s*[—–\-]+\s*(LONG|SHORT|NO CALL)/i);
+      var asset = m ? m[1].trim() : '';
+      return 'intelligence.html' + (asset ? '?asset=' + encodeURIComponent(asset) : '');
+    }
+    if (type === 'research')    return 'research.html';
+    if (type === 'newsletter')  return 'newsletters.html';
+    return 'alerts.html';
+  }
+
   async function load() {
     var session = (await getSB().auth.getSession()).data.session;
     if (!session) return;
@@ -33,12 +46,12 @@
 
     _items = (adminNotifs || []).map(function (n) {
       return {
-        id:        n.id,
-        title:     n.title,
-        body:      n.body,
-        type:      n.type || 'general',
-        time:      n.created_at,
-        unread:    new Date(n.created_at) > getLastRead(),
+        id:     n.id,
+        title:  n.title,
+        body:   n.body,
+        type:   n.type || 'general',
+        time:   n.created_at,
+        unread: new Date(n.created_at) > getLastRead(),
       };
     });
 
@@ -68,23 +81,41 @@
       return;
     }
 
-    var typeIcon = { article: '📄', newsletter: '📬', alert: '⚠️', general: '🔔' };
+    var typeIcon = { intelligence: '⚡', article: '📄', research: '📄', newsletter: '📬', alert: '⚠️', general: '🔔' };
 
     listEl.innerHTML = _items.map(function (n) {
       var icon = typeIcon[n.type] || '🔔';
       var time = n.time ? new Date(n.time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-      return '<div class="notif-item ' + (n.unread ? 'unread' : '') + '">' +
+      var link = notifLink(n.type, n.title);
+      return '<div class="notif-item ' + (n.unread ? 'unread' : '') + '" ' +
+        'data-link="' + esc(link) + '" ' +
+        'style="cursor:pointer;" ' +
+        'title="Go to ' + esc(n.title) + '">' +
         '<div class="notif-dot ' + (n.unread ? '' : 'read') + '"></div>' +
         '<div class="notif-body">' +
           '<div class="notif-title">' + icon + ' ' + esc(n.title) + '</div>' +
-          '<div class="notif-meta">' + esc(n.body) + '</div>' +
+          '<div class="notif-meta">' + esc(n.body || '') + '</div>' +
           '<div class="notif-meta" style="margin-top:3px;opacity:0.6;">' + time + '</div>' +
-        '</div></div>';
+        '</div>' +
+        '<div style="flex-shrink:0;color:#555;font-size:11px;align-self:center;">›</div>' +
+        '</div>';
     }).join('');
+
+    // Attach click handlers after DOM is set
+    listEl.querySelectorAll('.notif-item[data-link]').forEach(function (item) {
+      item.addEventListener('click', function () {
+        var link = item.dataset.link;
+        if (link) {
+          // Mark all read then navigate
+          setLastRead();
+          window.location.href = link;
+        }
+      });
+    });
   }
 
   function esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   window.toggleNotifDropdown = function () {
