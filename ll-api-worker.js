@@ -213,7 +213,7 @@ Do not include a title, date, or byline — those are added separately.`;
         blocks.push({ type:'header', data:{ text: line.slice(3).trim(), level: 2 } });
       } else if (line.startsWith('- ')) {
         if (!listItems) listItems = [];
-        listItems.push(line.slice(2).trim());
+        listItems.push({ content: line.slice(2).trim(), items: [] });
       } else {
         flush();
         blocks.push({ type:'paragraph', data:{ text: line } });
