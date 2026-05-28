@@ -394,13 +394,39 @@ function intelCalcIndicators(closes, highs, lows) {
   let direction='NO CALL',score=0,signals=longSigs;
   if(ls>=3&&ls>=ss){direction='LONG';score=ls;signals=longSigs;}
   else if(ss>=3&&ss>ls){direction='SHORT';score=ss;signals=shortSigs;}
+  // ── Risk management constants ────────────────────────────────
+  const MAX_RISK_PCT = 0.08;  // Never risk more than 8% from entry (within 5–10% band)
+  const MIN_RR       = 3;     // Minimum 1:3 risk-to-reward
+
   let entry_zone=null,target=null,stop_loss=null;
   if(direction==='LONG'){
-    entry_zone=`${intelFmtP(p*0.990)} – ${intelFmtP(p*1.005)}`;
-    target=intelFmtP(p*1.10); stop_loss=intelFmtP(swLo*0.990);
+    const entryLow  = p * 0.990;
+    const entryHigh = p * 1.005;
+    const entryMid  = (entryLow + entryHigh) / 2;
+    // Stop: use 10-day swing low, but never more than MAX_RISK_PCT below entry
+    const naturalStop = swLo * 0.990;
+    const cappedStop  = entryMid * (1 - MAX_RISK_PCT);
+    const stop        = Math.max(naturalStop, cappedStop);  // take the tighter (higher) stop
+    // Target: ensure at least MIN_RR × risk above entry
+    const risk        = entryMid - stop;
+    const tgt         = Math.max(entryMid + risk * MIN_RR, p * 1.05); // floor at 5% gain
+    entry_zone = `${intelFmtP(entryLow)} – ${intelFmtP(entryHigh)}`;
+    stop_loss  = intelFmtP(stop);
+    target     = intelFmtP(tgt);
   } else if(direction==='SHORT'){
-    entry_zone=`${intelFmtP(p*0.995)} – ${intelFmtP(p*1.010)}`;
-    target=intelFmtP(p*0.90); stop_loss=intelFmtP(swHi*1.010);
+    const entryLow  = p * 0.995;
+    const entryHigh = p * 1.010;
+    const entryMid  = (entryLow + entryHigh) / 2;
+    // Stop: use 10-day swing high, but never more than MAX_RISK_PCT above entry
+    const naturalStop = swHi * 1.010;
+    const cappedStop  = entryMid * (1 + MAX_RISK_PCT);
+    const stop        = Math.min(naturalStop, cappedStop);  // take the tighter (lower) stop
+    // Target: ensure at least MIN_RR × risk below entry
+    const risk        = stop - entryMid;
+    const tgt         = Math.min(entryMid - risk * MIN_RR, p * 0.95); // floor at 5% downside
+    entry_zone = `${intelFmtP(entryLow)} – ${intelFmtP(entryHigh)}`;
+    stop_loss  = intelFmtP(stop);
+    target     = intelFmtP(tgt);
   }
   return { direction, signal_score:score, signals, entry_zone, target, stop_loss,
     technicals:{ currentPrice:p, ema50, rsi:+rsi.toFixed(2), prevRsi:+prevRsi.toFixed(2),
