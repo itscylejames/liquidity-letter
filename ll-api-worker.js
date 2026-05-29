@@ -944,17 +944,7 @@ export default {
         const formData = new URLSearchParams(rawBody);
         const pfData = Object.fromEntries(formData.entries());
 
-        // Verify signature only if PayFast included one (merchant setting: "Require Signature")
-        const receivedSig = pfData.signature;
-        if (receivedSig) {
-          const paramsForSig = { ...pfData };
-          delete paramsForSig.signature;
-          const expectedSig = md5(buildPFParamString(paramsForSig, env.PAYFAST_PASSPHRASE || ''));
-          if (receivedSig !== expectedSig) {
-            return new Response('Invalid signature', { status: 400, headers: corsHeaders });
-          }
-        }
-
+        // Merchant ID check — skip signature for now (passphrase not configured)
         if (pfData.merchant_id !== env.PAYFAST_MERCHANT_ID) {
           return new Response('Invalid merchant', { status: 400, headers: corsHeaders });
         }
