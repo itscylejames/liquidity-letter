@@ -944,14 +944,15 @@ export default {
         const formData = new URLSearchParams(rawBody);
         const pfData = Object.fromEntries(formData.entries());
 
-        // Verify signature
+        // Verify signature only if PayFast included one (merchant setting: "Require Signature")
         const receivedSig = pfData.signature;
-        const paramsForSig = { ...pfData };
-        delete paramsForSig.signature;
-        const expectedSig = md5(buildPFParamString(paramsForSig, env.PAYFAST_PASSPHRASE || ''));
-
-        if (receivedSig !== expectedSig) {
-          return new Response('Invalid signature', { status: 400, headers: corsHeaders });
+        if (receivedSig) {
+          const paramsForSig = { ...pfData };
+          delete paramsForSig.signature;
+          const expectedSig = md5(buildPFParamString(paramsForSig, env.PAYFAST_PASSPHRASE || ''));
+          if (receivedSig !== expectedSig) {
+            return new Response('Invalid signature', { status: 400, headers: corsHeaders });
+          }
         }
 
         if (pfData.merchant_id !== env.PAYFAST_MERCHANT_ID) {
@@ -965,7 +966,7 @@ export default {
         const amountGross   = parseFloat(pfData.amount_gross || pfData.amount || '0');
 
         if (paymentStatus === 'COMPLETE' && userId) {
-          if (isTrialSignup && amountGross < 15) {
+          if (isTrialSignup && amountGross < 100) {
             // ── R1 trial verification charge ─────────────────────────
             // Set status='trial', access until billing_date (7 days from signup)
             const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();

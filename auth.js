@@ -390,10 +390,10 @@
     if (_role === 'super_admin' || _role === 'admin') return true;
 
     var fromPayment = window.location.search.includes('subscribed=1');
-    var maxAttempts = fromPayment ? 4 : 1;
+    var maxAttempts = fromPayment ? 10 : 1;
 
     for (var i = 0; i < maxAttempts; i++) {
-      if (i > 0) await new Promise(function (r) { setTimeout(r, 2500); });
+      if (i > 0) await new Promise(function (r) { setTimeout(r, 3000); });
       try {
         var result = await getClient()
           .from('subscriptions')
@@ -403,7 +403,7 @@
         var sub = result.data;
         if (!sub) continue;
 
-        if (sub.status === 'active') return true;
+        if (sub.status === 'active' || sub.status === 'trial') return true;
 
         // Cancelled but still within billing period
         if (sub.status === 'cancelled' && sub.current_period_end) {
