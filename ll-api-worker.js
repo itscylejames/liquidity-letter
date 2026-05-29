@@ -887,7 +887,7 @@ export default {
           name_last:         (last_name  || '').slice(0, 100),
           email_address:     email,
           m_payment_id:      mPaymentId,
-          amount:            isTrial ? '1.00' : zarAmount,  // R1 verification for trial
+          amount:            isTrial ? Math.ceil(1 * zarRate).toFixed(2) : zarAmount,  // $1 USD verification for trial
           item_name:         'The Liquidity Letter Monthly',
           subscription_type: '1',
           billing_date:      billingDateStr,
@@ -934,6 +934,7 @@ export default {
           discountPct,
           originalZar: discountPct > 0 ? Math.ceil(baseUsd * zarRate).toFixed(2) : null,
           isTrial,
+          trialZar: isTrial ? Math.ceil(1 * zarRate).toFixed(2) : null,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
@@ -964,7 +965,7 @@ export default {
         const amountGross   = parseFloat(pfData.amount_gross || pfData.amount || '0');
 
         if (paymentStatus === 'COMPLETE' && userId) {
-          if (isTrialSignup && amountGross < 5) {
+          if (isTrialSignup && amountGross < 15) {
             // ── R1 trial verification charge ─────────────────────────
             // Set status='trial', access until billing_date (7 days from signup)
             const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
