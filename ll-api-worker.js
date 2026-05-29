@@ -850,6 +850,18 @@ export default {
         const discountedUsd = discountPct > 0 ? baseUsd * (1 - discountPct / 100) : baseUsd;
         const zarAmount     = Math.ceil(discountedUsd * zarRate).toFixed(2);
 
+        // ── Check trial eligibility (first-time signups only) ─────────
+        let isTrial = false;
+        try {
+          const profRes  = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${user_id}&select=trial_used`,
+            { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
+          );
+          const profData = await profRes.json();
+          const trialUsed = Array.isArray(profData) && profData[0] && profData[0].trial_used;
+          isTrial = !trialUsed; // eligible if they've never used a trial
+        } catch(e) {}
+
         const isSandbox = env.PAYFAST_SANDBOX === 'true';
         const pfUrl = isSandbox
           ? 'https://sandbox.payfast.co.za/eng/process'
@@ -857,6 +869,13 @@ export default {
         const siteUrl = 'https://liquidityletter.com';
 
         const mPaymentId = `TLL_${user_id}_${Date.now()}`;
+
+        // billing_date: today for normal, today+7 for trial
+        const billingDateStr = (() => {
+          const d = new Date();
+          if (isTrial) d.setDate(d.getDate() + 7);
+          return d.toISOString().split('T')[0];
+        })();
 
         const params = {
           merchant_id:       env.PAYFAST_MERCHANT_ID,
@@ -868,15 +887,16 @@ export default {
           name_last:         (last_name  || '').slice(0, 100),
           email_address:     email,
           m_payment_id:      mPaymentId,
-          amount:            zarAmount,
+          amount:            isTrial ? '1.00' : zarAmount,  // R1 verification for trial
           item_name:         'The Liquidity Letter Monthly',
           subscription_type: '1',
-          billing_date:      new Date().toISOString().split('T')[0],
-          recurring_amount:  zarAmount,
+          billing_date:      billingDateStr,
+          recurring_amount:  zarAmount,  // always full ZAR amount for recurring
           frequency:         '3',
           cycles:            '0',
           custom_str1:       user_id,
           ...(affiliateCode && { custom_str2: affiliateCode }),
+          ...(isTrial        && { custom_str3: 'trial' }),
         };
 
         // Remove empty fields
@@ -913,6 +933,7 @@ export default {
           zarAmount,
           discountPct,
           originalZar: discountPct > 0 ? Math.ceil(baseUsd * zarRate).toFixed(2) : null,
+          isTrial,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
@@ -939,18 +960,37 @@ export default {
         const userId        = pfData.custom_str1;
         const paymentStatus = pfData.payment_status;
         const pfToken       = pfData.token || null; // subscription token for recurring management
+        const isTrialSignup = pfData.custom_str3 === 'trial';
+        const amountGross   = parseFloat(pfData.amount_gross || pfData.amount || '0');
 
         if (paymentStatus === 'COMPLETE' && userId) {
-          const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-          await upsertSubscription(env, userId, {
-            status:                  'active',
-            plan:                    'monthly',
-            lemon_subscription_id:   pfData.m_payment_id || '',
-            current_period_end:      periodEnd,
-            updated_at:              new Date().toISOString(),
-            ...(pfToken              && { paystack_auth_code: pfToken }),
-            ...(pfData.email_address && { paystack_email: pfData.email_address }),
-          });
+          if (isTrialSignup && amountGross < 5) {
+            // ── R1 trial verification charge ─────────────────────────
+            // Set status='trial', access until billing_date (7 days from signup)
+            const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            await upsertSubscription(env, userId, {
+              status:                  'trial',
+              plan:                    'monthly',
+              lemon_subscription_id:   pfData.m_payment_id || '',
+              current_period_end:      trialEnd,
+              updated_at:              new Date().toISOString(),
+              ...(pfToken              && { paystack_auth_code: pfToken }),
+              ...(pfData.email_address && { paystack_email: pfData.email_address }),
+            });
+          } else {
+            // ── Full payment: initial non-trial OR recurring billing ──
+            const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+            await upsertSubscription(env, userId, {
+              status:                  'active',
+              plan:                    'monthly',
+              lemon_subscription_id:   pfData.m_payment_id || '',
+              current_period_end:      periodEnd,
+              updated_at:              new Date().toISOString(),
+              ...(pfToken              && { paystack_auth_code: pfToken }),
+              ...(pfData.email_address && { paystack_email: pfData.email_address }),
+            });
+          }
+          // Always mark trial_used so they can't claim a second trial
           await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
             method: 'PATCH',
             headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' },

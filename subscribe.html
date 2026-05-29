@@ -117,14 +117,14 @@
   <main class="sub-main">
 
     <div class="sub-left">
-      <div class="sub-eyebrow">Premium Access</div>
-      <h1 class="sub-headline">Unlock Full Access</h1>
-      <p class="sub-tagline">The market data platform built for self-directed investors. No contracts, cancel anytime.</p>
+      <div class="sub-eyebrow">7-Day Free Trial</div>
+      <h1 class="sub-headline">Try Free for 7 Days</h1>
+      <p class="sub-tagline">The market data platform built for self-directed investors. R1 card verification today — full access for 7 days, then $29.99/mo. Cancel anytime.</p>
       <div class="price-row">
         <span class="price-amount">$29.99</span>
         <span class="price-period">&nbsp;/ month</span>
       </div>
-      <p class="price-note">Billed monthly in ZAR at the live exchange rate.</p>
+      <p class="price-note">7-day free trial · R1 today · Billed in ZAR at the live exchange rate.</p>
       <ul class="feature-list">
         <li>Weekly macro research newsletters</li>
         <li>Live market overview dashboard</li>
@@ -182,8 +182,8 @@
 
         <!-- Step 2: Payment -->
         <div id="step-checkout">
-          <div class="step-title">Complete Payment</div>
-          <div class="step-sub">Step 2 of 2 — Secure checkout via PayFast.</div>
+          <div class="step-title" id="checkout-title">Start Your Free Trial</div>
+          <div class="step-sub" id="checkout-sub">Step 2 of 2 — R1 card verification via PayFast.</div>
           <div class="msg-error" id="pay-err-msg"></div>
           <div class="checkout-user">
             <div class="checkout-user-avatar" id="co-avatar">?</div>
@@ -191,15 +191,18 @@
           </div>
           <div class="checkout-summary">
             <div class="checkout-summary-row"><span>The Liquidity Letter</span><span>$29.99/mo</span></div>
+            <div class="checkout-summary-row" id="trial-row" style="display:none;color:#C9A84C;">
+              <span>7-day free trial</span><span>R1.00 today</span>
+            </div>
             <div class="checkout-summary-row">
-              <span>Charged in ZAR</span>
+              <span id="recurring-label">Charged in ZAR</span>
               <span id="zar-amount">Loading rate…</span>
             </div>
           </div>
           <div class="zar-note" id="zar-rate-note"></div>
           <br>
           <button class="btn-primary-full" id="btn-pay">Subscribe Now &rarr;</button>
-          <p class="fine-print">Secure checkout via PayFast &nbsp;·&nbsp; Billed in ZAR at live USD rate &nbsp;·&nbsp; Cancel anytime</p>
+          <p class="fine-print" id="pay-fine-print">Secure checkout via PayFast &nbsp;·&nbsp; Billed in ZAR at live USD rate &nbsp;·&nbsp; Cancel anytime</p>
         </div>
 
       </div>
@@ -257,15 +260,33 @@
         pfParams = data.params;
         pfAction = data.action;
 
-        if (data.discountPct > 0 && data.originalZar) {
-          // Show discounted price with strikethrough original
+        if (data.isTrial) {
+          // ── 7-day free trial flow ────────────────────────────────────
+          document.getElementById('trial-row').style.display = '';
+          document.getElementById('recurring-label').textContent = 'Then after 7 days';
+          if (data.discountPct > 0 && data.originalZar) {
+            document.getElementById('zar-amount').innerHTML =
+              '<span style="text-decoration:line-through;color:var(--muted);font-size:13px;">R' + Math.round(parseFloat(data.originalZar)) + '</span>' +
+              '&nbsp;<span style="color:#2ECC8A">R' + Math.round(parseFloat(data.zarAmount)) + '/mo</span>';
+            document.getElementById('zar-rate-note').textContent = data.discountPct + '% affiliate discount — R1 today, then discounted rate after trial.';
+          } else {
+            document.getElementById('zar-amount').textContent = 'R' + Math.round(parseFloat(data.zarAmount)) + '/mo';
+            document.getElementById('zar-rate-note').textContent = 'R1 card verification today. Full amount billed after 7-day trial.';
+          }
+          document.getElementById('btn-pay').textContent = 'Start 7-Day Free Trial →';
+          document.getElementById('pay-fine-print').innerHTML = 'R1 today to verify your card &nbsp;·&nbsp; Full amount billed after 7 days &nbsp;·&nbsp; Cancel anytime';
+        } else if (data.discountPct > 0 && data.originalZar) {
+          // ── Returning user with affiliate discount ───────────────────
           document.getElementById('zar-amount').innerHTML =
             '<span style="text-decoration:line-through;color:var(--muted);font-size:14px;font-family:DM Sans,sans-serif">R' + Math.round(parseFloat(data.originalZar)) + '</span>' +
             '&nbsp;<span style="color:#2ECC8A">R' + Math.round(parseFloat(data.zarAmount)) + '/mo</span>';
           document.getElementById('zar-rate-note').textContent = data.discountPct + '% affiliate discount applied!';
         } else {
+          // ── Normal returning user (trial already used) ───────────────
           document.getElementById('zar-amount').textContent = 'R' + Math.round(parseFloat(data.zarAmount)) + '/mo';
           document.getElementById('zar-rate-note').textContent = 'Billed in ZAR at the live USD exchange rate';
+          document.getElementById('checkout-title').textContent = 'Complete Payment';
+          document.getElementById('checkout-sub').textContent  = 'Step 2 of 2 — Secure checkout via PayFast.';
         }
       } catch(e) {
         document.getElementById('zar-amount').textContent = '~R562/mo';
@@ -342,10 +363,10 @@
       if (!session || !session.user) return;
       client.from('subscriptions').select('status, current_period_end').eq('user_id', session.user.id).maybeSingle().then(function(r) {
         var sub = r.data;
-        if (sub && sub.status === 'active') {
-          window.location.href = 'dashboard.html'; // already paid, send to dashboard
+        if (sub && (sub.status === 'active' || sub.status === 'trial')) {
+          window.location.href = 'dashboard.html'; // already subscribed/trialling, send to dashboard
         } else {
-          // Logged in but not paid (no sub, trial, past_due, etc.) → skip to Step 2
+          // Logged in but not paid (no sub, past_due, etc.) → skip to Step 2
           showStep2(session.user);
         }
       });
@@ -381,7 +402,7 @@
         }
         // Check if they already have an active sub
         var { data: sub } = await client.from('subscriptions').select('status').eq('user_id', siData.user.id).maybeSingle();
-        if (sub && sub.status === 'active') { window.location.href = 'dashboard.html'; return; }
+        if (sub && (sub.status === 'active' || sub.status === 'trial')) { window.location.href = 'dashboard.html'; return; }
         showStep2(siData.user);
         return;
       }
