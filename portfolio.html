@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>My Portfolio — The Liquidity Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:         #C9A84C;
+      --gold-dim:     rgba(201,168,76,0.15);
+      --gold-border:  rgba(201,168,76,0.35);
+      --bg:           #0A0A0A;
+      --bg-card:      #111111;
+      --bg-hover:     #181818;
+      --border:       rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.14);
+      --text-primary: #F5F5F5;
+      --text-secondary:#999999;
+      --text-muted:   #555555;
+      --green:        #4CAF50;
+      --green-dim:    rgba(76,175,80,0.12);
+      --red:          #EF5350;
+      --red-dim:      rgba(239,83,80,0.12);
+      --nav-h:        60px;
+      --sidebar-w:    210px;
+      --font-display: 'Playfair Display', serif;
+      --font-body:    'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: var(--font-body); cursor: pointer; border: none; background: none; color: inherit; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    /* ── Nav ─────────────────────────────────────────────────────── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h); background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .nav-logo img { width: 36px; height: 36px; object-fit: contain; }
+    .nav-logo-text { font-weight: 700; font-size: 13px; letter-spacing: 0.18em; line-height: 1; }
+    .nav-logo-sub { font-size: 9px; letter-spacing: 0.22em; color: var(--gold); margin-top: 2px; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .nav-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--gold-dim); border: 1px solid var(--gold-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--gold); cursor: pointer;
+    }
+    /* Notification bell */
+    #notif-bell { position: relative; cursor: pointer; display: flex; align-items: center; padding: 4px; color: var(--text-secondary); }
+    #notif-bell:hover { color: var(--text-primary); }
+    #notif-badge {
+      position: absolute; top: 0; right: 0;
+      background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+      min-width: 16px; height: 16px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; padding: 0 3px;
+    }
+    #notif-badge.hidden { display: none; }
+    #notif-dropdown {
+      position: absolute; top: calc(var(--nav-h) + 4px); right: 16px; z-index: 200;
+      width: 320px; background: #161616; border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      overflow: hidden; display: none;
+    }
+    #notif-dropdown.open { display: block; }
+    .notif-header { padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .notif-header-title { font-size: 13px; font-weight: 600; }
+    .notif-mark-all { font-size: 11px; color: var(--gold); cursor: pointer; background: none; border: none; }
+    #notif-list { max-height: 360px; overflow-y: auto; }
+    .notif-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item:hover { background: var(--bg-hover); }
+    .notif-item.unread { background: rgba(201,168,76,0.04); }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 5px; }
+    .notif-dot.read { background: transparent; border: 1px solid var(--border); }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 12px; font-weight: 500; }
+    .notif-meta { font-size: 11px; color: var(--text-secondary); }
+    .notif-empty { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .layout {
+      display: flex; height: 100vh;
+      padding-top: var(--nav-h);
+    }
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      height: calc(100vh - var(--nav-h));
+      position: sticky; top: var(--nav-h);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto; background: var(--bg);
+    }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-label { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--text-muted); text-transform: uppercase; padding: 0 18px 8px; }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 18px; font-size: 13px; font-weight: 400;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+      border-left: 2px solid transparent; text-decoration: none;
+    }
+    .sidebar-item:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+    .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-dim); font-weight: 500; }
+    .sidebar-item svg { flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active svg { opacity: 1; }
+    .sidebar-premium { margin: 12px; padding: 14px; background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 10px; }
+    .sidebar-premium-head { font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .sidebar-premium-desc { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+    .btn-manage { width: 100%; padding: 7px; background: var(--gold); color: #0A0A0A; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; border-radius: 6px; text-transform: uppercase; }
+    .sidebar-signout { display: flex; align-items: center; gap: 8px; padding: 14px 18px; font-size: 12px; color: var(--text-muted); cursor: pointer; border-top: 1px solid var(--border); }
+    .sidebar-signout:hover { color: var(--text-primary); }
+
+    /* ── Main Content ────────────────────────────────────────────── */
+    .main-content { flex: 1; overflow-y: auto; padding: 28px 28px 60px; }
+
+    /* ── Page Header ─────────────────────────────────────────────── */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; }
+    .page-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .btn-add-asset {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--gold); color: #0A0A0A;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 9px 18px; border-radius: 8px;
+    }
+    .btn-add-asset:hover { background: #d4b05a; }
+
+    /* ── Summary Cards ───────────────────────────────────────────── */
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+    .summary-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px;
+    }
+    .summary-card.net-worth { border-color: var(--gold-border); background: var(--gold-dim); }
+    .summary-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .summary-value { font-family: var(--font-display); font-size: 24px; font-weight: 600; }
+    .summary-card.net-worth .summary-value { color: var(--gold); }
+    .summary-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .change-pos { color: var(--green); }
+    .change-neg { color: var(--red); }
+
+    /* ── Allocation Bar ──────────────────────────────────────────── */
+    .allocation-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+    .allocation-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+    .allocation-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-bottom: 14px; gap: 2px; }
+    .allocation-bar-seg { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .allocation-legend { display: flex; flex-wrap: wrap; gap: 12px; }
+    .alloc-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+    .alloc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Holdings Table ──────────────────────────────────────────── */
+    .holdings-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+    .holdings-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .holdings-title { font-size: 13px; font-weight: 600; }
+    .holdings-refresh { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; }
+    .holdings-refresh:hover { color: var(--text-primary); border-color: var(--border-hover); }
+    .holdings-table { width: 100%; }
+    .holdings-table th {
+      text-align: left; padding: 10px 20px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+    }
+    .holdings-table th:not(:first-child) { text-align: right; }
+    .holdings-table td { padding: 13px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .holdings-table td:not(:first-child) { text-align: right; }
+    .holdings-table tr:last-child td { border-bottom: none; }
+    .holdings-table tr:hover td { background: var(--bg-hover); }
+    .asset-name-cell { display: flex; align-items: center; gap: 10px; }
+    .asset-type-dot { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .asset-name { font-size: 13px; font-weight: 500; }
+    .asset-ticker { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .asset-value { font-size: 13px; font-weight: 600; }
+    .asset-value.liability { color: var(--red); }
+    .price-live { font-size: 12px; }
+    .price-manual { font-size: 11px; color: var(--text-muted); }
+    .change-badge { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 4px; }
+    .change-badge.pos { background: var(--green-dim); color: var(--green); }
+    .change-badge.neg { background: var(--red-dim); color: var(--red); }
+    .row-actions { display: flex; justify-content: flex-end; gap: 6px; }
+    .row-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.15s; }
+    .row-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .row-btn.del:hover { background: var(--red-dim); color: var(--red); }
+    .group-header td { padding: 8px 20px; background: rgba(255,255,255,0.015); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state svg { opacity: 0.3; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; margin-bottom: 6px; color: var(--text-secondary); }
+    .empty-state small { font-size: 12px; }
+
+    /* ── Zeus Section ────────────────────────────────────────────── */
+    .zeus-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .zeus-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .zeus-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--gold-dim); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .zeus-title { font-size: 14px; font-weight: 600; }
+    .zeus-sub { font-size: 12px; color: var(--text-secondary); }
+    .zeus-chat { padding: 16px 20px; min-height: 120px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .zeus-msg { font-size: 13px; line-height: 1.6; }
+    .zeus-msg.user { color: var(--text-secondary); font-style: italic; }
+    .zeus-msg.zeus { color: var(--text-primary); }
+    .zeus-msg.zeus strong { color: var(--gold); }
+    .zeus-typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+    .zeus-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.4; animation: pulse 1.2s infinite; }
+    .zeus-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .zeus-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%,100%{opacity:0.2} 50%{opacity:0.8} }
+    .zeus-input-row { display: flex; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); }
+    .zeus-input {
+      flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; padding: 9px 14px; outline: none;
+    }
+    .zeus-input:focus { border-color: var(--gold-border); }
+    .zeus-input::placeholder { color: var(--text-muted); }
+    .zeus-send {
+      background: var(--gold); color: #0A0A0A; font-weight: 700;
+      font-size: 12px; padding: 9px 16px; border-radius: 8px; letter-spacing: 0.05em;
+    }
+    .zeus-send:hover { background: #d4b05a; }
+    .zeus-prompts { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 14px; }
+    .zeus-prompt-chip {
+      font-size: 11px; padding: 5px 12px; border: 1px solid var(--border);
+      border-radius: 20px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .zeus-prompt-chip:hover { border-color: var(--gold-border); color: var(--gold); background: var(--gold-dim); }
+
+    /* ── Modal ───────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: #161616; border: 1px solid var(--border); border-radius: 16px;
+      width: 480px; max-width: calc(100vw - 40px); max-height: 90vh; overflow-y: auto;
+      transform: translateY(16px); transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0.04em; }
+    .form-input, .form-select {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; padding: 10px 14px; outline: none; width: 100%;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--gold-border); background: rgba(255,255,255,0.06); }
+    .form-select option { background: #161616; }
+    .form-hint { font-size: 11px; color: var(--text-muted); }
+    .form-toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .form-toggle input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
+    .form-toggle-label { font-size: 13px; color: var(--text-secondary); }
+    .modal-footer { display: flex; gap: 10px; padding: 16px 24px 20px; border-top: 1px solid var(--border); }
+    .btn-cancel { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; color: var(--text-secondary); }
+    .btn-cancel:hover { color: var(--text-primary); border-color: var(--border-hover); }
+    .btn-save { flex: 2; padding: 10px; background: var(--gold); color: #0A0A0A; font-size: 13px; font-weight: 700; border-radius: 8px; letter-spacing: 0.04em; }
+    .btn-save:hover { background: #d4b05a; }
+    .btn-delete-confirm { flex: 1; padding: 10px; background: var(--red); color: #fff; font-size: 13px; font-weight: 700; border-radius: 8px; }
+
+    /* ── Interest rate / liability field ─────────────────────────── */
+    .liability-fields { display: none; }
+    .liability-fields.show { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Loading ─────────────────────────────────────────────────── */
+    .loading-row td { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+
+    /* ── Mobile ──────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { padding: 16px 16px 80px; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .holdings-table th:nth-child(3),
+      .holdings-table td:nth-child(3),
+      .holdings-table th:nth-child(4),
+      .holdings-table td:nth-child(4) { display: none; }
+    }
+    @media (max-width: 480px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Top Nav ──────────────────────────────────────────────────── -->
+  <nav class="top-nav">
+    <a href="dashboard.html" class="nav-logo">
+      <img src="logo.png" alt="Liquidity Letter">
+      <div>
+        <div class="nav-logo-text">LIQUIDITY LETTER</div>
+        <div class="nav-logo-sub">PREMIUM</div>
+      </div>
+    </a>
+
+    <div class="nav-right">
+      <!-- Notification bell -->
+      <div id="notif-bell" onclick="toggleNotifDropdown()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span id="notif-badge" class="hidden"></span>
+      </div>
+      <div id="notif-dropdown">
+        <div class="notif-header">
+          <span class="notif-header-title">Notifications</span>
+          <button class="notif-mark-all" id="notif-mark-all" onclick="markAllRead()" style="display:none">Mark all read</button>
+        </div>
+        <div id="notif-list"></div>
+      </div>
+      <div class="nav-avatar" id="nav-avatar">?</div>
+    </div>
+  </nav>
+
+  <div class="layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <div class="sidebar-label">Main</div>
+
+        <a href="dashboard.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <a href="newsfeed.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10l6 6v8a2 2 0 0 1-2 2z"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Newsfeed
+        </a>
+
+        <a href="intelligence.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          Intelligence
+        </a>
+
+        <a href="research.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Research
+        </a>
+
+        <a href="newsletters.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Newsletters
+        </a>
+
+        <a href="portfolio.html" class="sidebar-item active">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          My Portfolio
+        </a>
+
+        <a href="etf-tracker.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          ETF Tracker
+        </a>
+
+        <a href="mag7.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Earnings Watch
+        </a>
+
+        <a href="macro-calendar.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Macro Calendar
+        </a>
+
+        <a href="alerts.html" class="sidebar-item">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </a>
+      </nav>
+
+      <div class="sidebar-premium">
+        <div class="sidebar-premium-head">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)" stroke="none"><path d="M2 20h20L12 4z"/></svg>
+          Premium Subscriber
+        </div>
+        <div class="sidebar-premium-desc">Thank you for being a valued subscriber.</div>
+        <button class="btn-manage" onclick="window.location.href='subscribe.html'">Manage Subscription</button>
+      </div>
+
+      <div class="sidebar-signout" id="sidebar-signout">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Sign Out
+      </div>
+    </aside>
+
+    <!-- ── Main Content ─────────────────────────────────────────────── -->
+    <div class="main-content">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">My Portfolio</div>
+          <div class="page-subtitle">Your complete financial picture in one place</div>
+        </div>
+        <button class="btn-add-asset" onclick="openAddModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Asset
+        </button>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card net-worth">
+          <div class="summary-label">Net Worth</div>
+          <div class="summary-value" id="s-net-worth">—</div>
+          <div class="summary-sub" id="s-net-worth-sub">Assets minus liabilities</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Assets</div>
+          <div class="summary-value" id="s-total-assets">—</div>
+          <div class="summary-sub" id="s-asset-count">0 holdings</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Liabilities</div>
+          <div class="summary-value change-neg" id="s-total-liab">—</div>
+          <div class="summary-sub" id="s-liab-count">0 debts</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Today's Move</div>
+          <div class="summary-value" id="s-today-change">—</div>
+          <div class="summary-sub">Live-priced assets only</div>
+        </div>
+      </div>
+
+      <!-- Allocation Bar -->
+      <div class="allocation-section">
+        <div class="allocation-title">Asset Allocation</div>
+        <div class="allocation-bar" id="alloc-bar"></div>
+        <div class="allocation-legend" id="alloc-legend"></div>
+      </div>
+
+      <!-- Holdings Table -->
+      <div class="holdings-section">
+        <div class="holdings-header">
+          <div class="holdings-title">Holdings</div>
+          <button class="holdings-refresh" onclick="loadPortfolio()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Refresh prices
+          </button>
+        </div>
+        <table class="holdings-table">
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>24h</th>
+              <th>Value (ZAR)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="holdings-tbody">
+            <tr class="loading-row"><td colspan="6">Loading your portfolio…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Zeus Section -->
+      <div class="zeus-section">
+        <div class="zeus-header">
+          <div class="zeus-icon">⚡</div>
+          <div>
+            <div class="zeus-title">Zeus — Portfolio Analyst</div>
+            <div class="zeus-sub">Ask Zeus anything about your portfolio</div>
+          </div>
+        </div>
+        <div class="zeus-prompts">
+          <div class="zeus-prompt-chip" onclick="askZeus('What is my biggest risk exposure right now?')">Biggest risk?</div>
+          <div class="zeus-prompt-chip" onclick="askZeus('How is my portfolio allocated and is it well diversified?')">Diversification</div>
+          <div class="zeus-prompt-chip" onclick="askZeus('What is my total debt cost per month based on my interest rates?')">Monthly debt cost</div>
+          <div class="zeus-prompt-chip" onclick="askZeus('Which assets should I consider rebalancing?')">Rebalance advice</div>
+          <div class="zeus-prompt-chip" onclick="askZeus('How much of my net worth is in hard assets like property, gold and crypto?')">Hard assets %</div>
+        </div>
+        <div class="zeus-chat" id="zeus-chat">
+          <div class="zeus-msg zeus">👋 I can see your full portfolio. Ask me anything — risk analysis, diversification, debt costs, or rebalancing ideas.</div>
+        </div>
+        <div class="zeus-input-row">
+          <input class="zeus-input" id="zeus-input" placeholder="Ask Zeus about your portfolio…" onkeydown="if(event.key==='Enter')sendZeus()">
+          <button class="zeus-send" onclick="sendZeus()">Ask</button>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /layout -->
+
+  <!-- ── Add / Edit Modal ──────────────────────────────────────────── -->
+  <div class="modal-overlay" id="asset-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">Add Asset</div>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label class="form-label">Asset Name *</label>
+          <input class="form-input" id="f-name" placeholder="e.g. Bitcoin, Shoprite, Cape Town Property">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Asset Type *</label>
+            <select class="form-select" id="f-type" onchange="onTypeChange()">
+              <option value="crypto">₿ Cryptocurrency</option>
+              <option value="stock">📈 Stock / ETF</option>
+              <option value="property">🏠 Property</option>
+              <option value="cash">💵 Cash / Bank Account</option>
+              <option value="commodity">🥇 Commodity (Gold/Silver)</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ticker <span style="color:var(--text-muted)">(optional)</span></label>
+            <input class="form-input" id="f-ticker" placeholder="e.g. BTC, JSE:SHP, XAU">
+            <div class="form-hint" id="ticker-hint">Used for live price lookup</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" id="qty-label">Quantity *</label>
+            <input class="form-input" id="f-qty" type="number" step="any" min="0" placeholder="0">
+          </div>
+          <div class="form-group" id="manual-val-group">
+            <label class="form-label" id="manual-val-label">Manual Value (ZAR)</label>
+            <input class="form-input" id="f-manual-val" type="number" step="any" min="0" placeholder="e.g. 2500000">
+            <div class="form-hint" id="manual-val-hint">Used when no live price available</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-toggle">
+            <input type="checkbox" id="f-liability" onchange="onLiabilityChange()">
+            <span class="form-toggle-label">This is a liability (debt / money owed)</span>
+          </label>
+        </div>
+        <div class="liability-fields" id="liability-fields">
+          <div class="form-group">
+            <label class="form-label">Interest Rate % p.a.</label>
+            <input class="form-input" id="f-interest" type="number" step="0.1" min="0" placeholder="e.g. 11.5">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes <span style="color:var(--text-muted)">(optional)</span></label>
+          <input class="form-input" id="f-notes" placeholder="e.g. Standard Bank home loan, Ref #123">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveAsset()">Save Asset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete Confirm Modal ──────────────────────────────────────── -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal" style="max-width:360px">
+      <div class="modal-header">
+        <div class="modal-title">Delete Asset</div>
+        <button class="modal-close" onclick="closeDeleteModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);font-size:14px;">Are you sure you want to remove <strong id="delete-name" style="color:var(--text-primary)"></strong> from your portfolio?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-delete-confirm" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Scripts ──────────────────────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="notif.js"></script>
+  <script>
+    const SUPA_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bXFzenprYnluamVlanN3eWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MDEwMjEsImV4cCI6MjA5NDM3NzAyMX0.7f_S9rVaUhlkf0F2tGZVvBBl0eIkvo0PaSXSSZIaNsg';
+    const WORKER  = 'https://api.liquidityletter.com';
+    const sb      = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    const TYPE_META = {
+      crypto:    { label: 'Crypto',     emoji: '₿', color: '#F7931A', bg: 'rgba(247,147,26,0.12)' },
+      stock:     { label: 'Stocks',     emoji: '📈', color: '#4CAF50', bg: 'rgba(76,175,80,0.12)'  },
+      property:  { label: 'Property',   emoji: '🏠', color: '#C9A84C', bg: 'rgba(201,168,76,0.12)' },
+      cash:      { label: 'Cash',       emoji: '💵', color: '#64B5F6', bg: 'rgba(100,181,246,0.12)'},
+      commodity: { label: 'Commodities',emoji: '🥇', color: '#FFD54F', bg: 'rgba(255,213,79,0.12)' },
+      other:     { label: 'Other',      emoji: '📦', color: '#9E9E9E', bg: 'rgba(158,158,158,0.12)'},
+    };
+
+    let _assets    = [];
+    let _prices    = {};
+    let _zarRate   = 18.7;
+    let _deleteId  = null;
+    let _userId    = null;
+    let _zeusCtx   = [];
+
+    // ── Auth ───────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = 'subscribe.html'; return; }
+      _userId = session.user.id;
+
+      // Avatar
+      const initials = (session.user.user_metadata?.first_name || session.user.email || '?')[0].toUpperCase();
+      document.getElementById('nav-avatar').textContent = initials;
+
+      // Sign out
+      document.getElementById('sidebar-signout').addEventListener('click', async () => {
+        await sb.auth.signOut(); window.location.href = 'subscribe.html';
+      });
+
+      await loadPortfolio();
+    });
+
+    // ── Load portfolio ─────────────────────────────────────────────
+    async function loadPortfolio() {
+      const tbody = document.getElementById('holdings-tbody');
+      tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Loading…</td></tr>';
+
+      const { data, error } = await sb.from('portfolio_assets')
+        .select('*').eq('user_id', _userId).order('sort_order').order('created_at');
+
+      if (error || !data) {
+        tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Failed to load portfolio.</td></tr>';
+        return;
+      }
+      _assets = data;
+
+      // Fetch live prices for priceable assets
+      const priceable = _assets.filter(a => a.ticker && (a.asset_type === 'crypto' || a.asset_type === 'stock' || a.asset_type === 'commodity'));
+      if (priceable.length > 0) {
+        try {
+          const res = await fetch(`${WORKER}/portfolio-prices`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assets: priceable.map(a => ({ id: a.id, ticker: a.ticker, asset_type: a.asset_type })) }),
+          });
+          const pd = await res.json();
+          _prices  = pd.prices || {};
+          _zarRate = pd.zarRate || 18.7;
+        } catch(e) {}
+      }
+
+      renderAll();
+    }
+
+    // ── Render everything ──────────────────────────────────────────
+    function renderAll() {
+      renderSummary();
+      renderAllocation();
+      renderTable();
+      buildZeusContext();
+    }
+
+    function assetValueZar(a) {
+      if (_prices[a.id]) return _prices[a.id].price_zar * (a.quantity || 1);
+      if (a.manual_value != null) return parseFloat(a.manual_value) * (a.quantity || 1);
+      return 0;
+    }
+
+    function fmt(n) {
+      if (n == null || isNaN(n)) return '—';
+      return 'R' + Math.round(n).toLocaleString('en-ZA');
+    }
+    function fmtPrice(n) {
+      if (n == null || isNaN(n) || n === 0) return null;
+      if (n >= 1000) return 'R' + Math.round(n).toLocaleString('en-ZA');
+      if (n >= 1) return 'R' + n.toFixed(2);
+      return 'R' + n.toFixed(6);
+    }
+    function fmtQty(n) {
+      if (!n) return '0';
+      if (n >= 1000) return Math.round(n).toLocaleString('en-ZA');
+      if (n >= 1) return parseFloat(n.toFixed(4)).toString();
+      return parseFloat(n.toFixed(8)).toString();
+    }
+
+    function renderSummary() {
+      const assets = _assets.filter(a => !a.is_liability);
+      const liabs  = _assets.filter(a => a.is_liability);
+      const totalAssets = assets.reduce((s,a) => s + assetValueZar(a), 0);
+      const totalLiabs  = liabs.reduce((s,a) => s + assetValueZar(a), 0);
+      const netWorth    = totalAssets - totalLiabs;
+
+      // Today's change (live assets only)
+      let todayVal = 0, todayPrev = 0;
+      _assets.filter(a => _prices[a.id]).forEach(a => {
+        const v = _prices[a.id].price_zar * (a.quantity || 1);
+        todayVal  += v;
+        if (_prices[a.id].change_pct) {
+          todayPrev += v / (1 + _prices[a.id].change_pct / 100);
+        } else {
+          todayPrev += v;
+        }
+      });
+      const todayChange = todayVal - todayPrev;
+
+      document.getElementById('s-net-worth').textContent    = fmt(netWorth);
+      document.getElementById('s-total-assets').textContent = fmt(totalAssets);
+      document.getElementById('s-total-liab').textContent   = liabs.length ? '-' + fmt(totalLiabs).slice(1) : '—';
+      document.getElementById('s-asset-count').textContent  = assets.length + ' holding' + (assets.length !== 1 ? 's' : '');
+      document.getElementById('s-liab-count').textContent   = liabs.length + ' liabilit' + (liabs.length !== 1 ? 'ies' : 'y');
+
+      const changeEl = document.getElementById('s-today-change');
+      if (todayChange === 0) { changeEl.textContent = '—'; changeEl.className = 'summary-value'; }
+      else {
+        changeEl.textContent = (todayChange > 0 ? '+' : '') + fmt(todayChange);
+        changeEl.className = 'summary-value ' + (todayChange > 0 ? 'change-pos' : 'change-neg');
+      }
+    }
+
+    function renderAllocation() {
+      const bar    = document.getElementById('alloc-bar');
+      const legend = document.getElementById('alloc-legend');
+      const byType = {};
+      _assets.filter(a => !a.is_liability).forEach(a => {
+        const v = assetValueZar(a);
+        byType[a.asset_type] = (byType[a.asset_type] || 0) + v;
+      });
+      const total = Object.values(byType).reduce((s,v) => s + v, 0);
+      if (total === 0) { bar.innerHTML = '<div style="flex:1;background:var(--border);border-radius:4px;"></div>'; legend.innerHTML = ''; return; }
+
+      bar.innerHTML = Object.entries(byType).map(([type, val]) => {
+        const pct = (val / total * 100).toFixed(1);
+        const col = (TYPE_META[type] || TYPE_META.other).color;
+        return `<div class="allocation-bar-seg" style="width:${pct}%;background:${col};"></div>`;
+      }).join('');
+
+      legend.innerHTML = Object.entries(byType).map(([type, val]) => {
+        const m   = TYPE_META[type] || TYPE_META.other;
+        const pct = (val / total * 100).toFixed(1);
+        return `<div class="alloc-item"><div class="alloc-dot" style="background:${m.color}"></div>${m.label} <span style="color:var(--text-primary);font-weight:500">${pct}%</span></div>`;
+      }).join('');
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('holdings-tbody');
+      if (_assets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6">
+          <div class="empty-state">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <p>No assets yet</p>
+            <small>Click "Add Asset" to start building your portfolio</small>
+          </div>
+        </td></tr>`;
+        return;
+      }
+
+      // Group by type
+      const groups = {};
+      _assets.forEach(a => {
+        const key = a.is_liability ? '__liabilities__' : a.asset_type;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(a);
+      });
+
+      const typeOrder = ['crypto','stock','property','commodity','cash','other','__liabilities__'];
+      let html = '';
+
+      typeOrder.forEach(type => {
+        if (!groups[type]) return;
+        const label = type === '__liabilities__' ? '🔴 Liabilities & Debts' : (TYPE_META[type]?.emoji + ' ' + TYPE_META[type]?.label) || type;
+        html += `<tr class="group-header"><td colspan="6">${label}</td></tr>`;
+        groups[type].forEach(a => {
+          const liveP = _prices[a.id];
+          const val   = assetValueZar(a);
+          const m     = TYPE_META[a.asset_type] || TYPE_META.other;
+          const priceStr = liveP ? fmtPrice(liveP.price_zar) : (a.manual_value ? fmtPrice(parseFloat(a.manual_value)) + ' <span class="price-manual">manual</span>' : '<span class="price-manual">manual</span>');
+          const changeStr = liveP && liveP.change_pct
+            ? `<span class="change-badge ${liveP.change_pct > 0 ? 'pos' : 'neg'}">${liveP.change_pct > 0 ? '+' : ''}${liveP.change_pct.toFixed(2)}%</span>`
+            : '—';
+          const interestNote = a.is_liability && a.interest_rate ? `<div class="asset-ticker">${a.interest_rate}% p.a.</div>` : '';
+
+          html += `<tr>
+            <td>
+              <div class="asset-name-cell">
+                <div class="asset-type-dot" style="background:${m.bg};">${m.emoji}</div>
+                <div>
+                  <div class="asset-name">${esc(a.name)}</div>
+                  ${a.ticker ? `<div class="asset-ticker">${esc(a.ticker.toUpperCase())}</div>` : ''}
+                  ${interestNote}
+                </div>
+              </div>
+            </td>
+            <td>${fmtQty(a.quantity)}</td>
+            <td class="price-live">${priceStr}</td>
+            <td>${changeStr}</td>
+            <td><span class="asset-value ${a.is_liability ? 'liability' : ''}">${a.is_liability ? '-' : ''}${fmt(val)}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="row-btn" title="Edit" onclick="openEditModal('${a.id}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="row-btn del" title="Delete" onclick="openDeleteModal('${a.id}', '${esc(a.name)}')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+        });
+      });
+      tbody.innerHTML = html;
+    }
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── Modal ──────────────────────────────────────────────────────
+    function openAddModal() {
+      document.getElementById('modal-title').textContent = 'Add Asset';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-type').value = 'crypto';
+      document.getElementById('f-ticker').value = '';
+      document.getElementById('f-qty').value = '';
+      document.getElementById('f-manual-val').value = '';
+      document.getElementById('f-liability').checked = false;
+      document.getElementById('f-interest').value = '';
+      document.getElementById('f-notes').value = '';
+      onTypeChange(); onLiabilityChange();
+      document.getElementById('asset-modal').classList.add('open');
+    }
+
+    function openEditModal(id) {
+      const a = _assets.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('modal-title').textContent = 'Edit Asset';
+      document.getElementById('edit-id').value = a.id;
+      document.getElementById('f-name').value = a.name || '';
+      document.getElementById('f-type').value = a.asset_type || 'other';
+      document.getElementById('f-ticker').value = a.ticker || '';
+      document.getElementById('f-qty').value = a.quantity || '';
+      document.getElementById('f-manual-val').value = a.manual_value || '';
+      document.getElementById('f-liability').checked = !!a.is_liability;
+      document.getElementById('f-interest').value = a.interest_rate || '';
+      document.getElementById('f-notes').value = a.notes || '';
+      onTypeChange(); onLiabilityChange();
+      document.getElementById('asset-modal').classList.add('open');
+    }
+
+    function closeModal() { document.getElementById('asset-modal').classList.remove('open'); }
+
+    function onTypeChange() {
+      const type = document.getElementById('f-type').value;
+      const tickerHint = document.getElementById('ticker-hint');
+      const hints = {
+        crypto:    'e.g. BTC, ETH, SOL, ADA',
+        stock:     'e.g. AAPL, JSE:SHP, JSE:MTN',
+        commodity: 'XAU for gold, XAG for silver',
+        property:  'Leave blank — enter value manually',
+        cash:      'Leave blank — enter balance manually',
+        other:     'Leave blank — enter value manually',
+      };
+      tickerHint.textContent = hints[type] || 'Optional ticker for live prices';
+      const manualLabel = document.getElementById('manual-val-label');
+      if (type === 'property') manualLabel.textContent = 'Property Value (ZAR)';
+      else if (type === 'cash') manualLabel.textContent = 'Account Balance (ZAR)';
+      else manualLabel.textContent = 'Manual Value (ZAR)';
+    }
+
+    function onLiabilityChange() {
+      const checked = document.getElementById('f-liability').checked;
+      document.getElementById('liability-fields').className = 'liability-fields' + (checked ? ' show' : '');
+    }
+
+    async function saveAsset() {
+      const name   = document.getElementById('f-name').value.trim();
+      const type   = document.getElementById('f-type').value;
+      const ticker = document.getElementById('f-ticker').value.trim().toUpperCase() || null;
+      const qty    = parseFloat(document.getElementById('f-qty').value) || 1;
+      const manVal = parseFloat(document.getElementById('f-manual-val').value) || null;
+      const isLiab = document.getElementById('f-liability').checked;
+      const rate   = parseFloat(document.getElementById('f-interest').value) || null;
+      const notes  = document.getElementById('f-notes').value.trim() || null;
+      const editId = document.getElementById('edit-id').value;
+
+      if (!name) { alert('Please enter an asset name.'); return; }
+
+      const payload = {
+        user_id:       _userId,
+        name, ticker,
+        asset_type:    type,
+        quantity:      qty,
+        manual_value:  manVal,
+        is_liability:  isLiab,
+        interest_rate: isLiab ? rate : null,
+        notes,
+        updated_at:    new Date().toISOString(),
+      };
+
+      let err;
+      if (editId) {
+        ({ error: err } = await sb.from('portfolio_assets').update(payload).eq('id', editId).eq('user_id', _userId));
+      } else {
+        ({ error: err } = await sb.from('portfolio_assets').insert(payload));
+      }
+
+      if (err) { alert('Error saving asset: ' + err.message); return; }
+      closeModal();
+      await loadPortfolio();
+    }
+
+    // ── Delete ─────────────────────────────────────────────────────
+    function openDeleteModal(id, name) {
+      _deleteId = id;
+      document.getElementById('delete-name').textContent = name;
+      document.getElementById('delete-modal').classList.add('open');
+    }
+    function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); _deleteId = null; }
+    async function confirmDelete() {
+      if (!_deleteId) return;
+      await sb.from('portfolio_assets').delete().eq('id', _deleteId).eq('user_id', _userId);
+      closeDeleteModal();
+      await loadPortfolio();
+    }
+
+    // ── Zeus ───────────────────────────────────────────────────────
+    function buildZeusContext() {
+      if (_assets.length === 0) return;
+      const assets = _assets.filter(a => !a.is_liability);
+      const liabs  = _assets.filter(a =>  a.is_liability);
+      const totalAssets = assets.reduce((s,a) => s + assetValueZar(a), 0);
+      const totalLiabs  = liabs.reduce((s,a) => s + assetValueZar(a), 0);
+
+      const lines = ['USER PORTFOLIO SUMMARY:',
+        `Net Worth: R${Math.round(totalAssets - totalLiabs).toLocaleString('en-ZA')}`,
+        `Total Assets: R${Math.round(totalAssets).toLocaleString('en-ZA')}`,
+        `Total Liabilities: R${Math.round(totalLiabs).toLocaleString('en-ZA')}`,
+        '', 'HOLDINGS:',
+      ];
+      _assets.forEach(a => {
+        const val = assetValueZar(a);
+        const liveP = _prices[a.id];
+        let line = `- ${a.name}${a.ticker ? ' (' + a.ticker + ')' : ''}: ${a.is_liability ? 'LIABILITY ' : ''}R${Math.round(val).toLocaleString('en-ZA')}`;
+        if (a.is_liability && a.interest_rate) line += ` @ ${a.interest_rate}% p.a.`;
+        if (liveP) line += ` (24h: ${liveP.change_pct >= 0 ? '+' : ''}${liveP.change_pct.toFixed(2)}%)`;
+        lines.push(line);
+      });
+      _zeusCtx = [{ role: 'user', content: lines.join('\n') }, { role: 'assistant', content: 'I have your full portfolio in view. What would you like to know?' }];
+    }
+
+    async function askZeus(question) {
+      document.getElementById('zeus-input').value = question;
+      await sendZeus();
+    }
+
+    async function sendZeus() {
+      const input = document.getElementById('zeus-input');
+      const q = input.value.trim();
+      if (!q) return;
+      input.value = '';
+
+      const chat = document.getElementById('zeus-chat');
+      chat.innerHTML += `<div class="zeus-msg user">"${esc(q)}"</div>`;
+      const typingEl = document.createElement('div');
+      typingEl.className = 'zeus-typing';
+      typingEl.innerHTML = '<span></span><span></span><span></span>';
+      chat.appendChild(typingEl);
+      chat.scrollTop = chat.scrollHeight;
+
+      const messages = [..._zeusCtx, { role: 'user', content: q }];
+      try {
+        const res  = await fetch(`${WORKER}/zeus`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages }),
+        });
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content || 'Sorry, I could not get a response.';
+        typingEl.remove();
+        chat.innerHTML += `<div class="zeus-msg zeus">${esc(reply).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
+        _zeusCtx.push({ role: 'user', content: q }, { role: 'assistant', content: reply });
+      } catch(e) {
+        typingEl.remove();
+        chat.innerHTML += `<div class="zeus-msg zeus" style="color:var(--red)">Connection error. Please try again.</div>`;
+      }
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Close modals on overlay click
+    document.getElementById('asset-modal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+    document.getElementById('delete-modal').addEventListener('click', function(e) { if(e.target===this) closeDeleteModal(); });
+    document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeModal(); closeDeleteModal(); } });
+  </script>
+  <link rel="stylesheet" href="mobile.css">
+  <script src="mobile.js"></script>
+</body>
+</html>

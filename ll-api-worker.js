@@ -645,6 +645,83 @@ export default {
         });
       }
 
+      // ── Portfolio: Live Prices ─────────────────────────────────────
+      if (url.pathname === '/portfolio-prices' && request.method === 'POST') {
+        const { assets } = await request.json();
+        if (!Array.isArray(assets) || assets.length === 0) {
+          return new Response(JSON.stringify({ prices: {}, zarRate: 18.7 }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // ZAR rate
+        let zarRate = 18.7;
+        try {
+          const rr = await fetch('https://open.er-api.com/v6/latest/USD');
+          const rd = await rr.json();
+          zarRate = rd.rates?.ZAR || 18.7;
+        } catch(e) {}
+
+        const prices = {};
+
+        // ── Crypto via CoinGecko ──────────────────────────────────────
+        const CG = {
+          BTC:'bitcoin',ETH:'ethereum',BNB:'binancecoin',SOL:'solana',
+          ADA:'cardano',XRP:'ripple',DOGE:'dogecoin',DOT:'polkadot',
+          AVAX:'avalanche-2',MATIC:'matic-network',LINK:'chainlink',
+          UNI:'uniswap',LTC:'litecoin',BCH:'bitcoin-cash',XLM:'stellar',
+          ATOM:'cosmos',NEAR:'near',OP:'optimism',ARB:'arbitrum',
+          SHIB:'shiba-inu',PEPE:'pepe',SUI:'sui',APT:'aptos',
+        };
+        const cryptos = assets.filter(a => a.asset_type === 'crypto' && a.ticker);
+        if (cryptos.length) {
+          const cgIds = [...new Set(cryptos.map(a => CG[a.ticker.toUpperCase()] || a.ticker.toLowerCase()))];
+          try {
+            const cgRes = await fetch(
+              `https://api.coingecko.com/api/v3/simple/price?ids=${cgIds.join(',')}&vs_currencies=usd&include_24hr_change=true`
+            );
+            const cgData = await cgRes.json();
+            cryptos.forEach(a => {
+              const id = CG[a.ticker.toUpperCase()] || a.ticker.toLowerCase();
+              if (cgData[id]?.usd) {
+                prices[a.id] = {
+                  price_usd: cgData[id].usd,
+                  price_zar: cgData[id].usd * zarRate,
+                  change_pct: cgData[id].usd_24h_change || 0,
+                };
+              }
+            });
+          } catch(e) {}
+        }
+
+        // ── Stocks + Commodities via Finnhub ──────────────────────────
+        const COMM = { XAU:'OANDA:XAU_USD', GOLD:'OANDA:XAU_USD', XAG:'OANDA:XAG_USD', SILVER:'OANDA:XAG_USD' };
+        const priceables = assets.filter(a =>
+          (a.asset_type === 'stock' || a.asset_type === 'commodity') && a.ticker && !prices[a.id]
+        );
+        for (const a of priceables) {
+          const symbol = COMM[a.ticker.toUpperCase()] || a.ticker.toUpperCase();
+          try {
+            const fh = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${env.FINNHUB_KEY}`);
+            const fd = await fh.json();
+            if (fd.c && fd.c > 0) {
+              const isJSE = symbol.startsWith('JSE:');
+              const priceZar = isJSE ? fd.c / 100 : fd.c * zarRate; // JSE = ZAR cents → rands
+              const priceUsd = isJSE ? priceZar / zarRate : fd.c;
+              prices[a.id] = {
+                price_usd: priceUsd,
+                price_zar: priceZar,
+                change_pct: fd.pc > 0 ? ((fd.c - fd.pc) / fd.pc) * 100 : 0,
+              };
+            }
+          } catch(e) {}
+        }
+
+        return new Response(JSON.stringify({ prices, zarRate }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // ── Zeus AI ────────────────────────────────────────────────────
       if (url.pathname === '/zeus' && request.method === 'POST') {
         const { messages } = await request.json();
