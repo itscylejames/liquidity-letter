@@ -664,7 +664,7 @@ export default {
 
         const prices = {};
 
-        // ── Crypto via CoinGecko ──────────────────────────────────────
+        // ── Crypto via CoinGecko (edge-cached 60s so rate limits never hit) ─
         const CG = {
           BTC:'bitcoin',ETH:'ethereum',BNB:'binancecoin',SOL:'solana',
           ADA:'cardano',XRP:'ripple',DOGE:'dogecoin',DOT:'polkadot',
@@ -672,26 +672,76 @@ export default {
           UNI:'uniswap',LTC:'litecoin',BCH:'bitcoin-cash',XLM:'stellar',
           ATOM:'cosmos',NEAR:'near',OP:'optimism',ARB:'arbitrum',
           SHIB:'shiba-inu',PEPE:'pepe',SUI:'sui',APT:'aptos',
+          TRX:'tron',TON:'the-open-network',HBAR:'hedera-hashgraph',
         };
         const cryptos = assets.filter(a => a.asset_type === 'crypto' && a.ticker);
         if (cryptos.length) {
+          // Build list of all CG ids we need
           const cgIds = [...new Set(cryptos.map(a => CG[a.ticker.toUpperCase()] || a.ticker.toLowerCase()))];
-          try {
-            const cgRes = await fetch(
-              `https://api.coingecko.com/api/v3/simple/price?ids=${cgIds.join(',')}&vs_currencies=usd&include_24hr_change=true`
-            );
-            const cgData = await cgRes.json();
+          const cgCacheKey = new Request(`https://cache.liquidityletter.com/cg-prices-v1-${cgIds.sort().join(',')}`);
+          const cache = caches.default;
+          let cgData = null;
+
+          // Try edge cache first
+          const cachedCg = await cache.match(cgCacheKey);
+          if (cachedCg) {
+            try { cgData = await cachedCg.json(); } catch(e) {}
+          }
+
+          // Cache miss — fetch from CoinGecko
+          if (!cgData) {
+            try {
+              const cgRes = await fetch(
+                `https://api.coingecko.com/api/v3/simple/price?ids=${cgIds.join(',')}&vs_currencies=usd&include_24hr_change=true`,
+                { headers: { 'Accept': 'application/json' } }
+              );
+              if (cgRes.ok) {
+                cgData = await cgRes.json();
+                // Cache for 60 seconds
+                const toCache = new Response(JSON.stringify(cgData), {
+                  headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
+                });
+                ctx.waitUntil(cache.put(cgCacheKey, toCache));
+              }
+            } catch(e) {}
+          }
+
+          // Fall back to Finnhub crypto if CoinGecko failed
+          if (!cgData || Object.keys(cgData).length === 0) {
+            const FH_CRYPTO = {
+              BTC:'BINANCE:BTCUSDT',ETH:'BINANCE:ETHUSDT',BNB:'BINANCE:BNBUSDT',
+              SOL:'BINANCE:SOLUSDT',ADA:'BINANCE:ADAUSDT',XRP:'BINANCE:XRPUSDT',
+              DOGE:'BINANCE:DOGEUSDT',DOT:'BINANCE:DOTUSDT',LTC:'BINANCE:LTCUSDT',
+              AVAX:'BINANCE:AVAXUSDT',LINK:'BINANCE:LINKUSDT',ATOM:'BINANCE:ATOMUSDT',
+              NEAR:'BINANCE:NEARUSDT',MATIC:'BINANCE:MATICUSDT',
+            };
+            for (const a of cryptos) {
+              const sym = FH_CRYPTO[a.ticker.toUpperCase()];
+              if (!sym) continue;
+              try {
+                const fh = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${env.FINNHUB_KEY}`);
+                const fd = await fh.json();
+                if (fd.c && fd.c > 0) {
+                  prices[a.id] = {
+                    price_usd:  fd.c,
+                    price_zar:  fd.c * zarRate,
+                    change_pct: fd.pc > 0 ? ((fd.c - fd.pc) / fd.pc) * 100 : 0,
+                  };
+                }
+              } catch(e) {}
+            }
+          } else {
             cryptos.forEach(a => {
               const id = CG[a.ticker.toUpperCase()] || a.ticker.toLowerCase();
               if (cgData[id]?.usd) {
                 prices[a.id] = {
-                  price_usd: cgData[id].usd,
-                  price_zar: cgData[id].usd * zarRate,
+                  price_usd:  cgData[id].usd,
+                  price_zar:  cgData[id].usd * zarRate,
                   change_pct: cgData[id].usd_24h_change || 0,
                 };
               }
             });
-          } catch(e) {}
+          }
         }
 
         // ── Stocks + Commodities via Finnhub ──────────────────────────
@@ -706,7 +756,7 @@ export default {
             const fd = await fh.json();
             if (fd.c && fd.c > 0) {
               const isJSE = symbol.startsWith('JSE:');
-              const priceZar = isJSE ? fd.c / 100 : fd.c * zarRate; // JSE = ZAR cents → rands
+              const priceZar = isJSE ? fd.c / 100 : fd.c * zarRate;
               const priceUsd = isJSE ? priceZar / zarRate : fd.c;
               prices[a.id] = {
                 price_usd: priceUsd,

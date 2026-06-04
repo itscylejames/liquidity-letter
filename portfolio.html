@@ -166,6 +166,11 @@
     .holdings-title { font-size: 13px; font-weight: 600; }
     .holdings-refresh { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; }
     .holdings-refresh:hover { color: var(--text-primary); border-color: var(--border-hover); }
+    .holdings-refresh.spinning svg { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .live-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: livepulse 2s infinite; }
+    @keyframes livepulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
     .holdings-table { width: 100%; }
     .holdings-table th {
       text-align: left; padding: 10px 20px;
@@ -482,13 +487,16 @@
       <div class="holdings-section">
         <div class="holdings-header">
           <div class="holdings-title">Holdings</div>
-          <button class="holdings-refresh" onclick="loadPortfolio()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-            Refresh prices
-          </button>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="live-badge"><div class="live-dot"></div><span id="last-updated">Updating…</span></div>
+            <button class="holdings-refresh" id="refresh-btn" onclick="refreshPrices()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
         <table class="holdings-table">
           <thead>
@@ -666,7 +674,7 @@
       await loadPortfolio();
     });
 
-    // ── Load portfolio ─────────────────────────────────────────────
+    // ── Load portfolio (assets from DB) ───────────────────────────
     async function loadPortfolio() {
       const tbody = document.getElementById('holdings-tbody');
       tbody.innerHTML = '<tr class="loading-row"><td colspan="6">Loading…</td></tr>';
@@ -679,24 +687,54 @@
         return;
       }
       _assets = data;
-
-      // Fetch live prices for priceable assets
-      const priceable = _assets.filter(a => a.ticker && (a.asset_type === 'crypto' || a.asset_type === 'stock' || a.asset_type === 'commodity'));
-      if (priceable.length > 0) {
-        try {
-          const res = await fetch(`${WORKER}/portfolio-prices`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ assets: priceable.map(a => ({ id: a.id, ticker: a.ticker, asset_type: a.asset_type })) }),
-          });
-          const pd = await res.json();
-          _prices  = pd.prices || {};
-          _zarRate = pd.zarRate || 18.7;
-        } catch(e) {}
-      }
-
+      await fetchPrices();
       renderAll();
     }
+
+    // ── Fetch live prices only (no DB reload) ─────────────────────
+    async function fetchPrices() {
+      const priceable = _assets.filter(a => a.ticker && (a.asset_type === 'crypto' || a.asset_type === 'stock' || a.asset_type === 'commodity'));
+      if (priceable.length === 0) {
+        setLastUpdated();
+        return;
+      }
+      try {
+        const res = await fetch(`${WORKER}/portfolio-prices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assets: priceable.map(a => ({ id: a.id, ticker: a.ticker, asset_type: a.asset_type })) }),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const pd = await res.json();
+        _prices  = pd.prices || {};
+        _zarRate = pd.zarRate || 18.7;
+        setLastUpdated();
+      } catch(e) {
+        document.getElementById('last-updated').textContent = 'Price error — retrying…';
+      }
+    }
+
+    // ── Manual refresh button ──────────────────────────────────────
+    async function refreshPrices() {
+      const btn = document.getElementById('refresh-btn');
+      btn.classList.add('spinning');
+      await fetchPrices();
+      renderAll();
+      btn.classList.remove('spinning');
+    }
+
+    function setLastUpdated() {
+      const now = new Date();
+      document.getElementById('last-updated').textContent =
+        'Live · updated ' + now.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // ── Auto-refresh prices every 60 seconds ──────────────────────
+    setInterval(async () => {
+      if (_assets.length === 0) return;
+      await fetchPrices();
+      renderAll();
+    }, 60000);
 
     // ── Render everything ──────────────────────────────────────────
     function renderAll() {
