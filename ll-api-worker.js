@@ -664,103 +664,96 @@ export default {
 
         const prices = {};
 
-        // ── Crypto via CoinGecko (edge-cached 60s so rate limits never hit) ─
-        const CG = {
-          BTC:'bitcoin',ETH:'ethereum',BNB:'binancecoin',SOL:'solana',
-          ADA:'cardano',XRP:'ripple',DOGE:'dogecoin',DOT:'polkadot',
-          AVAX:'avalanche-2',MATIC:'matic-network',LINK:'chainlink',
-          UNI:'uniswap',LTC:'litecoin',BCH:'bitcoin-cash',XLM:'stellar',
-          ATOM:'cosmos',NEAR:'near',OP:'optimism',ARB:'arbitrum',
-          SHIB:'shiba-inu',PEPE:'pepe',SUI:'sui',APT:'aptos',
-          TRX:'tron',TON:'the-open-network',HBAR:'hedera-hashgraph',
+        // ── Crypto via Binance (free, no key, 1200 req/min) ───────────
+        const BINANCE = {
+          BTC:'BTCUSDT', ETH:'ETHUSDT', BNB:'BNBUSDT',  SOL:'SOLUSDT',
+          ADA:'ADAUSDT', XRP:'XRPUSDT', DOGE:'DOGEUSDT', DOT:'DOTUSDT',
+          AVAX:'AVAXUSDT',MATIC:'MATICUSDT',LINK:'LINKUSDT',UNI:'UNIUSDT',
+          LTC:'LTCUSDT', BCH:'BCHUSDT', XLM:'XLMUSDT',  ATOM:'ATOMUSDT',
+          NEAR:'NEARUSDT',OP:'OPUSDT',  ARB:'ARBUSDT',  SHIB:'SHIBUSDT',
+          PEPE:'PEPEUSDT',SUI:'SUIUSDT',APT:'APTUSDT',  TRX:'TRXUSDT',
+          TON:'TONUSDT', HBAR:'HBARUSDT',
         };
         const cryptos = assets.filter(a => a.asset_type === 'crypto' && a.ticker);
         if (cryptos.length) {
-          // Build list of all CG ids we need
-          const cgIds = [...new Set(cryptos.map(a => CG[a.ticker.toUpperCase()] || a.ticker.toLowerCase()))];
-          const cgCacheKey = new Request(`https://cache.liquidityletter.com/cg-prices-v1-${cgIds.sort().join(',')}`);
-          const cache = caches.default;
-          let cgData = null;
-
-          // Try edge cache first
-          const cachedCg = await cache.match(cgCacheKey);
-          if (cachedCg) {
-            try { cgData = await cachedCg.json(); } catch(e) {}
-          }
-
-          // Cache miss — fetch from CoinGecko
-          if (!cgData) {
-            try {
-              const cgRes = await fetch(
-                `https://api.coingecko.com/api/v3/simple/price?ids=${cgIds.join(',')}&vs_currencies=usd&include_24hr_change=true`,
-                { headers: { 'Accept': 'application/json' } }
-              );
-              if (cgRes.ok) {
-                cgData = await cgRes.json();
-                // Cache for 60 seconds
-                const toCache = new Response(JSON.stringify(cgData), {
-                  headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' }
-                });
-                ctx.waitUntil(cache.put(cgCacheKey, toCache));
-              }
-            } catch(e) {}
-          }
-
-          // Fall back to Finnhub crypto if CoinGecko failed
-          if (!cgData || Object.keys(cgData).length === 0) {
-            const FH_CRYPTO = {
-              BTC:'BINANCE:BTCUSDT',ETH:'BINANCE:ETHUSDT',BNB:'BINANCE:BNBUSDT',
-              SOL:'BINANCE:SOLUSDT',ADA:'BINANCE:ADAUSDT',XRP:'BINANCE:XRPUSDT',
-              DOGE:'BINANCE:DOGEUSDT',DOT:'BINANCE:DOTUSDT',LTC:'BINANCE:LTCUSDT',
-              AVAX:'BINANCE:AVAXUSDT',LINK:'BINANCE:LINKUSDT',ATOM:'BINANCE:ATOMUSDT',
-              NEAR:'BINANCE:NEARUSDT',MATIC:'BINANCE:MATICUSDT',
-            };
-            for (const a of cryptos) {
-              const sym = FH_CRYPTO[a.ticker.toUpperCase()];
-              if (!sym) continue;
-              try {
-                const fh = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${env.FINNHUB_KEY}`);
-                const fd = await fh.json();
-                if (fd.c && fd.c > 0) {
-                  prices[a.id] = {
-                    price_usd:  fd.c,
-                    price_zar:  fd.c * zarRate,
-                    change_pct: fd.pc > 0 ? ((fd.c - fd.pc) / fd.pc) * 100 : 0,
+          const symMap = {};
+          cryptos.forEach(a => {
+            const sym = BINANCE[a.ticker.toUpperCase()] || (a.ticker.toUpperCase().replace(/USDT$/, '') + 'USDT');
+            symMap[sym] = a.id;
+          });
+          const symbols = Object.keys(symMap);
+          try {
+            const binRes = await fetch(
+              `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(symbols))}`,
+              { headers: { 'Accept': 'application/json' } }
+            );
+            if (binRes.ok) {
+              const binData = await binRes.json();
+              if (Array.isArray(binData)) {
+                binData.forEach(d => {
+                  const id = symMap[d.symbol];
+                  if (!id) return;
+                  const priceUsd = parseFloat(d.lastPrice);
+                  prices[id] = {
+                    price_usd:  priceUsd,
+                    price_zar:  priceUsd * zarRate,
+                    change_pct: parseFloat(d.priceChangePercent) || 0,
                   };
-                }
-              } catch(e) {}
-            }
-          } else {
-            cryptos.forEach(a => {
-              const id = CG[a.ticker.toUpperCase()] || a.ticker.toLowerCase();
-              if (cgData[id]?.usd) {
-                prices[a.id] = {
-                  price_usd:  cgData[id].usd,
-                  price_zar:  cgData[id].usd * zarRate,
-                  change_pct: cgData[id].usd_24h_change || 0,
-                };
+                });
               }
-            });
-          }
+            }
+          } catch(e) {}
         }
 
-        // ── Stocks + Commodities via Finnhub ──────────────────────────
+        // ── JSE Stocks via Yahoo Finance (.JO suffix) ─────────────────
+        const isJSETicker = t => t.toUpperCase().startsWith('JSE:') || t.toUpperCase().endsWith('.JO');
+        const toYahooSym  = t => {
+          const u = t.toUpperCase();
+          if (u.startsWith('JSE:')) return u.slice(4) + '.JO';
+          return u.endsWith('.JO') ? u : u + '.JO';
+        };
+        const jseStocks = assets.filter(a => a.asset_type === 'stock' && a.ticker && isJSETicker(a.ticker));
+        if (jseStocks.length) {
+          const ySyms = jseStocks.map(a => toYahooSym(a.ticker));
+          try {
+            const yRes = await fetch(
+              `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${ySyms.join(',')}&fields=regularMarketPrice,regularMarketChangePercent,currency`,
+              { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } }
+            );
+            if (yRes.ok) {
+              const yData = await yRes.json();
+              const results = yData?.quoteResponse?.result || [];
+              results.forEach(q => {
+                const asset = jseStocks.find(a => toYahooSym(a.ticker) === q.symbol);
+                if (!asset || !q.regularMarketPrice) return;
+                // Yahoo returns JSE prices in ZAR cents — divide by 100
+                const priceZar = q.currency === 'ZAc' ? q.regularMarketPrice / 100 : q.regularMarketPrice;
+                prices[asset.id] = {
+                  price_usd:  priceZar / zarRate,
+                  price_zar:  priceZar,
+                  change_pct: q.regularMarketChangePercent || 0,
+                };
+              });
+            }
+          } catch(e) {}
+        }
+
+        // ── US Stocks + Gold/Silver via Finnhub ───────────────────────
         const COMM = { XAU:'OANDA:XAU_USD', GOLD:'OANDA:XAU_USD', XAG:'OANDA:XAG_USD', SILVER:'OANDA:XAG_USD' };
-        const priceables = assets.filter(a =>
-          (a.asset_type === 'stock' || a.asset_type === 'commodity') && a.ticker && !prices[a.id]
+        const finnhubAssets = assets.filter(a =>
+          !prices[a.id] &&
+          (a.asset_type === 'stock' || a.asset_type === 'commodity') &&
+          a.ticker && !isJSETicker(a.ticker)
         );
-        for (const a of priceables) {
+        for (const a of finnhubAssets) {
           const symbol = COMM[a.ticker.toUpperCase()] || a.ticker.toUpperCase();
           try {
             const fh = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${env.FINNHUB_KEY}`);
             const fd = await fh.json();
             if (fd.c && fd.c > 0) {
-              const isJSE = symbol.startsWith('JSE:');
-              const priceZar = isJSE ? fd.c / 100 : fd.c * zarRate;
-              const priceUsd = isJSE ? priceZar / zarRate : fd.c;
               prices[a.id] = {
-                price_usd: priceUsd,
-                price_zar: priceZar,
+                price_usd:  fd.c,
+                price_zar:  fd.c * zarRate,
                 change_pct: fd.pc > 0 ? ((fd.c - fd.pc) / fd.pc) * 100 : 0,
               };
             }

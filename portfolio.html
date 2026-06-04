@@ -935,12 +935,12 @@
       const type = document.getElementById('f-type').value;
       const tickerHint = document.getElementById('ticker-hint');
       const hints = {
-        crypto:    'e.g. BTC, ETH, SOL, ADA',
-        stock:     'e.g. AAPL, JSE:SHP, JSE:MTN',
-        commodity: 'XAU for gold, XAG for silver',
-        property:  'Leave blank — enter value manually',
-        cash:      'Leave blank — enter balance manually',
-        other:     'Leave blank — enter value manually',
+        crypto:    'e.g. BTC, ETH, SOL, XRP — via Binance, live prices',
+        stock:     'US: AAPL, TSLA, SPY · JSE: SHP.JO, MTN.JO, NPN.JO',
+        commodity: 'XAU = gold · XAG = silver (per troy oz, USD)',
+        property:  'Leave blank — enter value manually below',
+        cash:      'Leave blank — enter balance manually below',
+        other:     'Leave blank — enter value manually below',
       };
       tickerHint.textContent = hints[type] || 'Optional ticker for live prices';
       const manualLabel = document.getElementById('manual-val-label');
