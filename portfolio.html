@@ -486,7 +486,7 @@
         <div class="summary-card net-worth">
           <div class="summary-label">Net Worth</div>
           <div class="summary-value" id="s-net-worth">—</div>
-          <div class="summary-sub" id="s-net-worth-sub">Assets minus liabilities</div>
+          <div class="summary-sub" id="s-net-worth-sub">USD · assets minus liabilities</div>
         </div>
         <div class="summary-card">
           <div class="summary-label">Total Assets</div>
@@ -534,7 +534,7 @@
               <th>Quantity</th>
               <th>Price</th>
               <th>24h</th>
-              <th>Value (ZAR)</th>
+              <th>Value (USD)</th>
               <th></th>
             </tr>
           </thead>
@@ -615,8 +615,8 @@
             <input class="form-input" id="f-qty" type="number" step="any" min="0" placeholder="0">
           </div>
           <div class="form-group" id="manual-val-group">
-            <label class="form-label" id="manual-val-label">Manual Value (ZAR)</label>
-            <input class="form-input" id="f-manual-val" type="number" step="any" min="0" placeholder="e.g. 2500000">
+            <label class="form-label" id="manual-val-label">Manual Value (USD)</label>
+            <input class="form-input" id="f-manual-val" type="number" step="any" min="0" placeholder="e.g. 135000">
             <div class="form-hint" id="manual-val-hint">Used when no live price available</div>
           </div>
         </div>
@@ -778,21 +778,23 @@
       buildZeusContext();
     }
 
-    function assetValueZar(a) {
-      if (_prices[a.id]) return _prices[a.id].price_zar * (a.quantity || 1);
+    function assetValueUsd(a) {
+      if (_prices[a.id]) return _prices[a.id].price_usd * (a.quantity || 1);
       if (a.manual_value != null) return parseFloat(a.manual_value) * (a.quantity || 1);
       return 0;
     }
+    // keep old name as alias so nothing breaks
+    const assetValueZar = assetValueUsd;
 
     function fmt(n) {
       if (n == null || isNaN(n)) return '—';
-      return 'R' + Math.round(n).toLocaleString('en-ZA');
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
     function fmtPrice(n) {
       if (n == null || isNaN(n) || n === 0) return null;
-      if (n >= 1000) return 'R' + Math.round(n).toLocaleString('en-ZA');
-      if (n >= 1) return 'R' + n.toFixed(2);
-      return 'R' + n.toFixed(6);
+      if (n >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+      if (n >= 1)    return '$' + n.toFixed(2);
+      return '$' + n.toFixed(6);
     }
     function fmtQty(n) {
       if (!n) return '0';
@@ -811,7 +813,7 @@
       // Today's change (live assets only)
       let todayVal = 0, todayPrev = 0;
       _assets.filter(a => _prices[a.id]).forEach(a => {
-        const v = _prices[a.id].price_zar * (a.quantity || 1);
+        const v = _prices[a.id].price_usd * (a.quantity || 1);
         todayVal  += v;
         if (_prices[a.id].change_pct) {
           todayPrev += v / (1 + _prices[a.id].change_pct / 100);
@@ -891,7 +893,7 @@
           const liveP = _prices[a.id];
           const val   = assetValueZar(a);
           const m     = TYPE_META[a.asset_type] || TYPE_META.other;
-          const priceStr = liveP ? fmtPrice(liveP.price_zar) : (a.manual_value ? fmtPrice(parseFloat(a.manual_value)) + ' <span class="price-manual">manual</span>' : '<span class="price-manual">manual</span>');
+          const priceStr = liveP ? fmtPrice(liveP.price_usd) : (a.manual_value ? fmtPrice(parseFloat(a.manual_value)) + ' <span class="price-manual">manual</span>' : '<span class="price-manual">manual</span>');
           const changeStr = liveP && liveP.change_pct
             ? `<span class="change-badge ${liveP.change_pct > 0 ? 'pos' : 'neg'}">${liveP.change_pct > 0 ? '+' : ''}${liveP.change_pct.toFixed(2)}%</span>`
             : '—';
@@ -946,7 +948,8 @@
         if (!q) { closeTickerResults(); return; }
         resultsEl.innerHTML = '<div class="ticker-searching">Searching…</div>';
         resultsEl.classList.add('open');
-        _tickerDebounce = setTimeout(() => doTickerSearch(q), 380);
+        const type = document.getElementById('f-type').value;
+        _tickerDebounce = setTimeout(() => doTickerSearch(q, type), 380);
       });
 
       searchEl.addEventListener('keydown', e => {
@@ -967,14 +970,14 @@
       items[_tickerFocusIdx]?.scrollIntoView({ block: 'nearest' });
     }
 
-    async function doTickerSearch(q) {
+    async function doTickerSearch(q, type) {
       const resultsEl = document.getElementById('ticker-results');
       try {
-        const res  = await fetch(`${WORKER}/ticker-search?q=${encodeURIComponent(q)}`);
+        const res  = await fetch(`${WORKER}/ticker-search?q=${encodeURIComponent(q)}&type=${encodeURIComponent(type || 'stock')}`);
         const data = await res.json();
         renderTickerResults(data);
       } catch(e) {
-        resultsEl.innerHTML = '<div class="ticker-no-results">Search unavailable — type ticker manually</div>';
+        resultsEl.innerHTML = '<div class="ticker-no-results">Search unavailable</div>';
       }
     }
 
@@ -1060,11 +1063,41 @@
     }
 
     function onTypeChange() {
-      const type = document.getElementById('f-type').value;
+      const type        = document.getElementById('f-type').value;
+      const searchEl    = document.getElementById('f-ticker-search');
+      const hintEl      = document.getElementById('ticker-hint');
       const manualLabel = document.getElementById('manual-val-label');
-      if (type === 'property') manualLabel.textContent = 'Property Value (ZAR)';
-      else if (type === 'cash') manualLabel.textContent = 'Account Balance (ZAR)';
-      else manualLabel.textContent = 'Manual Value (ZAR)';
+
+      const placeholders = {
+        crypto:    'Search CoinGecko — e.g. Bitcoin, Ethereum, Solana…',
+        stock:     'Search Yahoo Finance — e.g. Shoprite, Apple, Naspers…',
+        commodity: 'Search commodities — e.g. Gold, Silver, Oil…',
+        property:  'No ticker needed — enter value manually',
+        cash:      'No ticker needed — enter balance manually',
+        other:     'No ticker needed — enter value manually',
+      };
+      const hints = {
+        crypto:    '₿ Searches CoinGecko · priced via Binance',
+        stock:     '📈 Searches Yahoo Finance · JSE & US stocks supported',
+        commodity: '🥇 Gold (XAU), Silver (XAG), Oil (USOIL) via OANDA',
+        property:  'Enter the current market value below',
+        cash:      'Enter your current account balance below',
+        other:     'Enter the current value below',
+      };
+
+      if (searchEl) searchEl.placeholder = placeholders[type] || 'Search ticker…';
+      if (hintEl)   hintEl.textContent   = hints[type] || '';
+
+      // Clear previous selection when type changes
+      document.getElementById('f-ticker').value        = '';
+      document.getElementById('f-ticker-search').value = '';
+      closeTickerResults();
+
+      if (manualLabel) {
+        if (type === 'property') manualLabel.textContent = 'Property Value (USD)';
+        else if (type === 'cash') manualLabel.textContent = 'Account Balance (USD)';
+        else manualLabel.textContent = 'Manual Value (USD)';
+      }
     }
 
     function onLiabilityChange() {
@@ -1131,16 +1164,16 @@
       const totalAssets = assets.reduce((s,a) => s + assetValueZar(a), 0);
       const totalLiabs  = liabs.reduce((s,a) => s + assetValueZar(a), 0);
 
-      const lines = ['USER PORTFOLIO SUMMARY:',
-        `Net Worth: R${Math.round(totalAssets - totalLiabs).toLocaleString('en-ZA')}`,
-        `Total Assets: R${Math.round(totalAssets).toLocaleString('en-ZA')}`,
-        `Total Liabilities: R${Math.round(totalLiabs).toLocaleString('en-ZA')}`,
+      const lines = ['USER PORTFOLIO SUMMARY (USD):',
+        `Net Worth: $${Math.round(totalAssets - totalLiabs).toLocaleString('en-US')}`,
+        `Total Assets: $${Math.round(totalAssets).toLocaleString('en-US')}`,
+        `Total Liabilities: $${Math.round(totalLiabs).toLocaleString('en-US')}`,
         '', 'HOLDINGS:',
       ];
       _assets.forEach(a => {
         const val = assetValueZar(a);
         const liveP = _prices[a.id];
-        let line = `- ${a.name}${a.ticker ? ' (' + a.ticker + ')' : ''}: ${a.is_liability ? 'LIABILITY ' : ''}R${Math.round(val).toLocaleString('en-ZA')}`;
+        let line = `- ${a.name}${a.ticker ? ' (' + a.ticker + ')' : ''}: ${a.is_liability ? 'LIABILITY ' : ''}$${Math.round(val).toLocaleString('en-US')}`;
         if (a.is_liability && a.interest_rate) line += ` @ ${a.interest_rate}% p.a.`;
         if (liveP) line += ` (24h: ${liveP.change_pct >= 0 ? '+' : ''}${liveP.change_pct.toFixed(2)}%)`;
         lines.push(line);

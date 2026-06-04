@@ -647,77 +647,79 @@ export default {
 
       // ── Portfolio: Ticker Search ───────────────────────────────────
       if (url.pathname === '/ticker-search' && request.method === 'GET') {
-        const q = (url.searchParams.get('q') || '').trim();
+        const q    = (url.searchParams.get('q')    || '').trim();
+        const type = (url.searchParams.get('type') || 'stock').trim();
         if (q.length < 2) {
           return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
         const results = [];
         const seen    = new Set();
-        const add     = (item) => { if (!seen.has(item.ticker)) { seen.add(item.ticker); results.push(item); } };
+        const add = (item) => { const k = item.ticker.toUpperCase(); if (!seen.has(k)) { seen.add(k); results.push(item); } };
 
-        // ── Static commodities (gold, silver, oil) ──────────────────
-        const COMMS = [
-          { ticker:'XAU',    name:'Gold Spot',          exchange:'OANDA',  type:'commodity' },
-          { ticker:'XAG',    name:'Silver Spot',         exchange:'OANDA',  type:'commodity' },
-          { ticker:'USOIL',  name:'Crude Oil (WTI)',     exchange:'OANDA',  type:'commodity' },
-          { ticker:'UKOIL',  name:'Brent Crude',         exchange:'OANDA',  type:'commodity' },
-        ];
-        COMMS.forEach(c => {
-          if (c.name.toLowerCase().includes(q.toLowerCase()) || c.ticker.toLowerCase().includes(q.toLowerCase())) add(c);
-        });
-
-        // ── Yahoo Finance search (stocks, ETFs, JSE, global) ────────
-        try {
-          const yRes = await fetch(
-            `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=8&newsCount=0&enableFuzzyQuery=false&lang=en-US`,
-            { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } }
-          );
-          if (yRes.ok) {
-            const yData = await yRes.json();
-            const quotes = yData?.finance?.result?.[0]?.quotes || [];
-            quotes.forEach(r => {
-              if (!r.symbol || r.quoteType === 'OPTION' || r.quoteType === 'FUTURE') return;
-              const isJSE   = r.exchange === 'JNB' || r.symbol.endsWith('.JO');
-              const isCrypto = r.quoteType === 'CRYPTOCURRENCY';
-              add({
-                ticker:   r.symbol,
-                name:     r.longname || r.shortname || r.symbol,
-                exchange: isJSE ? 'JSE' : isCrypto ? 'Crypto' : (r.exchDisp || r.exchange || ''),
-                type:     isCrypto ? 'crypto' : (r.quoteType === 'ETF' ? 'stock' : 'stock'),
-              });
-            });
-          }
-        } catch(e) {}
-
-        // ── CoinGecko search (crypto names + symbols) ────────────────
-        try {
-          const cgRes = await fetch(
-            `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(q)}`,
-            { headers: { 'Accept': 'application/json' } }
-          );
-          if (cgRes.ok) {
-            const cgData = await cgRes.json();
-            (cgData?.coins || []).slice(0, 6).forEach(c => {
-              add({ ticker: c.symbol.toUpperCase(), name: c.name, exchange: 'Binance', type: 'crypto' });
-            });
-          }
-        } catch(e) {}
-
-        // ── Finnhub search (US stocks fallback) ─────────────────────
-        if (results.filter(r => r.type === 'stock').length < 3) {
+        // ── Cryptocurrency → CoinGecko only ───────────────────────────
+        if (type === 'crypto') {
           try {
-            const fhRes = await fetch(
-              `https://finnhub.io/api/v1/search?q=${encodeURIComponent(q)}&token=${env.FINNHUB_KEY}`
+            const cgRes = await fetch(
+              `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(q)}`,
+              { headers: { 'Accept': 'application/json' } }
             );
-            if (fhRes.ok) {
-              const fhData = await fhRes.json();
-              (fhData?.result || []).slice(0, 5).forEach(r => {
-                if (!r.symbol || r.type === 'Common Stock' && r.symbol.includes('.')) return;
-                add({ ticker: r.displaySymbol || r.symbol, name: r.description, exchange: 'US', type: 'stock' });
+            if (cgRes.ok) {
+              const cgData = await cgRes.json();
+              (cgData?.coins || []).slice(0, 10).forEach(c => {
+                add({ ticker: c.symbol.toUpperCase(), name: c.name, exchange: 'Binance', type: 'crypto' });
               });
             }
           } catch(e) {}
+        }
+
+        // ── Stock / ETF → Yahoo Finance (+ Finnhub fallback) ──────────
+        else if (type === 'stock') {
+          try {
+            const yRes = await fetch(
+              `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=10&newsCount=0&enableFuzzyQuery=false&lang=en-US`,
+              { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } }
+            );
+            if (yRes.ok) {
+              const yData = await yRes.json();
+              (yData?.finance?.result?.[0]?.quotes || []).forEach(r => {
+                if (!r.symbol || r.quoteType === 'OPTION' || r.quoteType === 'FUTURE' || r.quoteType === 'CRYPTOCURRENCY') return;
+                const isJSE = r.exchange === 'JNB' || r.symbol.endsWith('.JO');
+                add({
+                  ticker:   r.symbol,
+                  name:     r.longname || r.shortname || r.symbol,
+                  exchange: isJSE ? 'JSE' : (r.exchDisp || r.exchange || 'US'),
+                  type:     'stock',
+                });
+              });
+            }
+          } catch(e) {}
+          // Finnhub fallback
+          if (results.length < 3) {
+            try {
+              const fhRes = await fetch(`https://finnhub.io/api/v1/search?q=${encodeURIComponent(q)}&token=${env.FINNHUB_KEY}`);
+              if (fhRes.ok) {
+                const fhData = await fhRes.json();
+                (fhData?.result || []).slice(0, 5).forEach(r => {
+                  if (!r.symbol) return;
+                  add({ ticker: r.displaySymbol || r.symbol, name: r.description, exchange: 'US', type: 'stock' });
+                });
+              }
+            } catch(e) {}
+          }
+        }
+
+        // ── Commodity → static list (gold, silver, oil) ───────────────
+        else if (type === 'commodity') {
+          const COMMS = [
+            { ticker:'XAU',   name:'Gold Spot',        exchange:'OANDA', type:'commodity' },
+            { ticker:'XAG',   name:'Silver Spot',       exchange:'OANDA', type:'commodity' },
+            { ticker:'USOIL', name:'Crude Oil (WTI)',   exchange:'OANDA', type:'commodity' },
+            { ticker:'UKOIL', name:'Brent Crude',       exchange:'OANDA', type:'commodity' },
+          ];
+          COMMS.forEach(c => {
+            if (c.name.toLowerCase().includes(q.toLowerCase()) || c.ticker.toLowerCase().startsWith(q.toLowerCase())) add(c);
+          });
         }
 
         return new Response(JSON.stringify(results.slice(0, 12)), {
