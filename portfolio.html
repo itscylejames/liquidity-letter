@@ -283,6 +283,35 @@
     .liability-fields { display: none; }
     .liability-fields.show { display: flex; flex-direction: column; gap: 16px; }
 
+    /* ── Ticker Search ───────────────────────────────────────────── */
+    .ticker-search-wrap { position: relative; }
+    .ticker-search-results {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 600;
+      background: #1a1a1a; border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+      display: none;
+    }
+    .ticker-search-results.open { display: block; }
+    .ticker-result {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; cursor: pointer; transition: background 0.12s;
+      border-bottom: 1px solid var(--border);
+    }
+    .ticker-result:last-child { border-bottom: none; }
+    .ticker-result:hover, .ticker-result.focused { background: var(--bg-hover); }
+    .ticker-result-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .ticker-result-info { flex: 1; min-width: 0; }
+    .ticker-result-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ticker-result-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .ticker-result-sym { font-size: 12px; font-weight: 700; color: var(--gold); flex-shrink: 0; font-family: monospace; }
+    .ticker-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; letter-spacing: 0.06em; }
+    .ticker-badge.crypto { background: rgba(247,147,26,0.15); color: #F7931A; }
+    .ticker-badge.stock  { background: rgba(76,175,80,0.15);  color: #4CAF50; }
+    .ticker-badge.commodity { background: rgba(255,213,79,0.15); color: #FFD54F; }
+    .ticker-searching { padding: 14px; text-align: center; font-size: 12px; color: var(--text-muted); }
+    .ticker-no-results { padding: 14px; text-align: center; font-size: 12px; color: var(--text-muted); }
+
     /* ── Loading ─────────────────────────────────────────────────── */
     .loading-row td { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
 
@@ -571,9 +600,13 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Ticker <span style="color:var(--text-muted)">(optional)</span></label>
-            <input class="form-input" id="f-ticker" placeholder="e.g. BTC, JSE:SHP, XAU">
-            <div class="form-hint" id="ticker-hint">Used for live price lookup</div>
+            <label class="form-label">Search Ticker <span style="color:var(--text-muted)">(optional)</span></label>
+            <div class="ticker-search-wrap">
+              <input class="form-input" id="f-ticker-search" placeholder="Search: Bitcoin, Shoprite, Gold…" autocomplete="off">
+              <input type="hidden" id="f-ticker">
+              <div class="ticker-search-results" id="ticker-results"></div>
+            </div>
+            <div class="form-hint" id="ticker-hint">Search across crypto (Binance), JSE &amp; US stocks, gold/silver</div>
           </div>
         </div>
         <div class="form-row">
@@ -672,6 +705,7 @@
       });
 
       await loadPortfolio();
+      initTickerSearch();
     });
 
     // ── Load portfolio (assets from DB) ───────────────────────────
@@ -897,19 +931,108 @@
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     // ── Modal ──────────────────────────────────────────────────────
+    // ── Ticker Search ──────────────────────────────────────────────
+    let _tickerDebounce = null;
+    let _tickerFocusIdx = -1;
+
+    function initTickerSearch() {
+      const searchEl  = document.getElementById('f-ticker-search');
+      const resultsEl = document.getElementById('ticker-results');
+      if (!searchEl) return;
+
+      searchEl.addEventListener('input', () => {
+        clearTimeout(_tickerDebounce);
+        const q = searchEl.value.trim();
+        if (!q) { closeTickerResults(); return; }
+        resultsEl.innerHTML = '<div class="ticker-searching">Searching…</div>';
+        resultsEl.classList.add('open');
+        _tickerDebounce = setTimeout(() => doTickerSearch(q), 380);
+      });
+
+      searchEl.addEventListener('keydown', e => {
+        const items = resultsEl.querySelectorAll('.ticker-result');
+        if (e.key === 'ArrowDown') { e.preventDefault(); _tickerFocusIdx = Math.min(_tickerFocusIdx + 1, items.length - 1); updateTickerFocus(items); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); _tickerFocusIdx = Math.max(_tickerFocusIdx - 1, 0); updateTickerFocus(items); }
+        else if (e.key === 'Enter' && _tickerFocusIdx >= 0) { e.preventDefault(); items[_tickerFocusIdx]?.click(); }
+        else if (e.key === 'Escape') closeTickerResults();
+      });
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.ticker-search-wrap')) closeTickerResults();
+      });
+    }
+
+    function updateTickerFocus(items) {
+      items.forEach((el, i) => el.classList.toggle('focused', i === _tickerFocusIdx));
+      items[_tickerFocusIdx]?.scrollIntoView({ block: 'nearest' });
+    }
+
+    async function doTickerSearch(q) {
+      const resultsEl = document.getElementById('ticker-results');
+      try {
+        const res  = await fetch(`${WORKER}/ticker-search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        renderTickerResults(data);
+      } catch(e) {
+        resultsEl.innerHTML = '<div class="ticker-no-results">Search unavailable — type ticker manually</div>';
+      }
+    }
+
+    const TYPE_ICONS = { crypto:'₿', stock:'📈', commodity:'🥇', other:'📦' };
+    const TYPE_COLORS = { crypto:'rgba(247,147,26,0.15)', stock:'rgba(76,175,80,0.15)', commodity:'rgba(255,213,79,0.15)', other:'rgba(158,158,158,0.15)' };
+
+    function renderTickerResults(items) {
+      const resultsEl = document.getElementById('ticker-results');
+      _tickerFocusIdx = -1;
+      if (!items || items.length === 0) {
+        resultsEl.innerHTML = '<div class="ticker-no-results">No results — try a different search</div>';
+        return;
+      }
+      resultsEl.innerHTML = items.map((r, i) => `
+        <div class="ticker-result" data-idx="${i}" onclick="selectTicker(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+          <div class="ticker-result-icon" style="background:${TYPE_COLORS[r.type]||TYPE_COLORS.other}">${TYPE_ICONS[r.type]||'📦'}</div>
+          <div class="ticker-result-info">
+            <div class="ticker-result-name">${esc(r.name)}</div>
+            <div class="ticker-result-meta">${esc(r.exchange)} · <span class="ticker-badge ${r.type}">${r.type.toUpperCase()}</span></div>
+          </div>
+          <div class="ticker-result-sym">${esc(r.ticker)}</div>
+        </div>`).join('');
+      resultsEl.classList.add('open');
+    }
+
+    function selectTicker(r) {
+      document.getElementById('f-ticker').value        = r.ticker;
+      document.getElementById('f-ticker-search').value = r.name + ' (' + r.ticker + ')';
+      document.getElementById('f-type').value          = r.type || 'stock';
+      // Auto-fill name if empty
+      if (!document.getElementById('f-name').value.trim()) {
+        document.getElementById('f-name').value = r.name;
+      }
+      onTypeChange();
+      closeTickerResults();
+    }
+
+    function closeTickerResults() {
+      document.getElementById('ticker-results').classList.remove('open');
+      _tickerFocusIdx = -1;
+    }
+
     function openAddModal() {
       document.getElementById('modal-title').textContent = 'Add Asset';
       document.getElementById('edit-id').value = '';
       document.getElementById('f-name').value = '';
       document.getElementById('f-type').value = 'crypto';
       document.getElementById('f-ticker').value = '';
+      document.getElementById('f-ticker-search').value = '';
       document.getElementById('f-qty').value = '';
       document.getElementById('f-manual-val').value = '';
       document.getElementById('f-liability').checked = false;
       document.getElementById('f-interest').value = '';
       document.getElementById('f-notes').value = '';
+      closeTickerResults();
       onTypeChange(); onLiabilityChange();
       document.getElementById('asset-modal').classList.add('open');
+      setTimeout(() => document.getElementById('f-name').focus(), 100);
     }
 
     function openEditModal(id) {
@@ -920,29 +1043,24 @@
       document.getElementById('f-name').value = a.name || '';
       document.getElementById('f-type').value = a.asset_type || 'other';
       document.getElementById('f-ticker').value = a.ticker || '';
+      document.getElementById('f-ticker-search').value = a.ticker || '';
       document.getElementById('f-qty').value = a.quantity || '';
       document.getElementById('f-manual-val').value = a.manual_value || '';
       document.getElementById('f-liability').checked = !!a.is_liability;
       document.getElementById('f-interest').value = a.interest_rate || '';
       document.getElementById('f-notes').value = a.notes || '';
+      closeTickerResults();
       onTypeChange(); onLiabilityChange();
       document.getElementById('asset-modal').classList.add('open');
     }
 
-    function closeModal() { document.getElementById('asset-modal').classList.remove('open'); }
+    function closeModal() {
+      document.getElementById('asset-modal').classList.remove('open');
+      closeTickerResults();
+    }
 
     function onTypeChange() {
       const type = document.getElementById('f-type').value;
-      const tickerHint = document.getElementById('ticker-hint');
-      const hints = {
-        crypto:    'e.g. BTC, ETH, SOL, XRP — via Binance, live prices',
-        stock:     'US: AAPL, TSLA, SPY · JSE: SHP.JO, MTN.JO, NPN.JO',
-        commodity: 'XAU = gold · XAG = silver (per troy oz, USD)',
-        property:  'Leave blank — enter value manually below',
-        cash:      'Leave blank — enter balance manually below',
-        other:     'Leave blank — enter value manually below',
-      };
-      tickerHint.textContent = hints[type] || 'Optional ticker for live prices';
       const manualLabel = document.getElementById('manual-val-label');
       if (type === 'property') manualLabel.textContent = 'Property Value (ZAR)';
       else if (type === 'cash') manualLabel.textContent = 'Account Balance (ZAR)';
