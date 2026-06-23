@@ -403,7 +403,7 @@
   </footer>
 
   <script>
-    const FINNHUB_KEY = 'd82qj01r01qvkevnhh90d82qj01r01qvkevnhh9g';
+    const WORKER_URL = 'https://api.liquidityletter.com';
 
     // Wire auth buttons
     const SUPABASE_URL = 'https://dumqszzkbynjeejswyki.supabase.co';
@@ -552,12 +552,9 @@
       const to = toYMD(end);
 
       try {
-        const r = await fetch(
-          `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${FINNHUB_KEY}`
-        );
+        const r = await fetch(`${WORKER_URL}/calendar?from=${from}&to=${to}`);
         const data = await r.json();
-        allEvents = (data.economicCalendar || [])
-          .filter(e => (e.country || '').toUpperCase() === 'US')
+        allEvents = (data.events || [])
           .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
         document.getElementById('last-updated-cal').textContent =

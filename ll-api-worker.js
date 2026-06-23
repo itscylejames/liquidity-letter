@@ -325,10 +325,9 @@ function intelFmtP(p) {
 }
 
 async function intelFetchCrypto(sym) {
-  const r = await fetch(`https://api.binance.com/api/v3/klines?symbol=${sym}&interval=1d&limit=100`);
-  if (!r.ok) throw new Error(`Binance ${r.status}`);
-  const d = await r.json();
-  return { closes: d.map(k=>parseFloat(k[4])), highs: d.map(k=>parseFloat(k[2])), lows: d.map(k=>parseFloat(k[3])) };
+  // Binance blocks CF Worker IPs for klines — use Yahoo Finance instead (BTC-USD format)
+  const coin = sym.replace(/USDT$/i, '');
+  return await intelFetchYahoo(`${coin}-USD`);
 }
 
 async function intelFetchYahoo(sym) {
@@ -477,24 +476,16 @@ export default {
 
       // ── Economic Calendar ──────────────────────────────────────────
       if (url.pathname === '/calendar') {
+        // Accept optional from/to params for week navigation; default = today → today+60
         const today = new Date();
-        const from  = today.toISOString().split('T')[0];
-        const to    = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const from  = url.searchParams.get('from') || today.toISOString().split('T')[0];
+        const to    = url.searchParams.get('to')   || new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         const res  = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${env.FINNHUB_KEY}`);
         const data = await res.json();
 
-        const HIGH_KW = ['fed','fomc','interest rate','cpi','ppi','nonfarm','payroll','gdp','pce','unemployment rate','unemployment claims','inflation','core inflation','jolts','adp'];
-        const now = new Date().toISOString().replace('T',' ').substring(0,16);
         const events = (data.economicCalendar || [])
-          .filter(e => {
-            if ((e.country || '').toUpperCase() !== 'US') return false;
-            if ((e.time || '') < now) return false;
-            const impact = (e.impact || '').toString().toLowerCase();
-            const name   = (e.event  || '').toLowerCase();
-            const isHigh = impact === 'high' || impact === '3';
-            return isHigh || HIGH_KW.some(k => name.includes(k));
-          })
+          .filter(e => (e.country || '').toUpperCase() === 'US')
           .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
         return new Response(JSON.stringify({ events }), {
