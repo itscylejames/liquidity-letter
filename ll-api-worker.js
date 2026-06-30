@@ -474,23 +474,47 @@ export default {
 
     try {
 
-      // ── Economic Calendar ──────────────────────────────────────────
+      // ── Economic Calendar (ForexFactory — free, no key) ────────────
       if (url.pathname === '/calendar') {
-        // Accept optional from/to params for week navigation; default = today → today+60
         const today = new Date();
         const from  = url.searchParams.get('from') || today.toISOString().split('T')[0];
-        const to    = url.searchParams.get('to')   || new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const to    = url.searchParams.get('to')   || new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        const res  = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${env.FINNHUB_KEY}`);
-        const data = await res.json();
+        try {
+          const ffRes = await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json', {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          });
+          const raw = ffRes.ok ? await ffRes.json() : [];
 
-        const events = (data.economicCalendar || [])
-          .filter(e => (e.country || '').toUpperCase() === 'US')
-          .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+          const events = (Array.isArray(raw) ? raw : [])
+            .filter(e => e.country === 'USD' && e.impact !== 'Holiday')
+            .map(e => {
+              // Convert ForexFactory ISO-with-offset to UTC string so frontend formatTime works correctly
+              const utcStr = new Date(e.date).toISOString().replace('T', ' ').substring(0, 19);
+              return {
+                country:  'US',
+                event:    e.title,
+                time:     utcStr,
+                impact:   (e.impact || 'low').toLowerCase(),
+                estimate: e.forecast || '',
+                previous: e.previous || '',
+                actual:   null,
+              };
+            })
+            .filter(e => {
+              const d = e.time.substring(0, 10);
+              return d >= from && d <= to;
+            })
+            .sort((a, b) => a.time.localeCompare(b.time));
 
-        return new Response(JSON.stringify({ events }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+          return new Response(JSON.stringify({ events }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch(err) {
+          return new Response(JSON.stringify({ events: [] }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       // ── News Feed ──────────────────────────────────────────────────
