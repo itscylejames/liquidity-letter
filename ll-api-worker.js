@@ -1086,32 +1086,14 @@ export default {
         const discountedUsd = discountPct > 0 ? baseUsd * (1 - discountPct / 100) : baseUsd;
         const zarAmount     = Math.ceil(discountedUsd * zarRate).toFixed(2);
 
-        // ── Check trial eligibility (first-time signups only) ─────────
-        let isTrial = false;
-        try {
-          const profRes  = await fetch(
-            `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${user_id}&select=trial_used`,
-            { headers: { 'apikey': env.SUPABASE_SERVICE_KEY, 'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}` } }
-          );
-          const profData = await profRes.json();
-          const trialUsed = Array.isArray(profData) && profData[0] && profData[0].trial_used;
-          isTrial = !trialUsed; // eligible if they've never used a trial
-        } catch(e) {}
-
         const isSandbox = env.PAYFAST_SANDBOX === 'true';
         const pfUrl = isSandbox
           ? 'https://sandbox.payfast.co.za/eng/process'
           : 'https://www.payfast.co.za/eng/process';
         const siteUrl = 'https://liquidityletter.com';
 
-        const mPaymentId = `TLL_${user_id}_${Date.now()}`;
-
-        // billing_date: today for normal, today+7 for trial
-        const billingDateStr = (() => {
-          const d = new Date();
-          if (isTrial) d.setDate(d.getDate() + 7);
-          return d.toISOString().split('T')[0];
-        })();
+        const mPaymentId   = `TLL_${user_id}_${Date.now()}`;
+        const billingDateStr = new Date().toISOString().split('T')[0];
 
         const params = {
           merchant_id:       env.PAYFAST_MERCHANT_ID,
@@ -1123,16 +1105,15 @@ export default {
           name_last:         (last_name  || '').slice(0, 100),
           email_address:     email,
           m_payment_id:      mPaymentId,
-          amount:            isTrial ? Math.ceil(1 * zarRate).toFixed(2) : zarAmount,  // $1 USD verification for trial
+          amount:            zarAmount,
           item_name:         'The Liquidity Letter Monthly',
           subscription_type: '1',
           billing_date:      billingDateStr,
-          recurring_amount:  zarAmount,  // always full ZAR amount for recurring
+          recurring_amount:  zarAmount,
           frequency:         '3',
           cycles:            '0',
           custom_str1:       user_id,
           ...(affiliateCode && { custom_str2: affiliateCode }),
-          ...(isTrial        && { custom_str3: 'trial' }),
         };
 
         // Remove empty fields
@@ -1162,15 +1143,12 @@ export default {
           } catch(e) {}
         }
 
-        // No signature — "Enable require signature" is OFF in PayFast settings
         return new Response(JSON.stringify({
           params,
           action:      pfUrl,
           zarAmount,
           discountPct,
           originalZar: discountPct > 0 ? Math.ceil(baseUsd * zarRate).toFixed(2) : null,
-          isTrial,
-          trialZar: isTrial ? Math.ceil(1 * zarRate).toFixed(2) : null,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
